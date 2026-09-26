@@ -1,0 +1,28 @@
+import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { CatalogsModule } from './catalogs/catalogs.module';
+import { WorkflowModule } from './workflow/workflow.module';
+import { ReportsModule } from './reports/reports.module';
+import { FilesModule } from './files/files.module';
+import { IntegrationsModule } from './integrations/integrations.module';
+import { AuthModule } from './auth/auth.module';
+import { HealthModule } from './health/health.module';
+import { PrismaModule } from './prisma/prisma.module';
+import { RedisModule } from './redis/redis.module';
+import { DevRoleGuard } from './auth/guards/dev-role.guard';
+
+@Module({
+  imports: [
+    PrismaModule,
+    RedisModule,
+    CatalogsModule,
+    WorkflowModule,
+    ReportsModule,
+    FilesModule,
+    IntegrationsModule,
+    AuthModule,
+    HealthModule,
+  ],
+  providers: [{ provide: APP_GUARD, useClass: DevRoleGuard }],
+})
+export class AppModule {}

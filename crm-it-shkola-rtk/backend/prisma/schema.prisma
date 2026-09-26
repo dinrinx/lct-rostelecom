@@ -1,0 +1,348 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- RBAC -------------------------------------------------------------
+
+enum UserRole {
+  KAM
+  RUKOVODITEL
+  ADMINISTRATOR
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  fullName  String
+  role      UserRole
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Руководитель управляет своей командой КАМов
+  managerId String?
+  manager   User?   @relation("TeamMembers", fields: [managerId], references: [id])
+  team      User[]  @relation("TeamMembers")
+
+  universities         University[]           @relation("UniversityKam")
+  interactionInstances InteractionInstance[]   @relation("InteractionResponsible")
+  statusHistoryEntries StatusHistoryEntry[]    @relation("StatusHistoryChangedBy")
+  fileAttachments      FileAttachment[]        @relation("FileUploadedBy")
+  importJobs           ImportJob[]             @relation("ImportJobInitiatedBy")
+  auditLogs            AuditLog[]              @relation("AuditLogUser")
+}
+
+// --- Каталоги -----------------------------------------------------------
+
+model University {
+  id        String   @id @default(uuid())
+  name      String
+  inn       String?
+  region    String?
+  website   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // КАМ, ответственный за вуз
+  kamId String?
+  kam   User?   @relation("UniversityKam", fields: [kamId], references: [id])
+
+  responsiblePersons   ResponsiblePerson[]
+  licenses             License[]
+  interactionInstances InteractionInstance[]
+
+  @@index([kamId])
+}
+
+// Контактное лицо — либо со стороны вуза (universityId), либо со стороны
+// вендора по конкретному продукту (itProductId); хотя бы одно должно быть заполнено.
+model ResponsiblePerson {
+  id             String   @id @default(uuid())
+  fullName       String
+  position       String?
+  email          String?
+  phone          String?
+  contactMethod  String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  universityId String?
+  university   University? @relation(fields: [universityId], references: [id])
+
+  itProductId String?
+  itProduct   ItProduct? @relation(fields: [itProductId], references: [id])
+
+  @@index([universityId])
+  @@index([itProductId])
+}
+
+model ItDirection {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  itProducts ItProduct[]
+}
+
+model Vendor {
+  id             String   @id @default(uuid())
+  name           String
+  contactInfo    String?
+  contactName    String?
+  contactPhone   String?
+  contactEmail   String?
+  contactChannel String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  itProducts ItProduct[]
+}
+
+model ItProduct {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  itDirectionId String
+  itDirection   ItDirection @relation(fields: [itDirectionId], references: [id])
+
+  vendorId String
+  vendor   Vendor @relation(fields: [vendorId], references: [id])
+
+  licenses             License[]
+  interactionInstances InteractionInstance[]
+  responsiblePersons   ResponsiblePerson[]
+
+  @@index([itDirectionId])
+  @@index([vendorId])
+}
+
+// --- Лицензии/договоры ---------------------------------------------------
+
+enum LicenseStatus {
+  ACTIVE
+  PENDING
+  TERMINATED
+}
+
+model License {
+  id             String        @id @default(uuid())
+  contractNumber String?
+  status         LicenseStatus @default(ACTIVE)
+  seats          Int?
+  startDate      DateTime
+  endDate        DateTime
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  universityId String
+  university   University @relation(fields: [universityId], references: [id])
+
+  itProductId String
+  itProduct   ItProduct @relation(fields: [itProductId], references: [id])
+
+  fileAttachments FileAttachment[]
+
+  @@index([universityId])
+  @@index([itProductId])
+  @@index([endDate])
+}
+
+// --- Workflow (CLM) --------------------------------------------------------
+
+// 7 CLM-макростадий
+enum WorkflowPhase {
+  INITIATION
+  NEGOTIATION
+  CONTRACTING
+  IMPLEMENTATION
+  ACTIVE_USE
+  RENEWAL
+  TERMINATION
+}
+
+model WorkflowTemplate {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  versions WorkflowTemplateVersion[]
+}
+
+model WorkflowTemplateVersion {
+  id            String   @id @default(uuid())
+  versionNumber Int
+  isActive      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  workflowTemplateId String
+  workflowTemplate   WorkflowTemplate @relation(fields: [workflowTemplateId], references: [id])
+
+  statuses             WorkflowStatus[]
+  transitions          WorkflowTransition[]
+  interactionInstances InteractionInstance[]
+
+  @@unique([workflowTemplateId, versionNumber])
+}
+
+model WorkflowStatus {
+  id    String        @id @default(uuid())
+  name  String
+  phase WorkflowPhase
+  order Int
+
+  workflowTemplateVersionId String
+  workflowTemplateVersion   WorkflowTemplateVersion @relation(fields: [workflowTemplateVersionId], references: [id])
+
+  transitionsFrom WorkflowTransition[] @relation("TransitionFromStatus")
+  transitionsTo   WorkflowTransition[] @relation("TransitionToStatus")
+
+  interactionInstances    InteractionInstance[]
+  statusHistoryEntriesFrom StatusHistoryEntry[] @relation("StatusHistoryFromStatus")
+  statusHistoryEntriesTo   StatusHistoryEntry[] @relation("StatusHistoryToStatus")
+
+  @@index([workflowTemplateVersionId])
+}
+
+model WorkflowTransition {
+  id   String  @id @default(uuid())
+  name String?
+
+  workflowTemplateVersionId String
+  workflowTemplateVersion   WorkflowTemplateVersion @relation(fields: [workflowTemplateVersionId], references: [id])
+
+  fromStatusId String
+  fromStatus   WorkflowStatus @relation("TransitionFromStatus", fields: [fromStatusId], references: [id])
+
+  toStatusId String
+  toStatus   WorkflowStatus @relation("TransitionToStatus", fields: [toStatusId], references: [id])
+
+  @@index([workflowTemplateVersionId])
+  @@unique([workflowTemplateVersionId, fromStatusId, toStatusId])
+}
+
+// Взаимодействие вуза с ИТ Школой РТК, привязанное к конкретной версии шаблона
+model InteractionInstance {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  universityId String
+  university   University @relation(fields: [universityId], references: [id])
+
+  itProductId String?
+  itProduct   ItProduct? @relation(fields: [itProductId], references: [id])
+
+  workflowTemplateVersionId String
+  workflowTemplateVersion   WorkflowTemplateVersion @relation(fields: [workflowTemplateVersionId], references: [id])
+
+  currentStatusId String
+  currentStatus   WorkflowStatus @relation(fields: [currentStatusId], references: [id])
+
+  responsibleUserId String
+  responsibleUser   User   @relation("InteractionResponsible", fields: [responsibleUserId], references: [id])
+
+  statusHistoryEntries StatusHistoryEntry[]
+  fileAttachments      FileAttachment[]
+
+  @@index([universityId])
+  @@index([itProductId])
+  @@index([workflowTemplateVersionId])
+  @@index([currentStatusId])
+  @@index([responsibleUserId])
+}
+
+// Append-only журнал переходов по статусам
+model StatusHistoryEntry {
+  id        String   @id @default(uuid())
+  comment   String?
+  changedAt DateTime @default(now())
+
+  interactionInstanceId String
+  interactionInstance   InteractionInstance @relation(fields: [interactionInstanceId], references: [id])
+
+  fromStatusId String?
+  fromStatus   WorkflowStatus? @relation("StatusHistoryFromStatus", fields: [fromStatusId], references: [id])
+
+  toStatusId String
+  toStatus   WorkflowStatus @relation("StatusHistoryToStatus", fields: [toStatusId], references: [id])
+
+  changedById String
+  changedBy   User   @relation("StatusHistoryChangedBy", fields: [changedById], references: [id])
+
+  @@index([interactionInstanceId])
+  @@index([toStatusId])
+}
+
+// --- Файлы ------------------------------------------------------------
+
+model FileAttachment {
+  id         String   @id @default(uuid())
+  fileName   String
+  mimeType   String
+  size       Int
+  storageKey String
+  createdAt  DateTime @default(now())
+
+  uploadedById String
+  uploadedBy   User   @relation("FileUploadedBy", fields: [uploadedById], references: [id])
+
+  interactionInstanceId String?
+  interactionInstance   InteractionInstance? @relation(fields: [interactionInstanceId], references: [id])
+
+  licenseId String?
+  license   License? @relation(fields: [licenseId], references: [id])
+
+  @@index([interactionInstanceId])
+  @@index([licenseId])
+}
+
+// --- Импорт и аудит -----------------------------------------------------
+
+enum ImportJobStatus {
+  PENDING
+  PROCESSING
+  SUCCESS
+  FAILED
+}
+
+model ImportJob {
+  id            String          @id @default(uuid())
+  fileName      String
+  status        ImportJobStatus @default(PENDING)
+  resultSummary Json?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  initiatedById String
+  initiatedBy   User   @relation("ImportJobInitiatedBy", fields: [initiatedById], references: [id])
+
+  @@index([initiatedById])
+}
+
+// Append-only журнал аудита
+model AuditLog {
+  id         String   @id @default(uuid())
+  action     String
+  entityType String
+  entityId   String
+  payload    Json?
+  createdAt  DateTime @default(now())
+
+  userId String?
+  user   User?  @relation("AuditLogUser", fields: [userId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([userId])
+}
