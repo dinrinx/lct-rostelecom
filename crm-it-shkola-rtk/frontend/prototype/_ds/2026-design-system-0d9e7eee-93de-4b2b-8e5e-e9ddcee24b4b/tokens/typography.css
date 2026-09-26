@@ -1,0 +1,13 @@
+/* Rostelecom Basis scale from the "Font Rostelecom Basis" frame. Line-heights for 18/16/14/12 come from components; heading/promo line-heights are not specified in the source (1.2 assumed). */
+:root{
+--font-sans:"Rostelecom Basis",-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif;
+--weight-light:300;--weight-regular:400;--weight-medium:500;--weight-bold:700;
+--promo-48-size:48px;--promo-42-size:42px;--promo-32-size:32px;--promo-line:1.2; /* @kind font */
+--heading-28-size:28px;--heading-22-size:22px;--heading-18-size:18px;--heading-16-size:16px;--heading-line:1.2; /* @kind font */
+--body-l-size:18px;--body-l-line:26px;
+--body-m-size:16px;--body-m-line:24px;
+--body-s-size:14px;--body-s-line:20px;
+--description-l-size:12px;--description-l-line:16px;
+--description-m-size:11px;--description-m-line:14px;
+--description-s-size:10px;--description-s-line:12px;
+}

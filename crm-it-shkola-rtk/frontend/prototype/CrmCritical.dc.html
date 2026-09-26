@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/fonts/fonts.css">
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/tokens/figma/fig-tokens.css">
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/tokens/colors.css">
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/tokens/typography.css">
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/tokens/base.css">
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/assets/icons/icons.css">
+<script src="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/_ds_bundle.js"></script>
+<script src="crm-data.js"></script>
+</helmet>
+<div data-screen-label="03c Критический путь" style="display:flex;flex-direction:column;gap:32px;font-family:var(--font-sans);color:var(--color-fg-default)">
+  <sc-for list="{{ paths }}" as="p" hint-placeholder-count="1">
+    <section style="display:flex;flex-direction:column;gap:16px;min-width:0">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+        <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+          <h2 style="margin:0;font-weight:700;font-size:22px;line-height:1.2">{{ p.universityName }} · {{ p.itProductName }}</h2>
+          <span style="font-size:14px;line-height:20px;color:var(--color-fg-soft)">Сейчас «{{ p.currentStatusName }}»</span>
+        </div>
+        <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" variant="outline" size="s" on-click="{{ p.open }}" hint-size="150px,40px">Открыть карточку</x-import>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <sc-for list="{{ p.tiles }}" as="t">
+          <div style="display:flex;flex-direction:column;gap:2px;padding:12px 16px;border-radius:12px;background:var(--color-bg-surface3)">
+            <span style="font-size:12px;line-height:16px;color:var(--color-fg-soft)">{{ t.label }}</span>
+            <span style="font-weight:700;font-size:18px;line-height:1.2;color:{{ t.fg }}">{{ t.value }}</span>
+            <sc-if value="{{ t.note }}"><span style="font-size:12px;line-height:16px;color:{{ t.noteFg }}">{{ t.note }}</span></sc-if>
+          </div>
+        </sc-for>
+      </div>
+      <div style="overflow-x:auto;border-radius:16px;box-shadow:inset 0 0 0 1px var(--color-border-muted)">
+        <div style="min-width:820px;display:flex;flex-direction:column">
+          <div style="display:grid;grid-template-columns:240px 200px 1fr;gap:16px;padding:12px 20px;background:var(--color-bg-surface2);border-radius:16px 16px 0 0;font-size:12px;line-height:16px;color:var(--color-fg-soft)">
+            <span>Этап</span><span>Даты</span>
+            <div style="position:relative;height:16px">
+              <sc-for list="{{ p.ticks }}" as="k"><span style="position:absolute;left:{{ k.left }};top:0;white-space:nowrap">{{ k.label }}</span></sc-for>
+              <span style="position:absolute;left:{{ p.todayLeft }};top:0;transform:translateX(-50%);font-weight:500;color:var(--color-fg-default);background:var(--color-bg-surface2);padding:0 4px">сегодня</span>
+            </div>
+          </div>
+          <sc-for list="{{ p.gantt }}" as="g">
+            <div style="display:grid;grid-template-columns:240px 200px 1fr;gap:16px;align-items:center;padding:10px 20px;border-top:1px solid var(--color-border-muted)">
+              <span style="display:flex;flex-direction:column;gap:2px;min-width:0">
+                <span style="font-size:14px;line-height:20px;font-weight:{{ g.weight }};color:{{ g.nameFg }}">{{ g.name }}</span>
+                <span style="font-size:12px;line-height:16px;color:{{ g.stateFg }}">{{ g.state }}</span>
+              </span>
+              <span style="display:flex;flex-direction:column;gap:2px">
+                <span style="font-size:14px;line-height:20px;color:{{ g.nameFg }}">{{ g.dates }}</span>
+                <sc-if value="{{ g.slackText }}"><span style="font-size:12px;line-height:16px;color:var(--color-fg-muted)">{{ g.slackText }}</span></sc-if>
+              </span>
+              <div style="position:relative;height:24px">
+                <sc-for list="{{ p.ticks }}" as="k"><span style="position:absolute;left:{{ k.left }};top:-10px;bottom:-10px;width:1px;background:var(--color-border-muted)"></span></sc-for>
+                <sc-if value="{{ g.hasSlack }}"><span style="position:absolute;left:{{ g.slackLeft }};width:{{ g.slackWidth }};top:11px;height:2px;background:var(--color-border-default)"></span><span style="position:absolute;left:{{ g.slackEnd }};top:6px;width:2px;height:12px;background:var(--color-border-default)"></span></sc-if>
+                <sc-for list="{{ g.bars }}" as="b"><span title="{{ b.title }}" style="position:absolute;left:{{ b.left }};width:{{ b.width }};top:4px;height:16px;border-radius:4px;background:{{ b.bg }};box-shadow:{{ b.ring }}"></span></sc-for>
+                <span style="position:absolute;left:{{ p.todayLeft }};top:-10px;bottom:-10px;width:2px;background:var(--color-fg-default)"></span>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </section>
+  </sc-for>
+  <div style="display:flex;flex-wrap:wrap;gap:8px 20px;font-size:12px;line-height:16px;color:var(--color-fg-soft)">
+    <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:16px;height:10px;border-radius:3px;background:var(--color-neutral-muted)"></span>Пройдено</span>
+    <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:16px;height:10px;border-radius:3px;background:var(--color-accent)"></span>Критический путь</span>
+    <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:16px;height:10px;border-radius:3px;background:var(--color-bg-surface4);box-shadow:inset 0 0 0 1px var(--color-border-default)"></span>Есть запас</span>
+    <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:16px;height:2px;background:var(--color-border-default)"></span>Запас по времени</span>
+    <span>Будущие даты — самые ранние возможные по минимальным срокам этапов</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;rows&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;InteractionReportItemDto[]&quot;},&quot;role&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;kam&quot;,&quot;rukovoditel&quot;],&quot;default&quot;:&quot;kam&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;isMobile&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;onOpen&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(id:string)=&gt;void&quot;}}">
+const waitCRM = () => new Promise((r) => { const t = () => (window.CRM ? r(window.CRM) : setTimeout(t, 30)); t(); });
+const DAY = 864e5;
+class Component extends DCLogic {
+  state = { version: null, licenses: [], hist: {} };
+  componentDidMount() { waitCRM().then(async (CRM) => { try { const [version, licenses] = await Promise.all([CRM.api.templateVersion(CRM.activeVersionId()), CRM.api.licenses()]); this.setState({ version, licenses }); } catch (e) {} this.loadHist(); }); }
+  componentDidUpdate(pp) { if (pp.rows !== this.props.rows) this.loadHist(); }
+  async loadHist() {
+    const rows = (this.props.rows || []).slice(0, 4);
+    const out = {};
+    await Promise.all(rows.map(async (r) => { try { out[r.interactionInstanceId] = await window.CRM.api.history(r.interactionInstanceId); } catch (e) { out[r.interactionInstanceId] = []; } }));
+    this.setState({ hist: out });
+  }
+  build(r) {
+    const CRM = window.CRM, v = this.state.version, now = Date.now();
+    const f = (t) => new Date(t).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const f2 = (t) => new Date(t).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+    const c = CRM.criticalPath(v.statuses, r.currentStatusId, r.daysInCurrentStatus);
+    const hist = [...(this.state.hist[r.interactionInstanceId] || [])].sort((a, b) => a.changedAt.localeCompare(b.changedAt));
+    const actual = {};
+    hist.forEach((h, i) => { actual[h.toStatusId] = [new Date(h.changedAt).getTime(), i + 1 < hist.length ? new Date(hist[i + 1].changedAt).getTime() : now]; });
+    const start = hist.length ? new Date(hist[0].changedAt).getTime() : new Date(r.createdAt).getTime();
+    const finish = now + c.total * DAY;
+    const span = Math.max(DAY, Math.max(finish, now + 7 * DAY) - start) * 1.03;
+    const pct = (t) => Math.max(0, Math.min(100, ((t - start) / span) * 100)).toFixed(2) + '%';
+    const w = (a, b) => Math.max(0.6, ((b - a) / span) * 100).toFixed(2) + '%';
+    const ticks = []; const d = new Date(start); d.setDate(1); d.setMonth(d.getMonth() + 1);
+    const step = span / DAY > 300 ? 2 : 1;
+    while (d.getTime() < start + span) { ticks.push({ left: pct(d.getTime()), label: d.toLocaleDateString('ru-RU', { month: 'short' }).replace('.', '') }); d.setMonth(d.getMonth() + step); }
+    const gantt = c.nodes.map((n) => {
+      const bars = []; let state = '', stateFg = 'var(--color-fg-muted)', weight = 400, nameFg = 'var(--color-fg-default)', dates = '—', slackText = null;
+      const a = actual[n.id];
+      if (n.done) { nameFg = 'var(--color-fg-soft)'; if (a) { bars.push({ left: pct(a[0]), width: w(a[0], a[1]), bg: 'var(--color-neutral-muted)', ring: 'none', title: f(a[0]) + ' — ' + f(a[1]) }); dates = f(a[0]) + ' — ' + f(a[1]); state = 'Пройден'; } else state = 'Пропущен'; }
+      else if (n.skip) { nameFg = 'var(--color-fg-soft)'; state = 'Необязательный'; }
+      else {
+        const es = now + n.es * DAY, ef = now + n.ef * DAY;
+        if (n.current && a) bars.push({ left: pct(a[0]), width: w(a[0], now), bg: 'var(--color-fg-soft)', ring: 'none', title: 'В работе с ' + f(a[0]) });
+        if (n.dur > 0) bars.push({ left: pct(es), width: w(es, ef), bg: n.critical ? 'var(--color-accent)' : 'var(--color-bg-surface4)', ring: n.critical ? 'none' : 'inset 0 0 0 1px var(--color-border-default)', title: f(es) + ' — ' + f(ef) });
+        if (n.current) { weight = 500; state = 'Сейчас'; stateFg = 'var(--color-accent-strong)'; dates = (a ? f(a[0]) : f(now)) + ' — ' + f(ef); }
+        else if (!n.dur) { state = 'Финиш'; dates = 'не раньше ' + f(ef); }
+        else { state = n.critical ? 'Критический' : 'Есть запас'; stateFg = n.critical ? 'var(--color-accent-strong)' : 'var(--color-fg-muted)'; dates = f(es) + ' — ' + f(ef); }
+        if (!n.critical && n.slack > 0) slackText = 'можно закончить до ' + f2(now + n.lf * DAY);
+      }
+      const se = now + n.ef * DAY, sl = now + n.lf * DAY;
+      return { name: n.name, state, stateFg, weight, nameFg, dates, slackText, bars, hasSlack: n.remaining && !n.critical && n.slack > 0, slackLeft: pct(se), slackWidth: w(se, sl), slackEnd: pct(sl) };
+    });
+    const lic = this.state.licenses.find((l) => l.universityId === r.universityId && l.itProductId === r.itProductId);
+    const licEnd = lic ? new Date(lic.endDate).getTime() : null;
+    const licLate = licEnd && c.total > 0 && licEnd < finish;
+    const tiles = [
+      { label: 'Завершение не раньше', value: c.total ? f(finish) : 'Завершено', fg: 'var(--color-accent-strong)', note: c.total ? 'через ' + c.total + ' ' + CRM.plural(c.total, 'день', 'дня', 'дней') + ' — быстрее нельзя' : null, noteFg: 'var(--color-fg-soft)' },
+      { label: 'Начало цикла', value: f(start), fg: 'var(--color-fg-default)' },
+      lic ? { label: 'Лицензия ' + lic.contractNumber, value: 'до ' + f(licEnd), fg: licLate ? 'var(--color-error-strong)' : 'var(--color-fg-default)', note: licLate ? 'истечёт раньше завершения — продлите заранее' : 'покрывает весь путь', noteFg: licLate ? 'var(--color-error-strong)' : 'var(--color-success-strong)' } : null,
+    ].filter(Boolean);
+    return { ...r, tiles, gantt, ticks, todayLeft: pct(now), open: () => this.props.onOpen && this.props.onOpen(r.interactionInstanceId) };
+  }
+  renderVals() {
+    if (!window.CRM || !this.state.version) return { paths: [] };
+    return { paths: (this.props.rows || []).slice(0, 4).map((r) => this.build(r)) };
+  }
+}
+</script>
+</body>
+</html>

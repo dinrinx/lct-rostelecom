@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/fonts/fonts.css">
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/tokens/figma/fig-tokens.css">
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/tokens/colors.css">
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/tokens/typography.css">
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/tokens/base.css">
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/assets/icons/icons.css">
+<script src="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/_ds_bundle.js"></script>
+<script src="crm-data.js"></script>
+</helmet>
+<div style="display:flex;flex-direction:column;gap:16px;font-family:var(--font-sans);color:var(--color-fg-default)">
+
+  <sc-if value="{{ isLoading }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex;flex-direction:column;gap:8px"><sc-for list="{{ skeleton }}" as="k" hint-placeholder-count="5"><div style="height:72px;border-radius:12px;background:var(--color-bg-surface3);animation:crmPulse 1.2s ease-in-out infinite"></div></sc-for></div>
+  </sc-if>
+  <sc-if value="{{ isError }}">
+    <div role="alert" style="display:flex;flex-direction:column;gap:12px;align-items:flex-start;padding:32px;border-radius:16px;background:var(--color-bg-surface3)">
+      <div style="font-weight:700;font-size:22px;line-height:1.2">Не удалось загрузить данные команды</div>
+      <div style="font-size:14px;line-height:20px;color:var(--color-error-strong)">Код: {{ error.code }}</div>
+      <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" size="m" on-click="{{ retry }}" hint-size="140px,48px">Повторить</x-import>
+    </div>
+  </sc-if>
+  <sc-if value="{{ isEmpty }}">
+    <div style="display:flex;flex-direction:column;gap:8px;padding:40px 32px;border-radius:16px;background:var(--color-bg-surface3)">
+      <div style="font-weight:700;font-size:22px;line-height:1.2">{{ emptyTitle }}</div>
+      <div style="max-width:520px;font-size:16px;line-height:24px;color:var(--color-fg-soft)">{{ emptyText }}</div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ showRadar }}">
+    <div data-screen-label="07 Командный радар" style="display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;line-height:16px;color:var(--color-fg-soft);padding-bottom:4px">
+        <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:999px;background:var(--color-error)"></span>Зависли по SLA</span>
+        <sc-for list="{{ bucketLegend }}" as="b"><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:2px;background:{{ b.color }}"></span>Лицензии: {{ b.label }}</span></sc-for>
+      </div>
+      <sc-for list="{{ kams }}" as="k" hint-placeholder-count="5">
+        <button onClick="{{ k.go }}" style="display:grid;grid-template-columns:{{ radarCols }};gap:16px;align-items:center;padding:16px 20px;border:none;border-radius:16px;background:var(--color-bg-surface3);text-align:left;cursor:pointer;color:var(--color-fg-default);font-family:var(--font-sans)" style-hover="background:var(--color-bg-surface4)">
+          <span style="font-weight:700;font-size:22px;line-height:1.2;color:{{ k.rankColor }}">{{ k.rank }}</span>
+          <span style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-size:16px;line-height:24px;font-weight:500">{{ k.name }}</span><span style="font-size:12px;line-height:16px;color:var(--color-fg-muted)">{{ k.meta }}</span></span>
+          <span style="display:flex;flex-direction:column;gap:6px">
+            <span style="display:flex;align-items:center;gap:8px"><span style="flex:1;height:10px;border-radius:999px;background:#fff;overflow:hidden"><span style="display:block;height:100%;width:{{ k.slaPct }};background:var(--color-error);border-radius:999px"></span></span><span style="width:28px;text-align:right;font-size:14px;line-height:20px;font-weight:500;color:{{ k.slaColor }}">{{ k.sla }}</span></span>
+            <span style="display:flex;gap:4px;flex-wrap:wrap"><sc-for list="{{ k.lic }}" as="b"><span title="{{ b.label }}" style="display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 8px;border-radius:999px;background:#fff;font-size:12px;line-height:16px;color:var(--color-fg-soft)"><span style="width:8px;height:8px;border-radius:2px;background:{{ b.color }}"></span>{{ b.n }}</span></sc-for></span>
+          </span>
+        </button>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ showAssign }}">
+    <div data-screen-label="06 Ответственные" style="display:flex;flex-direction:column;gap:12px">
+      <div style="font-size:14px;line-height:20px;color:var(--color-fg-soft)">{{ assignCaption }}</div>
+      <div style="display:flex;flex-direction:column;border-radius:16px;box-shadow:inset 0 0 0 1px var(--color-border-muted)">
+        <sc-if value="{{ isDesktop }}">
+          <div style="display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) 110px minmax(240px,1.3fr) 150px;gap:16px;padding:12px 20px;background:var(--color-bg-surface2);border-radius:16px 16px 0 0;font-size:14px;line-height:20px;color:var(--color-fg-soft)"><span>Вуз</span><span>Регион</span><span>В работе</span><span>Ответственный КАМ</span><span></span></div>
+        </sc-if>
+        <sc-for list="{{ unis }}" as="u" hint-placeholder-count="6">
+          <div style="display:grid;grid-template-columns:{{ assignCols }};gap:{{ assignGap }};align-items:center;padding:{{ rowPad }};border-top:1px solid var(--color-border-muted)">
+            <span style="display:flex;flex-direction:column;gap:2px"><span style="font-size:16px;line-height:24px;font-weight:500">{{ u.name }}</span><sc-if value="{{ u.unassigned }}"><span style="font-size:12px;line-height:16px;color:var(--color-error-strong)">Нет ответственного — вуз не виден ни одному КАМ</span></sc-if></span>
+            <sc-if value="{{ isDesktop }}"><span style="font-size:14px;line-height:20px;color:var(--color-fg-soft)">{{ u.region }}</span></sc-if>
+            <sc-if value="{{ isDesktop }}"><span style="font-size:14px;line-height:20px">{{ u.count }}</span></sc-if>
+            <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Select" label="{{ null }}" hint="{{ null }}" placeholder="Не назначен" options="{{ kamOpts }}" value="{{ u.kamId }}" on-change="{{ u.change }}" hint-size="100%,48px"></x-import>
+            <sc-if value="{{ u.assigned }}"><x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" variant="outline" size="s" on-click="{{ u.remove }}" hint-size="150px,40px">Снять назначение</x-import></sc-if>
+            <sc-if value="{{ u.unassigned }}"><span></span></sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ confirm }}">
+    <div onClick="{{ cancel }}" style="position:fixed;inset:0;background:rgba(15,26,40,.4);z-index:70"></div>
+    <div role="dialog" aria-modal="true" style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(480px,calc(100% - 32px));background:#fff;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:16px;z-index:71">
+      <div style="font-weight:700;font-size:22px;line-height:1.2">{{ confirm.title }}</div>
+      <div style="font-size:16px;line-height:24px;color:var(--color-fg-soft);text-wrap:pretty">{{ confirm.text }}</div>
+      <sc-if value="{{ confirmError }}"><div role="alert" style="padding:12px 16px;border-radius:12px;box-shadow:inset 0 0 0 1px var(--color-error);font-size:14px;line-height:20px">{{ confirmError.message }} · <span style="color:var(--color-error-strong)">код {{ confirmError.code }}</span></div></sc-if>
+      <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
+        <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" variant="secondary" size="m" on-click="{{ cancel }}" hint-size="100px,48px">Отмена</x-import>
+        <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" size="m" disabled="{{ busy }}" on-click="{{ doConfirm }}" hint-size="180px,48px">{{ confirm.cta }}</x-import>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;mode&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;radar&quot;,&quot;assign&quot;],&quot;default&quot;:&quot;radar&quot;,&quot;tsType&quot;:&quot;'radar'|'assign'&quot;},&quot;role&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;rukovoditel&quot;],&quot;default&quot;:&quot;rukovoditel&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;isMobile&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;demoState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;auto&quot;,&quot;loading&quot;,&quot;empty&quot;,&quot;error&quot;],&quot;default&quot;:&quot;auto&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;refreshKey&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;number&quot;},&quot;onNavigate&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(screen:string,preset?:object)=&gt;void&quot;},&quot;onToast&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(t:object)=&gt;void&quot;}}">
+const waitCRM = () => new Promise((r) => { const t = () => (window.CRM ? r(window.CRM) : setTimeout(t, 30)); t(); });
+class Component extends DCLogic {
+  state = { status: 'loading', d: null, error: null, confirm: null, busy: false, confirmError: null };
+  componentDidMount() { this.load(); }
+  componentDidUpdate(pp) { if (pp.refreshKey !== this.props.refreshKey || pp.demoState !== this.props.demoState || pp.mode !== this.props.mode) this.load(); }
+  async load() {
+    const CRM = await waitCRM(), ds = this.props.demoState;
+    this.setState({ status: 'loading', error: null });
+    if (ds === 'loading') return;
+    if (ds === 'error') return setTimeout(() => this.setState({ status: 'error', error: { code: 'CATALOGS_UNAVAILABLE' } }), 300);
+    try {
+      const [unis, rows, sla, lic] = await Promise.all([CRM.api.universities(), CRM.api.interactions({}), CRM.api.slaRadar(), CRM.api.licenseRadar()]);
+      this.setState({ status: ds === 'empty' || !unis.length ? 'empty' : 'ready', d: { unis, rows, sla: sla.items, lic: lic.items } });
+    } catch (e) { this.setState({ status: 'error', error: { code: e.code } }); }
+  }
+  async doConfirm() {
+    const CRM = window.CRM, c = this.state.confirm;
+    this.setState({ busy: true, confirmError: null });
+    try {
+      if (c.kind === 'reassign') await CRM.api.reassign(c.uni.id, c.kamId); else await CRM.api.unassign(c.uni.id);
+      this.setState({ busy: false, confirm: null });
+      this.props.onToast && this.props.onToast({ kind: 'success', title: c.kind === 'reassign' ? 'Ответственный изменён' : 'Назначение снято', text: c.uni.name });
+      this.load();
+    } catch (e) { this.setState({ busy: false, confirmError: { code: e.code, message: e.message } }); }
+  }
+  renderVals() {
+    const s = this.state, CRM = window.CRM, m = !!this.props.isMobile, mode = this.props.mode || 'radar', ready = s.status === 'ready' && s.d && CRM;
+    const base = { isLoading: s.status === 'loading', isError: s.status === 'error', error: s.error || {}, retry: () => this.load(), isEmpty: s.status === 'empty', skeleton: [1, 2, 3, 4, 5],
+      emptyTitle: mode === 'radar' ? 'В команде пока нет КАМ с вузами' : 'Нет вузов в команде', emptyText: 'Когда администратор добавит вузы в каталог или импортирует реестр, их можно будет распределить по КАМ.',
+      isDesktop: !m, confirm: s.confirm, busy: s.busy, confirmError: s.confirmError, cancel: () => this.setState({ confirm: null, confirmError: null }), doConfirm: () => this.doConfirm(),
+      showRadar: false, showAssign: false, kams: [], unis: [], kamOpts: [], bucketLegend: CRM ? CRM.BUCKETS.slice(0, 3) : [] };
+    if (!ready) return base;
+    const { unis, rows, sla, lic } = s.d;
+    const kamOf = (uid) => (unis.find((u) => u.id === uid) || {}).kamId;
+    if (mode === 'radar') {
+      const list = CRM.local.KAMS.map((k) => {
+        const mySla = sla.filter((x) => x.responsibleUserId === k.id).length;
+        const myLic = lic.filter((l) => kamOf(l.universityId) === k.id);
+        const b = (key) => myLic.filter((l) => l.bucket === key).length;
+        return { k, sla: mySla, over: b('OVERDUE'), b7: b('DUE_IN_7_DAYS'), b30: b('DUE_IN_30_DAYS'), total: rows.filter((r) => r.responsibleUserId === k.id).length, unis: unis.filter((u) => u.kamId === k.id).length };
+      }).sort((a, b) => b.sla - a.sla || b.over - a.over || b.b7 - a.b7);
+      const max = Math.max(1, ...list.map((x) => x.sla));
+      return { ...base, showRadar: true, radarCols: m ? '32px 1fr' : '40px minmax(0,1fr) minmax(0,1.4fr)',
+        kams: list.map((x, i) => ({ rank: i + 1, rankColor: x.sla ? 'var(--color-error-strong)' : 'var(--color-fg-disabled)', name: x.k.fullName,
+          meta: x.unis + ' ' + CRM.plural(x.unis, 'вуз', 'вуза', 'вузов') + ' · ' + x.total + ' ' + CRM.plural(x.total, 'взаимодействие', 'взаимодействия', 'взаимодействий'),
+          sla: x.sla, slaPct: Math.round((x.sla / max) * 100) + '%', slaColor: x.sla ? 'var(--color-error-strong)' : 'var(--color-fg-muted)',
+          lic: CRM.BUCKETS.slice(0, 3).map((bk, j) => ({ label: 'Лицензии: ' + bk.label, color: bk.color, n: [x.over, x.b7, x.b30][j] })),
+          go: () => this.props.onNavigate && this.props.onNavigate('registry', { responsibleUserId: x.k.id }) })) };
+    }
+    const kamOpts = CRM.local.KAMS.map((k) => ({ value: k.id, label: k.fullName }));
+    const sorted = [...unis].sort((a, b) => (a.kamId ? 1 : 0) - (b.kamId ? 1 : 0) || a.name.localeCompare(b.name));
+    const nm = (id) => CRM.userName(id);
+    return { ...base, showAssign: true, kamOpts, assignCaption: unis.length + ' ' + CRM.plural(unis.length, 'вуз', 'вуза', 'вузов') + ' · ' + unis.filter((u) => !u.kamId).length + ' без ответственного',
+      assignCols: m ? '1fr' : 'minmax(0,1.4fr) minmax(0,1fr) 110px minmax(240px,1.3fr) 150px', assignGap: m ? '8px' : '16px', rowPad: m ? '16px' : '12px 20px',
+      unis: sorted.map((u) => ({ ...u, count: rows.filter((r) => r.universityId === u.id).length, assigned: !!u.kamId, unassigned: !u.kamId,
+        change: (kamId) => { if (kamId === u.kamId) return; this.setState({ confirmError: null, confirm: { kind: 'reassign', uni: u, kamId, title: 'Переназначить ' + u.name + '?', cta: 'Переназначить',
+          text: u.kamId ? nm(u.kamId) + ' перестанет видеть взаимодействия и лицензии вуза. Они перейдут к ' + nm(kamId) + '.' : nm(kamId) + ' получит доступ ко всем взаимодействиям и лицензиям вуза.' } }); this.forceUpdate(); },
+        remove: () => this.setState({ confirmError: null, confirm: { kind: 'unassign', uni: u, title: 'Снять назначение?', cta: 'Снять назначение', text: nm(u.kamId) + ' перестанет видеть ' + u.name + '. Вуз пропадёт из радара, пока не будет назначен новый КАМ.' } }) })) };
+  }
+}
+</script>
+</body>
+</html>

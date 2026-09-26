@@ -1,0 +1,223 @@
+/* Generated from Figma Variables. First mode = :root default.
+   FLOAT tokens are unitless — multiply by 1px in calc() where a length is needed. */
+
+:root {
+  --accent-default: rgb(254,79,19); /* @kind color */
+  --accent-hover: rgb(216,68,15); /* @kind color */
+  --accent-muted: rgb(255,166,136); /* @kind color */
+  --accent-on-accent: rgb(178,56,14); /* @kind color */
+  --accent-surface2: rgb(254,115,65); /* @kind color */
+  --bg-background-surface1: rgb(255,255,255); /* @kind color */
+  --bg-background-surface2: rgb(249,249,250); /* @kind color */
+  --bg-background-surface3: rgb(244,244,245); /* @kind color */
+  --bg-background-surface4: rgb(231,231,238); /* @kind color */
+  --blue-5: rgb(64,150,255); /* @kind color */
+  --blue-6: rgb(22,119,255); /* @kind color */
+  --blue-7: rgb(9,88,217); /* @kind color */
+  --border-default: rgb(171,173,180); /* @kind color */
+  --border-muted: rgb(229,230,232); /* @kind color */
+  --border-surface2: rgb(213,214,217); /* @kind color */
+  --borderradius: 6; /* @kind radius */
+  --borderradiuslg: 8; /* @kind radius */
+  --borderradiussm: 4; /* @kind radius */
+  --brand-default: rgb(119,0,255); /* @kind color */
+  --brand-hover: rgb(101,0,217); /* @kind color */
+  --brand-muted: rgb(194,153,255); /* @kind color */
+  --brand-on-brand: rgb(83,0,179); /* @kind color */
+  --brand-surface2: rgb(146,77,255); /* @kind color */
+  --button-borderradius-2: var(--borderradius);
+  --button-borderradius: var(--borderradius);
+  --button-borderradiuslg-2: var(--borderradiuslg);
+  --button-borderradiuslg: var(--borderradiuslg);
+  --button-borderradiussm: var(--borderradiussm);
+  --button-colorbgcontainer-2: var(--colorbgcontainer); /* @kind color */
+  --button-colorbgcontainer: var(--colorbgcontainer); /* @kind color */
+  --button-colorbgcontainerdisabled: var(--colorbgcontainerdisabled); /* @kind color */
+  --button-colorbgtexthover: var(--colorbgtexthover); /* @kind color */
+  --button-colorborder-2: var(--colorborder); /* @kind color */
+  --button-colorborder: var(--colorborder); /* @kind color */
+  --button-colorerror: var(--colorerror); /* @kind color */
+  --button-colorerroractive: var(--colorerroractive); /* @kind color */
+  --button-colorerrorborderhover: var(--colorerrorborderhover); /* @kind color */
+  --button-colorerrorhover: var(--colorerrorhover); /* @kind color */
+  --button-colorprimary: var(--colorprimary); /* @kind color */
+  --button-colorprimaryactive: var(--colorprimaryactive); /* @kind color */
+  --button-colorprimaryhover: var(--colorprimaryhover); /* @kind color */
+  --button-colortext-2: var(--colortext); /* @kind color */
+  --button-colortext: var(--colortext); /* @kind color */
+  --button-colortextdisabled: var(--colortextdisabled); /* @kind color */
+  --button-colortextlightsolid-2: var(--colortextlightsolid); /* @kind color */
+  --button-colortextlightsolid: var(--colortextlightsolid); /* @kind color */
+  --button-controlheight-2: var(--controlheight);
+  --button-controlheight: var(--controlheight);
+  --button-controlheightlg-2: var(--controlheightlg);
+  --button-controlheightlg: var(--controlheightlg);
+  --button-controlheightsm: var(--controlheightsm);
+  --button-marginxs-2: var(--marginxs);
+  --button-marginxs: var(--marginxs);
+  --button-paddingcontenthorizontal-2: var(--paddingcontenthorizontal);
+  --button-paddingcontenthorizontal: var(--paddingcontenthorizontal);
+  --button-paddingxs: var(--paddingxs);
+  --colorbgbase-2: rgb(255,255,255); /* @kind color */
+  --colorbgbase: rgb(255,255,255); /* @kind color */
+  --colorbgcontainer-2: var(--colorbgbase-2); /* @kind color */
+  --colorbgcontainer: var(--colorbgbase); /* @kind color */
+  --colorbgcontainerdisabled: var(--colorfilltertiary); /* @kind color */
+  --colorbgtexthover: var(--colorfillsecondary); /* @kind color */
+  --colorborder: rgba(0,0,0,0.15); /* @kind color */
+  --colorborderbg: var(--colorbgcontainer-2); /* @kind color */
+  --colorerror: var(--colorerrorbase); /* @kind color */
+  --colorerroractive: var(--red-7); /* @kind color */
+  --colorerrorbase: var(--red-5); /* @kind color */
+  --colorerrorborderhover: var(--red-4); /* @kind color */
+  --colorerrorhover: var(--red-4); /* @kind color */
+  --colorfillsecondary: rgba(0,0,0,0.06); /* @kind color */
+  --colorfilltertiary: rgba(0,0,0,0.04); /* @kind color */
+  --coloricon: var(--colortexttertiary); /* @kind color */
+  --colorprimary: var(--colorprimarybase); /* @kind color */
+  --colorprimaryactive: var(--blue-7); /* @kind color */
+  --colorprimarybase: var(--blue-6); /* @kind color */
+  --colorprimaryhover: var(--blue-5); /* @kind color */
+  --colortext: rgba(0,0,0,0.88); /* @kind color */
+  --colortextdisabled: var(--colortextquaternary); /* @kind color */
+  --colortextlightsolid: rgb(255,255,255); /* @kind color */
+  --colortextquaternary: rgba(0,0,0,0.25); /* @kind color */
+  --colortexttertiary: rgba(0,0,0,0.45); /* @kind color */
+  --controlheight: 32; /* @kind spacing */
+  --controlheightlg: 40; /* @kind spacing */
+  --controlheightsm: 24; /* @kind spacing */
+  --error-default: rgb(255,39,39); /* @kind color */
+  --error-hover: rgb(217,32,32); /* @kind color */
+  --error-muted: rgb(255,148,147); /* @kind color */
+  --error-on-neutural: rgb(179,26,27); /* @kind color */
+  --error-surface2: rgb(254,82,81); /* @kind color */
+  --fg-foreground-default: rgb(15,26,40); /* @kind color */
+  --fg-foreground-disabled: rgb(171,173,181); /* @kind color */
+  --fg-foreground-muted: rgb(124,128,136); /* @kind color */
+  --fg-foreground-soft: rgb(76,81,94); /* @kind color */
+  --hover-for-button: rgba(68,148,41,0.35); /* @kind color */
+  --inactive-button: rgba(68,148,41,0.25); /* @kind color */
+  --info-default: rgb(46,124,246); /* @kind color */
+  --info-hover: rgb(39,105,209); /* @kind color */
+  --info-muted: rgb(155,192,251); /* @kind color */
+  --info-on-info: rgb(32,87,172); /* @kind color */
+  --info-surface2: rgb(87,150,248); /* @kind color */
+  --marginxs: var(--sizexs);
+  --neutral-default: rgb(88,93,105); /* @kind color */
+  --neutral-hover: rgb(77,81,94); /* @kind color */
+  --neutral-muted: rgb(182,183,192); /* @kind color */
+  --neutral-on-neutural: rgb(69,75,89); /* @kind color */
+  --neutral-surface2: rgb(121,126,138); /* @kind color */
+  --paddingcontenthorizontal: var(--sizems);
+  --paddingxs: var(--sizexs);
+  --radius-full: 999;
+  --radius-l: 16;
+  --radius-m: 12;
+  --radius-none: 0;
+  --radius-s: 8;
+  --radius-xs: 4;
+  --red-4: rgb(255,120,117); /* @kind color */
+  --red-5: rgb(255,77,79); /* @kind color */
+  --red-7: rgb(207,19,34); /* @kind color */
+  --red-8: rgb(168,7,26); /* @kind color */
+  --sizems: 16; /* @kind spacing */
+  --sizexs: 8; /* @kind spacing */
+  --spacing-2xl: 24;
+  --spacing-2xs: 2;
+  --spacing-3xl: 32;
+  --spacing-l: 16;
+  --spacing-m: 12;
+  --spacing-s: 8;
+  --spacing-xl: 20;
+  --spacing-xs: 4;
+  --success-default: rgb(17,202,91); /* @kind color */
+  --success-hover: rgb(10,173,77); /* @kind color */
+  --success-muted: rgb(133,228,174); /* @kind color */
+  --success-on-neutural: rgb(9,141,64); /* @kind color */
+  --success-surface2: rgb(61,213,123); /* @kind color */
+  --text-for-gray-button: rgb(116,117,122); /* @kind color */
+  --warning-default: rgb(255,159,10); /* @kind color */
+  --warning-hover: rgb(217,135,8); /* @kind color */
+  --warning-muted: rgb(255,208,138); /* @kind color */
+  --warning-on-warning: rgb(179,111,7); /* @kind color */
+  --warning-surface2: rgb(255,178,61); /* @kind color */
+}
+
+:root[data-theme="dark"], .dark {
+  --blue-5: rgb(21,84,173); /* @kind color */
+  --blue-6: rgb(22,104,220); /* @kind color */
+  --blue-7: rgb(60,137,232); /* @kind color */
+  --borderradius: 6; /* @kind radius */
+  --borderradiuslg: 8; /* @kind radius */
+  --borderradiussm: 4; /* @kind radius */
+  --button-borderradius-2: var(--borderradius);
+  --button-borderradius: var(--borderradius);
+  --button-borderradiuslg-2: var(--borderradiuslg);
+  --button-borderradiuslg: var(--borderradiuslg);
+  --button-borderradiussm: var(--borderradiussm);
+  --button-colorbgcontainer-2: var(--colorbgcontainer); /* @kind color */
+  --button-colorbgcontainer: var(--colorbgcontainer); /* @kind color */
+  --button-colorbgcontainerdisabled: var(--colorbgcontainerdisabled); /* @kind color */
+  --button-colorbgtexthover: var(--colorbgtexthover); /* @kind color */
+  --button-colorborder-2: var(--colorborder); /* @kind color */
+  --button-colorborder: var(--colorborder); /* @kind color */
+  --button-colorerror: var(--colorerror); /* @kind color */
+  --button-colorerroractive: var(--colorerroractive); /* @kind color */
+  --button-colorerrorborderhover: var(--colorerrorborderhover); /* @kind color */
+  --button-colorerrorhover: var(--colorerrorhover); /* @kind color */
+  --button-colorprimary: var(--colorprimary); /* @kind color */
+  --button-colorprimaryactive: var(--colorprimaryactive); /* @kind color */
+  --button-colorprimaryhover: var(--colorprimaryhover); /* @kind color */
+  --button-colortext-2: var(--colortext); /* @kind color */
+  --button-colortext: var(--colortext); /* @kind color */
+  --button-colortextdisabled: var(--colortextdisabled); /* @kind color */
+  --button-colortextlightsolid-2: var(--colortextlightsolid); /* @kind color */
+  --button-colortextlightsolid: var(--colortextlightsolid); /* @kind color */
+  --button-controlheight-2: var(--controlheight);
+  --button-controlheight: var(--controlheight);
+  --button-controlheightlg-2: var(--controlheightlg);
+  --button-controlheightlg: var(--controlheightlg);
+  --button-controlheightsm: var(--controlheightsm);
+  --button-marginxs-2: var(--marginxs);
+  --button-marginxs: var(--marginxs);
+  --button-paddingcontenthorizontal-2: var(--paddingcontenthorizontal);
+  --button-paddingcontenthorizontal: var(--paddingcontenthorizontal);
+  --button-paddingxs: var(--paddingxs);
+  --colorbgbase-2: rgb(0,0,0); /* @kind color */
+  --colorbgbase: rgb(0,0,0); /* @kind color */
+  --colorbgcontainer-2: rgb(20,20,20); /* @kind color */
+  --colorbgcontainer: rgb(20,20,20); /* @kind color */
+  --colorbgcontainerdisabled: var(--colorfilltertiary); /* @kind color */
+  --colorbgtexthover: var(--colorfillsecondary); /* @kind color */
+  --colorborder: rgb(66,66,66); /* @kind color */
+  --colorborderbg: var(--colorbgcontainer-2); /* @kind color */
+  --colorerror: var(--colorerrorbase); /* @kind color */
+  --colorerroractive: var(--red-4); /* @kind color */
+  --colorerrorbase: var(--red-7); /* @kind color */
+  --colorerrorborderhover: var(--red-4); /* @kind color */
+  --colorerrorhover: var(--red-8); /* @kind color */
+  --colorfillsecondary: rgba(255,255,255,0.12); /* @kind color */
+  --colorfilltertiary: rgba(255,255,255,0.08); /* @kind color */
+  --coloricon: var(--colortexttertiary); /* @kind color */
+  --colorprimary: var(--colorprimarybase); /* @kind color */
+  --colorprimaryactive: var(--blue-5); /* @kind color */
+  --colorprimarybase: var(--blue-6); /* @kind color */
+  --colorprimaryhover: var(--blue-7); /* @kind color */
+  --colortext: rgba(255,255,255,0.85); /* @kind color */
+  --colortextdisabled: var(--colortextquaternary); /* @kind color */
+  --colortextlightsolid: rgb(255,255,255); /* @kind color */
+  --colortextquaternary: rgba(255,255,255,0.25); /* @kind color */
+  --colortexttertiary: rgba(255,255,255,0.45); /* @kind color */
+  --controlheight: 32; /* @kind spacing */
+  --controlheightlg: 40; /* @kind spacing */
+  --controlheightsm: 24; /* @kind spacing */
+  --marginxs: var(--sizexs);
+  --paddingcontenthorizontal: var(--sizems);
+  --paddingxs: var(--sizexs);
+  --red-4: rgb(121,26,31); /* @kind color */
+  --red-5: rgb(166,29,36); /* @kind color */
+  --red-7: rgb(232,71,73); /* @kind color */
+  --red-8: rgb(243,115,112); /* @kind color */
+  --sizems: 16; /* @kind spacing */
+  --sizexs: 8; /* @kind spacing */
+}

@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/fonts/fonts.css">
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/tokens/figma/fig-tokens.css">
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/tokens/colors.css">
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/tokens/typography.css">
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/tokens/base.css">
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/assets/icons/icons.css">
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/styles.css">
+<script src="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/_ds_bundle.js"></script>
+<script src="crm-data.js"></script>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;background:#fff;font-family:var(--font-sans);color:var(--color-fg-default);-webkit-font-smoothing:antialiased}
+a{color:var(--color-accent-strong)}a:hover{color:var(--color-accent-hover)}
+button{font-family:var(--font-sans)}
+@keyframes crmPulse{0%,100%{opacity:1}50%{opacity:.45}}
+@keyframes crmSlide{from{transform:translateX(24px);opacity:0}to{transform:none;opacity:1}}
+</style>
+</helmet>
+
+<sc-if value="{{ notAuthed }}" hint-placeholder-val="{{ true }}">
+  <div data-screen-label="01a Вход в админ-панель" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 16px;background:var(--color-fg-default)">
+    <div style="width:100%;max-width:440px;background:#fff;border-radius:16px;padding:40px 32px;display:flex;flex-direction:column;gap:24px">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-weight:700;font-size:28px;line-height:1.2">Админ-панель</div>
+        <div style="font-size:16px;line-height:24px;color:var(--color-fg-soft)">Техническая настройка CRM ИТ Школы РТК: пользователи, каталоги, workflow</div>
+      </div>
+      <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" size="l" disabled="{{ authLoading }}" on-click="{{ login }}" style="align-self:flex-start" hint-size="260px,56px">{{ loginLabel }}</x-import>
+      <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:14px;line-height:20px">
+        <a href="CRM.dc.html">Рабочий интерфейс КАМ</a>
+        <span style="color:var(--color-fg-muted)">Доступ только с ролью «Администратор»</span>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ authed }}" hint-placeholder-val="{{ false }}">
+  <div style="min-height:100vh;display:flex;flex-direction:{{ shellDir }}">
+    <aside style="display:flex;flex-direction:column;gap:{{ asideGap }};padding:{{ asidePad }};background:var(--color-fg-default);width:{{ asideW }};flex-shrink:0;position:{{ asidePos }};top:0;height:{{ asideH }}">
+      <div style="display:flex;flex-direction:column;gap:4px;padding:0 12px">
+        <div style="font-weight:700;font-size:18px;line-height:1.2;color:#fff">Админ-панель</div>
+        <div style="font-size:12px;line-height:16px;color:var(--color-border-surface2)">CRM ИТ Школа РТК</div>
+      </div>
+      <nav style="display:flex;flex-direction:{{ navDir }};gap:2px;overflow-x:auto">
+        <sc-for list="{{ nav }}" as="n" hint-placeholder-count="5">
+          <button onClick="{{ n.go }}" style="flex-shrink:0;height:44px;padding:0 12px;border:none;border-radius:12px;background:{{ n.bg }};color:#fff;font-size:16px;line-height:24px;font-weight:{{ n.weight }};text-align:left;cursor:pointer;white-space:nowrap">{{ n.label }}</button>
+        </sc-for>
+      </nav>
+      <sc-if value="{{ isDesktop }}">
+        <div style="margin-top:auto;display:flex;align-items:center;gap:8px;padding:16px 4px 0 12px;border-top:1px solid var(--color-neutral-hover)">
+          <div style="flex:1;min-width:0;font-size:14px;line-height:20px;color:#fff">Администратор Платформы</div>
+          <button onClick="{{ logout }}" aria-label="Выйти" title="Выйти" style="width:40px;height:40px;flex-shrink:0;border:none;border-radius:12px;background:transparent;color:var(--color-border-surface2);cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:var(--color-neutral);color:#fff"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg></button>
+        </div>
+      </sc-if>
+    </aside>
+
+    <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+      <header style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:{{ headerPad }};border-bottom:1px solid var(--color-border-muted)">
+        <h1 style="margin:0;font-weight:700;font-size:{{ titleSize }};line-height:1.2">{{ title }}</h1>
+        <span title="{{ sourceHint }}" style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:999px;background:var(--color-bg-surface3);font-size:12px;line-height:16px;color:var(--color-fg-soft);flex-shrink:0"><span style="width:8px;height:8px;border-radius:999px;background:{{ sourceColor }}"></span>{{ sourceLabel }}</span>
+      </header>
+      <div style="flex:1;padding:{{ contentPad }};width:100%;max-width:1320px;display:flex;flex-direction:column;gap:16px">
+
+        <sc-if value="{{ isUsers }}" hint-placeholder-val="{{ true }}">
+          <div data-screen-label="08 Пользователи и роли" style="display:flex;flex-direction:column;gap:16px">
+            <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap">
+              <div style="width:100%;max-width:360px"><x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Input" label="{{ null }}" hint="{{ null }}" placeholder="Поиск по имени или почте" value="{{ q }}" on-change="{{ setQ }}" hint-size="100%,48px"></x-import></div>
+              <span style="font-size:14px;line-height:20px;color:var(--color-fg-muted)">Роли и учётные записи синхронизируются с Keycloak</span>
+            </div>
+            <sc-if value="{{ usersLoading }}"><div style="display:flex;flex-direction:column;gap:8px"><sc-for list="{{ skeleton }}" as="k"><div style="height:64px;border-radius:12px;background:var(--color-bg-surface3);animation:crmPulse 1.2s ease-in-out infinite"></div></sc-for></div></sc-if>
+            <sc-if value="{{ usersError }}"><div role="alert" style="display:flex;flex-direction:column;gap:12px;align-items:flex-start;padding:24px;border-radius:16px;background:var(--color-bg-surface3)"><span style="font-weight:700;font-size:18px">Список пользователей не загрузился</span><span style="font-size:14px;color:var(--color-error-strong)">Код: {{ usersErr.code }}</span><x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" size="s" on-click="{{ loadUsers }}" hint-size="120px,40px">Повторить</x-import></div></sc-if>
+            <sc-if value="{{ usersEmpty }}"><div style="padding:32px;border-radius:16px;background:var(--color-bg-surface3);font-size:16px;line-height:24px;color:var(--color-fg-soft)">Никого не нашли по запросу «{{ q }}». Проверьте написание или поищите по почте.</div></sc-if>
+            <sc-if value="{{ usersReady }}">
+              <div style="overflow-x:auto;border-radius:16px;box-shadow:inset 0 0 0 1px var(--color-border-muted)">
+                <table style="width:100%;min-width:760px;border-collapse:collapse;font-size:14px;line-height:20px">
+                  <thead><tr style="background:var(--color-bg-surface2);color:var(--color-fg-soft);text-align:left"><th style="padding:12px 20px;font-weight:400">Пользователь</th><th style="padding:12px;font-weight:400">Роль</th><th style="padding:12px;font-weight:400">Руководитель</th><th style="padding:12px;font-weight:400">Статус</th><th style="padding:12px 20px;font-weight:400"></th></tr></thead>
+                  <tbody>
+                    <sc-for list="{{ users }}" as="u">
+                      <tr style="border-top:1px solid var(--color-border-muted)">
+                        <td style="padding:12px 20px"><div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:16px;line-height:24px;font-weight:500;color:{{ u.nameColor }}">{{ u.fullName }}</span><span style="font-size:12px;line-height:16px;color:var(--color-fg-muted)">{{ u.email }}</span></div></td>
+                        <td style="padding:12px">{{ u.roleLabel }}</td>
+                        <td style="padding:12px;color:var(--color-fg-soft)">{{ u.manager }}</td>
+                        <td style="padding:12px"><span style="display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:999px;background:var(--color-bg-surface3)"><span style="width:8px;height:8px;border-radius:999px;background:{{ u.statusColor }}"></span>{{ u.statusLabel }}</span></td>
+                        <td style="padding:12px 20px;text-align:right"><sc-if value="{{ u.canToggle }}"><x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" variant="outline" size="s" on-click="{{ u.toggle }}" hint-size="150px,40px">{{ u.actionLabel }}</x-import></sc-if></td>
+                      </tr>
+                    </sc-for>
+                  </tbody>
+                </table>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isCatalogs }}" hint-placeholder-val="{{ false }}">
+          <dc-import name="AdminCatalogs" is-mobile="{{ isMobile }}" demo-state="{{ demoState }}" on-toast="{{ toast }}" hint-size="100%,640px"></dc-import>
+        </sc-if>
+        <sc-if value="{{ isWorkflow }}" hint-placeholder-val="{{ false }}">
+          <dc-import name="AdminWorkflow" is-mobile="{{ isMobile }}" demo-state="{{ demoState }}" on-toast="{{ toast }}" hint-size="100%,640px"></dc-import>
+        </sc-if>
+
+        <sc-if value="{{ isVisibility }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="11 Видимость данных" style="display:flex;flex-direction:column;gap:16px">
+            <div style="padding:16px 20px;border-radius:12px;background:var(--color-bg-surface3);font-size:16px;line-height:24px;color:var(--color-fg-soft);max-width:760px;text-wrap:pretty">Правила видимости заданы на бэкенде (RBAC на уровне запросов). Экран показывает, что видит каждая роль. Настройка правил появится в следующей версии.</div>
+            <div style="overflow-x:auto;border-radius:16px;box-shadow:inset 0 0 0 1px var(--color-border-muted)">
+              <table style="width:100%;min-width:680px;border-collapse:collapse;font-size:14px;line-height:20px">
+                <thead><tr style="background:var(--color-bg-surface2);color:var(--color-fg-soft);text-align:left"><th style="padding:12px 20px;font-weight:400">Данные</th><th style="padding:12px;font-weight:400">КАМ</th><th style="padding:12px;font-weight:400">Руководитель</th><th style="padding:12px 20px;font-weight:400">Администратор</th></tr></thead>
+                <tbody>
+                  <sc-for list="{{ rbac }}" as="r">
+                    <tr style="border-top:1px solid var(--color-border-muted)">
+                      <td style="padding:12px 20px;font-size:16px;line-height:24px">{{ r.entity }}</td>
+                      <sc-for list="{{ r.cells }}" as="c"><td style="padding:12px"><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:999px;background:{{ c.color }}"></span><span style="color:{{ c.fg }}">{{ c.text }}</span></span></td></sc-for>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isHealth }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="12 Техпросмотр" style="display:flex;flex-direction:column;gap:24px">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+              <span style="font-size:14px;line-height:20px;color:var(--color-fg-soft)">{{ healthCaption }}</span>
+              <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" variant="outline" size="s" on-click="{{ loadHealth }}" hint-size="120px,40px">Обновить</x-import>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">
+              <sc-for list="{{ services }}" as="x" hint-placeholder-count="5">
+                <div style="display:flex;flex-direction:column;gap:8px;padding:20px;border-radius:16px;background:var(--color-bg-surface3)">
+                  <span style="font-size:16px;line-height:24px;font-weight:500">{{ x.name }}</span>
+                  <span style="display:flex;align-items:center;gap:8px;font-size:18px;line-height:26px;font-weight:700;color:{{ x.fg }}"><span style="width:12px;height:12px;border-radius:999px;background:{{ x.color }}"></span>{{ x.label }}</span>
+                  <span style="font-size:12px;line-height:16px;color:var(--color-fg-muted)">{{ x.note }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <section style="display:flex;flex-direction:column;gap:12px">
+              <h2 style="margin:0;font-weight:700;font-size:18px;line-height:1.2">Счётчики запросов</h2>
+              <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px">
+                <sc-for list="{{ counters }}" as="c" hint-placeholder-count="4">
+                  <div style="display:flex;flex-direction:column;gap:4px;padding:16px 20px;border-radius:16px;box-shadow:inset 0 0 0 1px var(--color-border-muted)"><span style="font-size:14px;line-height:20px;color:var(--color-fg-soft)">{{ c.label }}</span><span style="font-weight:700;font-size:28px;line-height:1.2">{{ c.value }}</span></div>
+                </sc-for>
+              </div>
+              <span style="font-size:12px;line-height:16px;color:var(--color-fg-muted)">Счётчики текущей сессии браузера. Серверные метрики появятся, когда /health начнёт их отдавать.</span>
+            </section>
+          </div>
+        </sc-if>
+      </div>
+    </main>
+
+    <sc-if value="{{ confirm }}">
+      <div onClick="{{ cancel }}" style="position:fixed;inset:0;background:rgba(15,26,40,.4);z-index:70"></div>
+      <div role="dialog" aria-modal="true" style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(480px,calc(100% - 32px));background:#fff;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:16px;z-index:71">
+        <div style="font-weight:700;font-size:22px;line-height:1.2">{{ confirm.title }}</div>
+        <div style="font-size:16px;line-height:24px;color:var(--color-fg-soft);text-wrap:pretty">{{ confirm.text }}</div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
+          <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" variant="secondary" size="m" on-click="{{ cancel }}" hint-size="100px,48px">Отмена</x-import>
+          <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" size="m" on-click="{{ doConfirm }}" hint-size="180px,48px">{{ confirm.cta }}</x-import>
+        </div>
+      </div>
+    </sc-if>
+
+    <div style="position:fixed;right:16px;bottom:24px;display:flex;flex-direction:column;gap:8px;z-index:80;max-width:calc(100% - 32px);width:380px">
+      <sc-for list="{{ toasts }}" as="t">
+        <div role="status" style="display:flex;gap:12px;align-items:flex-start;padding:16px;border-radius:12px;background:var(--color-fg-default);color:#fff;animation:crmSlide 160ms ease-out">
+          <span style="width:10px;height:10px;border-radius:999px;margin-top:5px;flex-shrink:0;background:{{ t.color }}"></span>
+          <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+            <div style="font-size:16px;line-height:24px;font-weight:500">{{ t.title }}</div>
+            <sc-if value="{{ t.text }}"><div style="font-size:14px;line-height:20px;color:var(--color-border-surface2)">{{ t.text }}</div></sc-if>
+            <sc-if value="{{ t.code }}"><div style="font-size:12px;line-height:16px;color:var(--color-border-surface2)">Код: {{ t.code }}</div></sc-if>
+          </div>
+          <button onClick="{{ t.close }}" aria-label="Закрыть" style="border:none;background:transparent;color:#fff;cursor:pointer;padding:0;display:flex"><span class="ds-icon ds-icon-close-s" style="width:16px;height:16px"></span></button>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;dataSource&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;auto&quot;,&quot;api&quot;,&quot;demo&quot;],&quot;default&quot;:&quot;auto&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Данные&quot;},&quot;apiBase&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;http://localhost:3000&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Данные&quot;},&quot;demoState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;auto&quot;,&quot;loading&quot;,&quot;empty&quot;,&quot;error&quot;],&quot;default&quot;:&quot;auto&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Состояния экранов&quot;}}">
+const waitCRM = () => new Promise((r) => { const t = () => (window.CRM ? r(window.CRM) : setTimeout(t, 30)); t(); });
+const SECTIONS = [['users', 'Пользователи и роли'], ['catalogs', 'Каталоги и импорт'], ['workflow', 'Workflow-шаблоны'], ['visibility', 'Видимость данных'], ['health', 'Техпросмотр']];
+const RBAC = [
+  ['Вузы', 'own', 'team', 'all'], ['Взаимодействия и история', 'own', 'team', 'all'], ['Вложения к статусам', 'own', 'team', 'all'], ['Лицензии и договоры', 'own', 'team', 'all'],
+  ['Отчёты и графики', 'own', 'team', 'all'], ['Назначение ответственных', 'none', 'edit', 'edit'], ['Каталоги и импорт', 'read', 'read', 'edit'], ['Workflow-шаблоны', 'none', 'none', 'edit'], ['Пользователи и роли', 'none', 'none', 'edit'],
+];
+const CELL = { own: ['Только свои', 'var(--color-accent)'], team: ['Своя команда', 'var(--color-info)'], all: ['Все', 'var(--color-success)'], edit: ['Изменение', 'var(--color-success)'], read: ['Просмотр', 'var(--color-neutral-muted)'], none: ['Нет доступа', 'var(--color-border-surface2)'] };
+class Component extends DCLogic {
+  state = { authed: false, authLoading: false, section: 'users', width: window.innerWidth, source: null, stats: null, users: null, usersStatus: 'loading', usersErr: null, q: '', confirm: null, toasts: [], health: null, healthAt: null, healthErr: null };
+  componentDidMount() {
+    this.onResize = () => this.setState({ width: window.innerWidth }); window.addEventListener('resize', this.onResize);
+    waitCRM().then((CRM) => {
+      CRM.configure({ mode: this.props.dataSource ?? 'auto', base: this.props.apiBase || 'http://localhost:3000', role: 'administrator' });
+      this.off = CRM.onStatus((s) => this.setState({ source: s.source, stats: s.stats }));
+      let saved = null; try { saved = JSON.parse(localStorage.getItem('crm.admin.session') || 'null'); } catch (e) {}
+      if (saved) this.enter(saved.section);
+    });
+  }
+  componentWillUnmount() { window.removeEventListener('resize', this.onResize); this.off && this.off(); clearInterval(this.hTimer); }
+  componentDidUpdate(pp) { if (pp.dataSource !== this.props.dataSource || pp.apiBase !== this.props.apiBase) { window.CRM.configure({ mode: this.props.dataSource ?? 'auto', base: this.props.apiBase || 'http://localhost:3000' }); this.go(this.state.section); } if (pp.demoState !== this.props.demoState) this.go(this.state.section); }
+  enter(section) { this.setState({ authed: true, authLoading: false }); this.go(section || 'users'); }
+  login = () => { this.setState({ authLoading: true }); setTimeout(() => this.enter('users'), 700); };
+  logout = () => { try { localStorage.removeItem('crm.admin.session'); } catch (e) {} clearInterval(this.hTimer); this.setState({ authed: false }); };
+  go(section) {
+    try { localStorage.setItem('crm.admin.session', JSON.stringify({ section })); } catch (e) {}
+    this.setState({ section }); clearInterval(this.hTimer);
+    if (section === 'users') this.loadUsers();
+    if (section === 'health') { this.loadHealth(); this.hTimer = setInterval(() => this.loadHealth(), 15000); }
+  }
+  loadUsers = async () => {
+    const CRM = await waitCRM(), ds = this.props.demoState;
+    this.setState({ usersStatus: 'loading' });
+    if (ds === 'loading') return;
+    if (ds === 'error') return setTimeout(() => this.setState({ usersStatus: 'error', usersErr: { code: 'KEYCLOAK_SYNC_FAILED' } }), 300);
+    try { const users = await CRM.api.users(); this.setState({ users, usersStatus: 'ready' }); } catch (e) { this.setState({ usersStatus: 'error', usersErr: { code: e.code } }); }
+  };
+  loadHealth = async () => {
+    const CRM = await waitCRM();
+    try { const h = await CRM.api.health(); this.setState({ health: h, healthAt: new Date(), healthErr: null, healthSrc: CRM.source }); } catch (e) { this.setState({ health: null, healthAt: new Date(), healthErr: { code: e.code } }); }
+  };
+  toast = (t) => {
+    const tid = Date.now() + Math.random();
+    const close = () => this.setState((s) => ({ toasts: s.toasts.filter((x) => x.id !== tid) }));
+    this.setState((s) => ({ toasts: [...s.toasts.slice(-2), { ...t, id: tid, close, color: t.kind === 'error' ? 'var(--color-error)' : t.kind === 'info' ? 'var(--color-accent)' : 'var(--color-success)' }] }));
+    setTimeout(close, t.kind === 'error' ? 9000 : 5000);
+  };
+  async doConfirm() {
+    const CRM = window.CRM, c = this.state.confirm; this.setState({ confirm: null });
+    const prev = this.state.users;
+    this.setState({ users: prev.map((u) => (u.id === c.user.id ? { ...u, isActive: !u.isActive } : u)) }); // optimistic
+    try { await CRM.api.updateUser(c.user.id, { isActive: !c.user.isActive }); this.toast({ kind: 'success', title: c.user.isActive ? 'Пользователь деактивирован' : 'Пользователь активирован', text: c.user.fullName }); }
+    catch (e) { this.setState({ users: prev }); this.toast({ kind: 'error', title: 'Не удалось изменить статус', text: e.message, code: e.code }); }
+  }
+  renderVals() {
+    const s = this.state, CRM = window.CRM, m = s.width < 768;
+    const roleLabel = { KAM: 'КАМ', RUKOVODITEL: 'Руководитель', ADMINISTRATOR: 'Администратор' };
+    const q = s.q.trim().toLowerCase();
+    const users = (s.users || []).filter((u) => !q || (u.fullName + ' ' + u.email).toLowerCase().includes(q)).map((u) => ({ ...u, roleLabel: roleLabel[u.role] || u.role, manager: u.managerId && CRM ? CRM.userName(u.managerId) : '—',
+      statusLabel: u.isActive ? 'Активен' : 'Деактивирован', statusColor: u.isActive ? 'var(--color-success)' : 'var(--color-fg-disabled)', nameColor: u.isActive ? 'var(--color-fg-default)' : 'var(--color-fg-muted)',
+      canToggle: u.role !== 'ADMINISTRATOR', actionLabel: u.isActive ? 'Деактивировать' : 'Активировать',
+      toggle: () => this.setState({ confirm: { user: u, title: (u.isActive ? 'Деактивировать ' : 'Активировать ') + u.fullName + '?', cta: u.isActive ? 'Деактивировать' : 'Активировать',
+        text: u.isActive ? 'Пользователь не сможет войти через Keycloak. Вузы останутся за ним, пока руководитель их не переназначит.' : 'Пользователь снова сможет войти и увидит свои вузы.' } }) }));
+    const h = s.health, src = s.source;
+    const svc = (name, ok, note) => ({ name, note, label: ok === true ? 'Работает' : ok === false ? 'Ошибка' : 'Нет данных', color: ok === true ? 'var(--color-success)' : ok === false ? 'var(--color-error)' : 'var(--color-fg-disabled)', fg: ok === true ? 'var(--color-success-strong)' : ok === false ? 'var(--color-error-strong)' : 'var(--color-fg-muted)' });
+    const live = s.healthSrc === 'api';
+    const upt = h ? Math.floor(h.uptime / 3600) + ' ч ' + Math.floor((h.uptime % 3600) / 60) + ' мин' : '—';
+    const services = [
+      svc('Backend API', s.healthErr ? false : h ? (live ? true : null) : null, s.healthErr ? 'Код: ' + s.healthErr.code : live ? 'Аптайм ' + upt : 'Демо-данные: API не отвечает'),
+      svc('PostgreSQL', h ? h.db === 'ok' : null, 'Поле db в /health'), svc('Redis', h ? h.redis === 'ok' : null, 'Поле redis в /health'),
+      svc('MinIO', null, 'Пока не отдаётся в /health'), svc('Keycloak', null, 'Пока не отдаётся в /health'),
+    ];
+    const st = s.stats || { total: 0, errors: 0, ms: 0, api: 0, fixtures: 0 };
+    const title = (SECTIONS.find(([k]) => k === s.section) || [])[1];
+    return {
+      notAuthed: !s.authed, authed: s.authed, authLoading: s.authLoading, loginLabel: s.authLoading ? 'Перенаправление в Keycloak…' : 'Войти через Keycloak', login: this.login, logout: this.logout,
+      isMobile: m, isDesktop: !m, shellDir: m ? 'column' : 'row', navDir: m ? 'row' : 'column',
+      asideGap: m ? '12px' : '24px', asidePad: m ? '16px' : '24px 16px', asideW: m ? 'auto' : '248px', asidePos: m ? 'static' : 'sticky', asideH: m ? 'auto' : '100vh',
+      nav: SECTIONS.map(([k, label]) => ({ label, go: () => this.go(k), bg: s.section === k ? 'var(--color-neutral)' : 'transparent', weight: s.section === k ? 500 : 400 })),
+      headerPad: m ? '12px 16px' : '20px 32px', contentPad: m ? '16px' : '24px 32px 48px', titleSize: m ? '20px' : '28px', title,
+      sourceLabel: src === 'api' ? 'API' : src === 'fixtures' ? 'Демо-данные' : 'Подключение…', sourceColor: src === 'api' ? 'var(--color-success)' : src === 'fixtures' ? 'var(--color-warning)' : 'var(--color-fg-disabled)', sourceHint: 'Источник данных',
+      isUsers: s.section === 'users', isCatalogs: s.section === 'catalogs', isWorkflow: s.section === 'workflow', isVisibility: s.section === 'visibility', isHealth: s.section === 'health',
+      demoState: this.props.demoState ?? 'auto', toast: this.toast, toasts: s.toasts,
+      q: s.q, setQ: (v) => this.setState({ q: v }), users, skeleton: [1, 2, 3, 4], loadUsers: this.loadUsers,
+      usersLoading: s.usersStatus === 'loading', usersError: s.usersStatus === 'error', usersErr: s.usersErr || {}, usersReady: s.usersStatus === 'ready' && users.length > 0, usersEmpty: s.usersStatus === 'ready' && !users.length,
+      confirm: s.confirm, cancel: () => this.setState({ confirm: null }), doConfirm: () => this.doConfirm(),
+      rbac: RBAC.map(([entity, ...c]) => ({ entity, cells: c.map((k) => ({ text: CELL[k][0], color: CELL[k][1], fg: k === 'none' ? 'var(--color-fg-muted)' : 'var(--color-fg-default)' })) })),
+      services, loadHealth: this.loadHealth, healthCaption: s.healthAt ? 'Проверено в ' + s.healthAt.toLocaleTimeString('ru-RU') + ' · обновляется каждые 15 секунд' : 'Проверка…',
+      counters: [{ label: 'Запросов', value: st.total }, { label: 'Ошибок', value: st.errors }, { label: 'Последний отклик', value: st.ms + ' мс' }, { label: 'Из API / демо', value: st.api + ' / ' + st.fixtures }],
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/fonts/fonts.css">
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/tokens/figma/fig-tokens.css">
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/tokens/colors.css">
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/tokens/typography.css">
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/tokens/base.css">
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/assets/icons/icons.css">
+<script src="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/_ds_bundle.js"></script>
+<script src="crm-data.js"></script>
+</helmet>
+<div data-screen-label="03 Реестр" style="display:flex;flex-direction:column;gap:16px;font-family:var(--font-sans);color:var(--color-fg-default)">
+
+  <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;gap:8px;align-items:center;justify-content:space-between">
+      <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" variant="secondary" size="s" on-click="{{ toggleFilters }}" hint-size="140px,40px">{{ filtersBtn }}</x-import>
+      <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Switch" label="Просроченные" checked="{{ f.onlyOverdue }}" on-change="{{ setOverdue }}" hint-size="160px,24px"></x-import>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ showFilters }}" hint-placeholder-val="{{ true }}">
+    <section style="display:flex;flex-direction:column;gap:16px;padding:{{ pad }};border-radius:16px;background:var(--color-bg-surface3)">
+      <div style="display:grid;grid-template-columns:{{ filterCols }};gap:12px">
+        <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Select" label="Период" hint="{{ null }}" options="{{ periodOpts }}" value="{{ f.period }}" on-change="{{ set.period }}" hint-size="100%,72px"></x-import>
+        <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Select" label="Вуз" hint="{{ null }}" options="{{ uniOpts }}" value="{{ f.universityId }}" on-change="{{ set.universityId }}" hint-size="100%,72px"></x-import>
+        <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Select" label="ИТ-направление" hint="{{ null }}" options="{{ dirOpts }}" value="{{ f.itDirectionId }}" on-change="{{ set.itDirectionId }}" hint-size="100%,72px"></x-import>
+        <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Select" label="ИТ-продукт" hint="{{ null }}" options="{{ prodOpts }}" value="{{ f.itProductId }}" on-change="{{ set.itProductId }}" hint-size="100%,72px"></x-import>
+        <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Select" label="Стадия" hint="{{ null }}" options="{{ phaseOpts }}" value="{{ f.phase }}" on-change="{{ set.phase }}" hint-size="100%,72px"></x-import>
+        <sc-if value="{{ isRuk }}">
+          <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Select" label="Ответственный" hint="{{ null }}" options="{{ respOpts }}" value="{{ f.responsibleUserId }}" on-change="{{ set.responsibleUserId }}" hint-size="100%,72px"></x-import>
+        </sc-if>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+        <sc-if value="{{ isDesktop }}"><x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Switch" label="Только просроченные" checked="{{ f.onlyOverdue }}" on-change="{{ setOverdue }}" hint-size="220px,24px"></x-import></sc-if>
+        <sc-if value="{{ hasActive }}"><x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" variant="outline" size="s" on-click="{{ reset }}" hint-size="150px,40px">Сбросить фильтры</x-import></sc-if>
+      </div>
+    </section>
+  </sc-if>
+
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+    <div role="tablist" aria-label="Вид реестра" style="display:flex;gap:8px;flex-wrap:wrap">
+      <sc-for list="{{ views }}" as="v" hint-placeholder-count="3">
+        <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Tag" removable="{{ false }}" selected="{{ v.selected }}" on-click="{{ v.pick }}" hint-size="auto,32px">{{ v.label }}</x-import>
+      </sc-for>
+    </div>
+    <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+      <span style="font-size:14px;line-height:20px;color:var(--color-fg-soft)">{{ countLabel }}</span>
+      <sc-if value="{{ showSort }}"><button onClick="{{ toggleSort }}" style="border:none;background:transparent;padding:0;font-size:14px;line-height:20px;color:var(--color-fg-soft);cursor:pointer;display:flex;align-items:center;gap:4px">Сортировка: {{ sortLabel }} <span class="ds-icon ds-icon-chevron" style="width:16px;height:16px;transform:{{ sortRotate }}"></span></button></sc-if>
+    </div>
+  </div>
+
+  <sc-if value="{{ isLoading }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <sc-for list="{{ skeleton }}" as="k" hint-placeholder-count="6"><div style="height:64px;border-radius:12px;background:var(--color-bg-surface3);animation:crmPulse 1.2s ease-in-out infinite"></div></sc-for>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isError }}">
+    <div role="alert" style="display:flex;flex-direction:column;gap:12px;align-items:flex-start;padding:32px;border-radius:16px;background:var(--color-bg-surface3)">
+      <div style="font-weight:700;font-size:22px;line-height:1.2">Не удалось загрузить реестр</div>
+      <div style="font-size:16px;line-height:24px;color:var(--color-fg-soft)">{{ error.message }}. Фильтры сохранены.</div>
+      <div style="font-size:14px;line-height:20px;color:var(--color-error-strong)">Код: {{ error.code }}</div>
+      <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" size="m" on-click="{{ retry }}" hint-size="140px,48px">Повторить</x-import>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isEmpty }}">
+    <div style="display:flex;flex-direction:column;gap:12px;align-items:flex-start;padding:40px 32px;border-radius:16px;background:var(--color-bg-surface3)">
+      <div style="font-weight:700;font-size:22px;line-height:1.2">{{ emptyTitle }}</div>
+      <div style="max-width:520px;font-size:16px;line-height:24px;color:var(--color-fg-soft);text-wrap:pretty">{{ emptyText }}</div>
+      <sc-if value="{{ hasActive }}"><x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" size="m" on-click="{{ reset }}" hint-size="180px,48px">Сбросить фильтры</x-import></sc-if>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ showTable }}">
+    <div style="overflow-x:auto;border-radius:16px;box-shadow:inset 0 0 0 1px var(--color-border-muted)"><div role="table" style="display:flex;flex-direction:column;min-width:780px">
+      <div role="row" style="display:grid;grid-template-columns:{{ gridCols }};gap:16px;padding:12px 20px;background:var(--color-bg-surface2);font-size:14px;line-height:20px;color:var(--color-fg-soft)">
+        <span>Вуз</span><span>Продукт и направление</span><span>Статус</span>
+        <button onClick="{{ toggleSort }}" style="border:none;background:transparent;padding:0;text-align:left;font-family:var(--font-sans);font-size:14px;line-height:20px;color:var(--color-fg-soft);font-weight:400;cursor:pointer;display:flex;align-items:center;gap:4px">В статусе <span class="ds-icon ds-icon-chevron" style="width:16px;height:16px;transform:{{ sortRotate }}"></span></button>
+        <sc-if value="{{ isRuk }}"><span>Ответственный</span></sc-if>
+        <span>Обновлено</span>
+      </div>
+      <sc-for list="{{ pageRows }}" as="r" hint-placeholder-count="8">
+        <button role="row" onClick="{{ r.open }}" style="display:grid;grid-template-columns:{{ gridCols }};gap:16px;align-items:center;padding:14px 20px;border:none;border-top:1px solid var(--color-border-muted);background:{{ r.bg }};text-align:left;cursor:pointer;color:var(--color-fg-default);font-family:var(--font-sans)" style-hover="background:var(--color-bg-surface2)">
+          <span style="font-size:16px;line-height:24px;font-weight:500">{{ r.universityName }}</span>
+          <span style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-size:16px;line-height:24px">{{ r.itProductName }}</span><span style="font-size:12px;line-height:16px;color:var(--color-fg-muted)">{{ r.itDirectionName }}</span></span>
+          <span style="display:inline-flex;align-items:center;gap:6px;align-self:center;justify-self:start;min-height:28px;padding:4px 10px;border-radius:14px;background:var(--color-bg-surface3);font-size:14px;line-height:20px"><span style="width:8px;height:8px;flex-shrink:0;border-radius:999px;background:{{ r.phaseColor }}"></span>{{ r.currentStatusName }}</span>
+          <span style="display:flex;flex-direction:column;gap:2px"><span style="font-size:16px;line-height:24px;font-weight:{{ r.daysWeight }};color:{{ r.daysColor }}">{{ r.daysLabel }}</span><span style="font-size:12px;line-height:16px;color:var(--color-fg-muted)">{{ r.slaText }}</span></span>
+          <sc-if value="{{ isRuk }}"><span style="font-size:14px;line-height:20px">{{ r.responsibleUserName }}</span></sc-if>
+          <span style="font-size:14px;line-height:20px;color:var(--color-fg-soft)">{{ r.updated }}</span>
+        </button>
+      </sc-for>
+    </div></div>
+  </sc-if>
+
+  <sc-if value="{{ showCards }}">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <sc-for list="{{ pageRows }}" as="r" hint-placeholder-count="5">
+        <button onClick="{{ r.open }}" style="display:flex;flex-direction:column;gap:8px;padding:16px;border:none;border-radius:16px;background:var(--color-bg-surface3);text-align:left;cursor:pointer;color:var(--color-fg-default);font-family:var(--font-sans)">
+          <span style="display:flex;justify-content:space-between;gap:12px;width:100%"><span style="font-size:16px;line-height:24px;font-weight:500">{{ r.universityName }}</span><span style="font-size:14px;line-height:20px;font-weight:{{ r.daysWeight }};color:{{ r.daysColor }};white-space:nowrap">{{ r.daysLabel }}</span></span>
+          <span style="font-size:14px;line-height:20px;color:var(--color-fg-soft)">{{ r.itProductName }}</span>
+          <span style="display:inline-flex;align-items:center;gap:6px;align-self:flex-start;min-height:28px;padding:4px 10px;border-radius:14px;background:#fff;font-size:14px;line-height:20px"><span style="width:8px;height:8px;flex-shrink:0;border-radius:999px;background:{{ r.phaseColor }}"></span>{{ r.currentStatusName }}</span>
+        </button>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ showBoard }}">
+    <dc-import name="CrmBoard" rows="{{ allRows }}" role="{{ role }}" is-mobile="{{ isMobile }}" on-open="{{ open }}" on-toast="{{ toast }}" on-changed="{{ changed }}" hint-size="100%,560px"></dc-import>
+  </sc-if>
+  <sc-if value="{{ showCritical }}">
+    <dc-import name="CrmCritical" rows="{{ allRows }}" role="{{ role }}" is-mobile="{{ isMobile }}" on-open="{{ open }}" hint-size="100%,560px"></dc-import>
+  </sc-if>
+
+  <sc-if value="{{ showPager }}">
+    <nav aria-label="Страницы" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <span style="font-size:14px;line-height:20px;color:var(--color-fg-muted)">{{ pageInfo }}</span>
+      <div style="display:flex;gap:4px">
+        <sc-for list="{{ pages }}" as="p" hint-placeholder-count="3">
+          <button onClick="{{ p.go }}" aria-current="{{ p.current }}" style="min-width:40px;height:40px;border:none;border-radius:12px;background:{{ p.bg }};color:{{ p.fg }};font-size:14px;cursor:pointer">{{ p.n }}</button>
+        </sc-for>
+      </div>
+    </nav>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;role&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;kam&quot;,&quot;rukovoditel&quot;],&quot;default&quot;:&quot;kam&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;isMobile&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;demoState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;auto&quot;,&quot;loading&quot;,&quot;empty&quot;,&quot;error&quot;],&quot;default&quot;:&quot;auto&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;refreshKey&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;number&quot;},&quot;preset&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object&quot;},&quot;onOpen&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(id:string)=&gt;void&quot;},&quot;onToast&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(t:object)=&gt;void&quot;}}">
+const waitCRM = () => new Promise((r) => { const t = () => (window.CRM ? r(window.CRM) : setTimeout(t, 30)); t(); });
+const KEY = 'crm.registry.filters';
+const DEF = { period: 'all', universityId: 'all', itDirectionId: 'all', itProductId: 'all', phase: 'all', responsibleUserId: 'all', onlyOverdue: false };
+const PER = 10;
+class Component extends DCLogic {
+  state = { view: (() => { try { return localStorage.getItem('crm.registry.view') || 'table'; } catch (e) { return 'table'; } })(), f: { ...DEF }, status: 'loading', rows: [], page: 1, sortDesc: true, error: null, cat: { unis: [], dirs: [], prods: [] }, filtersOpen: false };
+  componentDidMount() {
+    let saved = {}; try { saved = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) {}
+    const f = this.props.preset ? { ...DEF, ...this.props.preset } : { ...DEF, ...saved };
+    delete f.nonce;
+    this.setState({ f }, () => { this.loadCatalogs(); this.load(); });
+  }
+  componentDidUpdate(pp) {
+    if (this.props.preset && (!pp.preset || pp.preset.nonce !== this.props.preset.nonce)) { const f = { ...DEF, ...this.props.preset }; delete f.nonce; this.setF(f, true); return; }
+    if (pp.refreshKey !== this.props.refreshKey || pp.demoState !== this.props.demoState) this.load(true);
+  }
+  async loadCatalogs() {
+    const CRM = await waitCRM();
+    try { const [unis, dirs, prods] = await Promise.all([CRM.api.universities(), CRM.api.directions(), CRM.api.products()]); this.setState({ cat: { unis, dirs, prods } }); } catch (e) {}
+  }
+  setF(patch, replace) {
+    const f = replace ? patch : { ...this.state.f, ...patch };
+    try { localStorage.setItem(KEY, JSON.stringify(f)); } catch (e) {}
+    this.setState({ f, page: 1 }, () => this.load());
+  }
+  query() {
+    const f = this.state.f, q = {};
+    if (f.period !== 'all') { const d = new Date(Date.now() - Number(f.period) * 864e5); q.from = d.toISOString().slice(0, 10); }
+    ['universityId', 'itDirectionId', 'itProductId', 'responsibleUserId'].forEach((k) => { if (f[k] !== 'all') q[k] = f[k]; });
+    if (f.onlyOverdue) q.onlyOverdue = true;
+    return q;
+  }
+  // В режиме критического пути нужен один вуз: если фильтр пуст — подставляем вуз с самым долгим путём.
+  ensureUni() {
+    const s = this.state;
+    if (s.view !== 'critical' || s.f.universityId !== 'all' || !s.rows.length || !window.CRM) return;
+    const v = window.CRM.activeVersion();
+    const best = [...s.rows].sort((a, b) => window.CRM.criticalPath(v.statuses, b.currentStatusId, b.daysInCurrentStatus).total - window.CRM.criticalPath(v.statuses, a.currentStatusId, a.daysInCurrentStatus).total)[0];
+    this.setF({ universityId: best.universityId });
+  }
+  async load(quiet) {
+    const CRM = await waitCRM();
+    const forced = this.props.demoState;
+    if (!quiet || forced !== 'auto') this.setState({ status: 'loading', error: null });
+    if (forced === 'loading') return;
+    if (forced === 'error') { await new Promise((r) => setTimeout(r, 300)); return this.setState({ status: 'error', error: { code: 'NETWORK_UNAVAILABLE', message: 'Сервер недоступен. Проверьте подключение' } }); }
+    if (forced === 'empty') { await new Promise((r) => setTimeout(r, 300)); return this.setState({ status: 'ready', rows: [] }); }
+    const req = (this.req = (this.req || 0) + 1);
+    try {
+      let rows = await CRM.api.interactions(this.query());
+      if (req !== this.req) return;
+      // Фильтр по стадии и «только просроченные» дублируем на клиенте: в query /reports/interactions нет параметра phase.
+      if (this.state.f.phase !== 'all') rows = rows.filter((r) => r.currentPhase === this.state.f.phase);
+      if (this.state.f.onlyOverdue) rows = rows.filter((r) => r.isOverdue);
+      this.setState({ status: 'ready', rows }, () => this.ensureUni());
+    } catch (e) { if (req === this.req) this.setState({ status: 'error', error: { code: e.code, message: e.message } }); }
+  }
+  renderVals() {
+    const s = this.state, f = s.f, CRM = window.CRM, m = !!this.props.isMobile, isRuk = this.props.role === 'rukovoditel';
+    const opt = (list, all) => [{ value: 'all', label: all }, ...list.map((x) => ({ value: x.id, label: x.name }))];
+    const set = {}; ['period', 'universityId', 'itDirectionId', 'itProductId', 'phase', 'responsibleUserId'].forEach((k) => { set[k] = (v) => this.setF({ [k]: v }); });
+    const activeCount = Object.keys(DEF).filter((k) => f[k] !== DEF[k]).length;
+    const rows = [...s.rows].sort((a, b) => (s.sortDesc ? b.daysInCurrentStatus - a.daysInCurrentStatus : a.daysInCurrentStatus - b.daysInCurrentStatus));
+    const pagesN = Math.max(1, Math.ceil(rows.length / PER));
+    const page = Math.min(s.page, pagesN);
+    const pageRows = !CRM ? [] : rows.slice((page - 1) * PER, page * PER).map((r) => ({
+      ...r, phaseColor: CRM.PHASE[r.currentPhase].color, slaText: CRM.SLA[r.currentStatusId] ? 'норма ' + CRM.SLA[r.currentStatusId] + ' дн.' : 'финальный статус',
+      daysLabel: r.daysInCurrentStatus + ' ' + CRM.plural(r.daysInCurrentStatus, 'день', 'дня', 'дней'),
+      daysColor: r.isOverdue ? 'var(--color-error-strong)' : 'var(--color-fg-default)', daysWeight: r.isOverdue ? 500 : 400,
+      bg: '#fff', updated: CRM.fmtDate(r.updatedAt), open: () => this.props.onOpen && this.props.onOpen(r.interactionInstanceId),
+    }));
+    const ready = s.status === 'ready';
+    const n = rows.length;
+    return {
+      f, set, isMobile: m, isDesktop: !m, isRuk,
+      showFilters: !m || s.filtersOpen, toggleFilters: () => this.setState({ filtersOpen: !s.filtersOpen }),
+      filtersBtn: activeCount ? 'Фильтры · ' + activeCount : 'Фильтры',
+      pad: m ? '16px' : '20px', filterCols: m ? '1fr' : 'repeat(auto-fill,minmax(200px,1fr))',
+      periodOpts: [{ value: 'all', label: 'За всё время' }, { value: '30', label: 'Последние 30 дней' }, { value: '90', label: 'Последние 90 дней' }, { value: '365', label: 'Последний год' }],
+      uniOpts: opt(s.cat.unis, 'Все вузы'), dirOpts: opt(s.cat.dirs, 'Все направления'),
+      prodOpts: opt(f.itDirectionId === 'all' ? s.cat.prods : s.cat.prods.filter((p) => p.itDirectionId === f.itDirectionId), 'Все продукты'),
+      phaseOpts: [{ value: 'all', label: 'Все стадии' }, ...(CRM ? CRM.PHASES.map((p) => ({ value: p.key, label: p.label })) : [])],
+      respOpts: [{ value: 'all', label: 'Вся команда' }, ...(CRM ? CRM.local.KAMS.map((u) => ({ value: u.id, label: u.fullName })) : [])],
+      setOverdue: (v) => this.setF({ onlyOverdue: v }), hasActive: activeCount > 0, reset: () => this.setF({ ...DEF }, true),
+      countLabel: !ready ? 'Загрузка…' : n + ' ' + (CRM ? CRM.plural(n, 'взаимодействие', 'взаимодействия', 'взаимодействий') : ''),
+      sortLabel: s.sortDesc ? 'дольше в статусе' : 'недавно сменили статус', sortRotate: s.sortDesc ? 'none' : 'rotate(180deg)',
+      toggleSort: () => this.setState({ sortDesc: !s.sortDesc, page: 1 }),
+      isLoading: s.status === 'loading', skeleton: [1, 2, 3, 4, 5, 6], isError: s.status === 'error', error: s.error || {}, retry: () => this.load(),
+      isEmpty: ready && !n, emptyTitle: activeCount ? 'Нет взаимодействий по выбранным фильтрам' : isRuk ? 'У команды пока нет взаимодействий' : 'У вас пока нет взаимодействий',
+      emptyText: activeCount ? 'Ослабьте условия — например, расширьте период или уберите фильтр по продукту.' : 'Взаимодействия появятся после назначения вузов или синхронизации заявок из LMS и сайта.',
+      views: [['table', 'Таблица'], ['board', 'Доска'], ['critical', 'Критический путь']].map(([k, label]) => ({ label, selected: s.view === k, pick: () => { try { localStorage.setItem('crm.registry.view', k); } catch (e) {} this.setState({ view: k }, () => this.ensureUni()); } })),
+      showSort: s.view === 'table', role: this.props.role, allRows: rows, open: (id) => this.props.onOpen && this.props.onOpen(id), toast: (t) => this.props.onToast && this.props.onToast(t),
+      changed: () => { if (this.props.onChanged) this.props.onChanged(); else this.load(true); },
+      showBoard: ready && n > 0 && s.view === 'board', showCritical: ready && n > 0 && s.view === 'critical',
+      showTable: ready && n > 0 && !m && s.view === 'table', showCards: ready && n > 0 && m && s.view === 'table', pageRows,
+      gridCols: isRuk ? 'minmax(0,1.3fr) minmax(0,1.3fr) minmax(0,1.5fr) 110px minmax(0,1.1fr) 100px' : 'minmax(0,1.3fr) minmax(0,1.3fr) minmax(0,1.6fr) 110px 100px',
+      showPager: ready && pagesN > 1 && s.view === 'table', pageInfo: 'Показано ' + ((page - 1) * PER + 1) + '–' + Math.min(page * PER, n) + ' из ' + n,
+      pages: Array.from({ length: pagesN }, (_, i) => ({ n: i + 1, current: i + 1 === page, bg: i + 1 === page ? 'var(--color-fg-default)' : 'var(--color-bg-surface3)', fg: i + 1 === page ? '#fff' : 'var(--color-fg-default)', go: () => { this.setState({ page: i + 1 }); window.scrollTo(0, 0); } })),
+    };
+  }
+}
+</script>
+</body>
+</html>

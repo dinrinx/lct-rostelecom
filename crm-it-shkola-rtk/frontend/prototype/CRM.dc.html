@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/fonts/fonts.css">
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/tokens/figma/fig-tokens.css">
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/tokens/colors.css">
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/tokens/typography.css">
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/tokens/base.css">
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/assets/icons/icons.css">
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/styles.css">
+<script src="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/_ds_bundle.js"></script>
+<script src="crm-data.js"></script>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;background:#fff;font-family:var(--font-sans);color:var(--color-fg-default);-webkit-font-smoothing:antialiased}
+a{color:var(--color-accent-strong)}a:hover{color:var(--color-accent-hover)}
+button{font-family:var(--font-sans)}
+@keyframes crmPulse{0%,100%{opacity:1}50%{opacity:.45}}
+@keyframes crmSlideL{from{transform:translateX(-24px);opacity:0}to{transform:none;opacity:1}}
+@keyframes crmSlide{from{transform:translateX(24px);opacity:0}to{transform:none;opacity:1}}
+</style>
+</helmet>
+
+<sc-if value="{{ notAuthed }}" hint-placeholder-val="{{ true }}">
+  <div data-screen-label="01 Авторизация" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 16px;background:var(--color-bg-surface3)">
+    <div style="width:100%;max-width:440px;background:#fff;border-radius:16px;padding:40px 32px;display:flex;flex-direction:column;gap:24px">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-weight:700;font-size:28px;line-height:1.2">ИТ Школа РТК</div>
+        <div style="font-size:16px;line-height:24px;color:var(--color-fg-soft)">CRM взаимодействия с вузами</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:14px;line-height:20px;color:var(--color-fg-soft)">Войти как</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <sc-for list="{{ roleChips }}" as="c" hint-placeholder-count="2">
+            <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Tag" removable="{{ false }}" selected="{{ c.selected }}" on-click="{{ c.onClick }}" hint-size="auto,32px">{{ c.label }}</x-import>
+          </sc-for>
+        </div>
+        <div style="font-size:12px;line-height:16px;color:var(--color-fg-muted)">Dev-режим: роль передаётся заголовком X-Dev-Role. После подключения Keycloak роль придёт из токена.</div>
+      </div>
+      <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" size="l" disabled="{{ authLoading }}" on-click="{{ login }}" style="align-self:flex-start" hint-size="260px,56px">{{ loginLabel }}</x-import>
+      <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:14px;line-height:20px">
+        <a href="Admin.dc.html">Вход в админ-панель</a>
+        <span style="color:var(--color-fg-muted)">Единый вход через Keycloak (OIDC)</span>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ authed }}" hint-placeholder-val="{{ false }}">
+  <div style="min-height:100vh;display:flex;background:#fff;max-width:{{ rootMax }};margin:0 auto;position:relative">
+
+    <sc-if value="{{ showAside }}" hint-placeholder-val="{{ true }}">
+      <aside style="width:248px;flex-shrink:0;background:var(--color-bg-surface2);display:flex;flex-direction:column;gap:24px;padding:24px 16px;position:sticky;top:0;height:100vh;animation:crmSlideL 150ms ease-out">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding-left:12px">
+          <div style="font-weight:700;font-size:18px;line-height:1.2;white-space:nowrap">ИТ Школа РТК</div>
+          <button onClick="{{ toggleAside }}" aria-label="{{ toggleLabel }}" title="{{ toggleLabel }}" style="width:40px;height:40px;flex-shrink:0;border:none;border-radius:12px;background:transparent;color:var(--color-fg-soft);cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:var(--color-bg-surface4);color:var(--color-fg-default)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg></button>
+        </div>
+        <nav style="display:flex;flex-direction:column;gap:2px">
+          <sc-for list="{{ nav }}" as="n" hint-placeholder-count="4">
+            <button onClick="{{ n.go }}" style="display:flex;align-items:center;justify-content:space-between;gap:8px;height:44px;padding:0 12px;border:none;border-radius:12px;background:{{ n.bg }};color:var(--color-fg-default);font-size:16px;line-height:24px;font-weight:{{ n.weight }};text-align:left;cursor:pointer">
+              <span>{{ n.label }}</span>
+              <sc-if value="{{ n.count }}"><x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Badge" type="counter" color="error" hint-size="20px,20px">{{ n.count }}</x-import></sc-if>
+            </button>
+          </sc-for>
+        </nav>
+        <div style="margin-top:auto;display:flex;align-items:center;gap:8px;padding:16px 4px 0 12px;border-top:1px solid var(--color-border-muted)">
+          <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+            <div style="font-size:14px;line-height:20px;font-weight:500">{{ meName }}</div>
+            <div style="font-size:12px;line-height:16px;color:var(--color-fg-muted)">{{ roleLabel }}</div>
+          </div>
+          <button onClick="{{ logout }}" aria-label="Выйти" title="Выйти" style="width:40px;height:40px;flex-shrink:0;border:none;border-radius:12px;background:transparent;color:var(--color-fg-soft);cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:var(--color-bg-surface4);color:var(--color-fg-default)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg></button>
+        </div>
+      </aside>
+    </sc-if>
+
+    <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+      <header style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:{{ headerPad }};border-bottom:1px solid var(--color-border-muted);position:sticky;top:0;background:#fff;z-index:5">
+        <div style="display:flex;align-items:center;gap:12px;min-width:0">
+          <sc-if value="{{ showRail }}"><button onClick="{{ toggleAside }}" aria-label="{{ toggleLabel }}" title="{{ toggleLabel }}" style="width:40px;height:40px;flex-shrink:0;border:none;border-radius:12px;background:var(--color-bg-surface3);color:var(--color-fg-soft);cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:var(--color-bg-surface4);color:var(--color-fg-default)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg></button></sc-if>
+          <div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+          <h1 style="margin:0;font-weight:700;font-size:{{ titleSize }};line-height:1.2">{{ title }}</h1>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;flex-shrink:0">
+          <button onClick="{{ openHelp }}" aria-label="Справка" title="Справка по экрану" style="width:40px;height:40px;border-radius:12px;border:none;background:var(--color-bg-surface3);font-size:18px;font-weight:500;color:var(--color-fg-default);cursor:pointer">?</button>
+        </div>
+      </header>
+
+      <div style="flex:1;padding:{{ contentPad }};width:100%;max-width:1320px">
+        <sc-if value="{{ isDash }}" hint-placeholder-val="{{ true }}">
+          <dc-import name="CrmRadar" role="{{ role }}" is-mobile="{{ isMobile }}" demo-state="{{ demoState }}" refresh-key="{{ refreshKey }}" on-open="{{ openInteraction }}" on-navigate="{{ navigate }}" on-toast="{{ toast }}" hint-size="100%,720px"></dc-import>
+        </sc-if>
+        <sc-if value="{{ isReg }}" hint-placeholder-val="{{ false }}">
+          <dc-import name="CrmRegistry" role="{{ role }}" is-mobile="{{ isMobile }}" demo-state="{{ demoState }}" refresh-key="{{ refreshKey }}" preset="{{ preset }}" on-open="{{ openInteraction }}" on-changed="{{ interactionChanged }}" on-toast="{{ toast }}" hint-size="100%,720px"></dc-import>
+        </sc-if>
+        <sc-if value="{{ isRep }}" hint-placeholder-val="{{ false }}">
+          <dc-import name="CrmReports" role="{{ role }}" is-mobile="{{ isMobile }}" demo-state="{{ demoState }}" on-toast="{{ toast }}" hint-size="100%,720px"></dc-import>
+        </sc-if>
+        <sc-if value="{{ isTeam }}" hint-placeholder-val="{{ false }}">
+          <dc-import name="CrmTeam" mode="radar" role="{{ role }}" is-mobile="{{ isMobile }}" demo-state="{{ demoState }}" refresh-key="{{ refreshKey }}" on-navigate="{{ navigate }}" on-toast="{{ toast }}" hint-size="100%,600px"></dc-import>
+        </sc-if>
+        <sc-if value="{{ isAssign }}" hint-placeholder-val="{{ false }}">
+          <dc-import name="CrmTeam" mode="assign" role="{{ role }}" is-mobile="{{ isMobile }}" demo-state="{{ demoState }}" refresh-key="{{ refreshKey }}" on-navigate="{{ navigate }}" on-toast="{{ toast }}" hint-size="100%,600px"></dc-import>
+        </sc-if>
+      </div>
+      <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}"><div style="height:72px"></div></sc-if>
+    </main>
+
+    <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
+      <nav style="position:fixed;left:0;right:0;bottom:0;max-width:{{ rootMax }};margin:0 auto;height:64px;display:grid;grid-template-columns:repeat(3,1fr);background:#fff;border-top:1px solid var(--color-border-muted);z-index:20">
+        <sc-for list="{{ mobileNav }}" as="n" hint-placeholder-count="3">
+          <button onClick="{{ n.go }}" style="border:none;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:14px;line-height:20px;font-weight:{{ n.weight }};color:{{ n.fg }};cursor:pointer">
+            <span style="width:24px;height:3px;border-radius:2px;background:{{ n.bar }}"></span>{{ n.label }}
+          </button>
+        </sc-for>
+      </nav>
+    </sc-if>
+
+    <sc-if value="{{ more }}">
+      <div onClick="{{ closeMore }}" style="position:fixed;inset:0;background:rgba(15,26,40,.4);z-index:30"></div>
+      <div style="position:fixed;left:0;right:0;bottom:0;max-width:{{ rootMax }};margin:0 auto;background:#fff;border-radius:16px 16px 0 0;padding:24px 16px 32px;display:flex;flex-direction:column;gap:8px;z-index:31">
+        <div style="font-size:14px;line-height:20px;color:var(--color-fg-muted);padding:0 4px 8px">{{ meName }} · {{ roleLabel }}</div>
+        <sc-for list="{{ moreNav }}" as="n">
+          <button onClick="{{ n.go }}" style="height:48px;border:none;border-radius:12px;background:var(--color-bg-surface3);text-align:left;padding:0 16px;font-size:16px;color:var(--color-fg-default);cursor:pointer">{{ n.label }}</button>
+        </sc-for>
+        <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" variant="outline" size="m" on-click="{{ logout }}" style="align-self:flex-start" hint-size="120px,48px">Выйти</x-import>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ drawerOpen }}">
+      <div onClick="{{ closeDrawer }}" style="position:fixed;inset:0;background:rgba(15,26,40,.4);z-index:40"></div>
+      <div data-screen-label="04 Карточка взаимодействия" style="position:fixed;top:0;right:0;bottom:0;width:{{ drawerWidth }};background:#fff;z-index:41;overflow-y:auto;animation:crmSlide 160ms ease-out">
+        <dc-import name="CrmInteraction" interaction-id="{{ drawerId }}" role="{{ role }}" is-mobile="{{ isMobile }}" demo-state="{{ demoState }}" on-close="{{ closeDrawer }}" on-changed="{{ interactionChanged }}" on-toast="{{ toast }}" hint-size="100%,100%"></dc-import>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ help }}">
+      <div onClick="{{ closeHelp }}" style="position:fixed;inset:0;background:rgba(15,26,40,.4);z-index:50"></div>
+      <div style="position:fixed;top:0;right:0;bottom:0;width:{{ helpWidth }};background:#fff;z-index:51;overflow-y:auto;padding:32px;display:flex;flex-direction:column;gap:24px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px">
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <div style="font-size:12px;line-height:16px;color:var(--color-fg-muted)">Справка</div>
+            <div style="font-weight:700;font-size:22px;line-height:1.2">{{ title }}</div>
+          </div>
+          <button onClick="{{ closeHelp }}" aria-label="Закрыть" style="width:40px;height:40px;border:none;border-radius:12px;background:var(--color-bg-surface3);cursor:pointer;display:flex;align-items:center;justify-content:center"><span class="ds-icon ds-icon-close" style="width:20px;height:20px"></span></button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <sc-for list="{{ helpItems }}" as="h">
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <div style="font-weight:700;font-size:16px;line-height:1.2">{{ h.t }}</div>
+              <div style="font-size:16px;line-height:24px;color:var(--color-fg-soft);text-wrap:pretty">{{ h.d }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="margin-top:auto;padding:16px;border-radius:12px;background:var(--color-bg-surface3);font-size:14px;line-height:20px;color:var(--color-fg-soft)">Ошибки показываются с кодом, например NETWORK_UNAVAILABLE. Назовите код поддержке — это ускорит разбор.</div>
+      </div>
+    </sc-if>
+
+    <div style="position:fixed;right:16px;bottom:{{ toastBottom }};display:flex;flex-direction:column;gap:8px;z-index:60;max-width:calc(100% - 32px);width:380px">
+      <sc-for list="{{ toasts }}" as="t">
+        <div role="status" style="display:flex;gap:12px;align-items:flex-start;padding:16px;border-radius:12px;background:var(--color-fg-default);color:#fff;animation:crmSlide 160ms ease-out">
+          <span style="width:10px;height:10px;border-radius:999px;margin-top:5px;flex-shrink:0;background:{{ t.color }}"></span>
+          <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+            <div style="font-size:16px;line-height:24px;font-weight:500">{{ t.title }}</div>
+            <sc-if value="{{ t.text }}"><div style="font-size:14px;line-height:20px;color:var(--color-border-surface2)">{{ t.text }}</div></sc-if>
+            <sc-if value="{{ t.code }}"><div style="font-size:12px;line-height:16px;color:var(--color-border-surface2)">Код: {{ t.code }}</div></sc-if>
+            <sc-if value="{{ t.actionLabel }}"><button onClick="{{ t.action }}" style="align-self:flex-start;margin-top:6px;height:32px;padding:0 12px;border:none;border-radius:8px;background:var(--color-accent);color:#fff;font-size:14px;cursor:pointer">{{ t.actionLabel }}</button></sc-if>
+          </div>
+          <button onClick="{{ t.close }}" aria-label="Закрыть" style="border:none;background:transparent;color:#fff;cursor:pointer;padding:0;display:flex"><span class="ds-icon ds-icon-close-s" style="width:16px;height:16px"></span></button>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;dataSource&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;auto&quot;,&quot;api&quot;,&quot;demo&quot;],&quot;default&quot;:&quot;auto&quot;,&quot;tsType&quot;:&quot;'auto'|'api'|'demo'&quot;,&quot;section&quot;:&quot;Данные&quot;},&quot;apiBase&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;http://localhost:3000&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Данные&quot;},&quot;demoState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;auto&quot;,&quot;loading&quot;,&quot;empty&quot;,&quot;error&quot;],&quot;default&quot;:&quot;auto&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Состояния экранов&quot;},&quot;layout&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;auto&quot;,&quot;desktop&quot;,&quot;mobile&quot;],&quot;default&quot;:&quot;auto&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Вид&quot;},&quot;skipLogin&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Вид&quot;}}">
+const waitCRM = () => new Promise((r) => { const t = () => (window.CRM ? r(window.CRM) : setTimeout(t, 30)); t(); });
+const TITLES = { dashboard: { kam: 'Радар лицензий и SLA', rukovoditel: 'Радар команды' }, registry: 'Реестр взаимодействий', reports: 'Отчёты', team: 'Командный радар', assign: 'Ответственные за вузы' };
+const HELP = {
+  dashboard: [
+    { t: 'Что здесь', d: 'Радар показывает лицензии, которые скоро истекут, и взаимодействия, зависшие на статусе дольше нормы. Начинайте день с этого экрана.' },
+    { t: 'Уровни срочности', d: 'Красный — лицензия уже истекла, оранжевый — до 7 дней, жёлтый — до 30 дней, серый — до 60 дней.' },
+    { t: 'SLA', d: 'У каждого статуса есть норма в днях. Если взаимодействие стоит дольше, оно попадает в радар SLA. Нажмите на строку, чтобы открыть карточку и перевести статус.' },
+  ],
+  registry: [
+    { t: 'Фильтры', d: 'Период, вуз, направление, продукт и стадия. Выбор сохраняется между сессиями.' },
+    { t: 'Только просроченные', d: 'Оставляет взаимодействия, где время в статусе превышает норму SLA.' },
+    { t: 'Карточка', d: 'Нажмите на строку — карточка откроется сбоку, фильтры останутся на месте.' },
+    { t: 'Доска', d: 'Взаимодействия разложены по статусам. Перетащите карточку в другой столбец, чтобы сменить статус: подсвечиваются только разрешённые шаблоном переходы. Кнопка «Свой статус» добавляет новый этап в шаблон.' },
+    { t: 'Критический путь', d: 'Показывает самую длинную цепочку обязательных этапов до статуса «Завершено». Быстрее этого срока взаимодействие закончить нельзя. Этапы с запасом можно сдвигать без потери срока.' },
+  ],
+  reports: [
+    { t: 'Как сформировать', d: 'Выберите период, фильтры, колонки и формат. Отчёт строится в фоне — можно продолжать работу.' },
+    { t: 'Готовность', d: 'Когда файл готов, появится уведомление и кнопка «Скачать» в списке отчётов.' },
+    { t: 'Графики', d: 'Графики пересчитываются по тем же фильтрам, что и отчёт.' },
+  ],
+  team: [
+    { t: 'Ранжирование', d: 'КАМ отсортированы по числу просрочек: сначала зависшие по SLA, затем истекшие лицензии.' },
+    { t: 'Переход в реестр', d: 'Нажмите на строку КАМ, чтобы открыть его взаимодействия в реестре.' },
+  ],
+  assign: [
+    { t: 'Переназначение', d: 'Выберите нового КАМ в строке вуза. Прежний ответственный перестанет видеть взаимодействия этого вуза.' },
+    { t: 'Снятие назначения', d: 'Вуз останется без ответственного и пропадёт из радара КАМ. Действие требует подтверждения.' },
+  ],
+};
+
+class Component extends DCLogic {
+  state = { aside: (() => { try { return localStorage.getItem('crm.aside') !== 'collapsed'; } catch (e) { return true; } })(), authed: false, authLoading: false, role: 'kam', screen: 'dashboard', width: window.innerWidth, source: null, toasts: [], help: false, drawerId: null, preset: null, refreshKey: 0, more: false, me: null, overdue: 0 };
+
+  componentDidMount() {
+    this.onResize = () => this.setState({ width: window.innerWidth });
+    window.addEventListener('resize', this.onResize);
+    waitCRM().then((CRM) => {
+      this.applyCfg();
+      this.off = CRM.onStatus((s) => this.setState({ source: s.source }));
+      let saved = null; try { saved = JSON.parse(localStorage.getItem('crm.session') || 'null'); } catch (e) {}
+      if (saved && saved.role) this.enter(saved.role, saved.screen);
+      else if (this.props.skipLogin) this.enter('kam');
+    });
+  }
+  componentWillUnmount() { window.removeEventListener('resize', this.onResize); this.off && this.off(); }
+  componentDidUpdate(pp) {
+    if (pp.dataSource !== this.props.dataSource || pp.apiBase !== this.props.apiBase) { this.applyCfg(); this.setState((s) => ({ refreshKey: s.refreshKey + 1 })); }
+  }
+  applyCfg() { window.CRM.configure({ mode: this.props.dataSource ?? 'auto', base: this.props.apiBase || 'http://localhost:3000', role: this.state.role }); }
+  persist(patch) { try { const cur = JSON.parse(localStorage.getItem('crm.session') || '{}'); localStorage.setItem('crm.session', JSON.stringify({ ...cur, ...patch })); } catch (e) {} }
+  enter(role, screen) {
+    window.CRM.configure({ role });
+    this.persist({ role, screen: screen || 'dashboard' });
+    this.setState({ authed: true, role, screen: screen || 'dashboard', authLoading: false });
+    window.CRM.api.me().then((me) => this.setState({ me })).catch(() => {});
+    window.CRM.api.slaRadar().then((r) => this.setState({ overdue: r.items.length })).catch(() => {});
+  }
+  login = () => { this.setState({ authLoading: true }); setTimeout(() => this.enter(this.state.role), 700); };
+  logout = () => { try { localStorage.removeItem('crm.session'); } catch (e) {} this.setState({ authed: false, drawerId: null, help: false, more: false, me: null }); };
+  navigate = (screen, preset) => { this.persist({ screen }); this.setState({ screen, preset: preset ? { ...preset, nonce: Date.now() } : null, more: false }); window.scrollTo(0, 0); };
+  toast = (t) => {
+    const tid = Date.now() + Math.random();
+    const close = () => this.setState((s) => ({ toasts: s.toasts.filter((x) => x.id !== tid) }));
+    const color = t.kind === 'error' ? 'var(--color-error)' : t.kind === 'info' ? 'var(--color-accent)' : 'var(--color-success)';
+    this.setState((s) => ({ toasts: [...s.toasts.slice(-2), { ...t, id: tid, color, close, action: t.action ? () => { t.action(); close(); } : null }] }));
+    setTimeout(close, t.kind === 'error' ? 9000 : t.action ? 12000 : 5000);
+  };
+  openInteraction = (iid) => this.setState({ drawerId: iid });
+  closeDrawer = () => this.setState({ drawerId: null });
+  interactionChanged = () => {
+    this.setState((s) => ({ refreshKey: s.refreshKey + 1 }));
+    window.CRM.api.slaRadar().then((r) => this.setState({ overdue: r.items.length })).catch(() => {});
+  };
+
+  renderVals() {
+    const s = this.state, CRM = window.CRM;
+    const layout = this.props.layout ?? 'auto';
+    const isMobile = layout === 'mobile' || (layout === 'auto' && s.width < 768);
+    const isRuk = s.role === 'rukovoditel';
+    const items = [
+      { key: 'dashboard', label: isRuk ? 'Радар команды' : 'Радар', count: s.overdue || null },
+      { key: 'registry', label: 'Реестр' },
+      { key: 'reports', label: 'Отчёты' },
+      ...(isRuk ? [{ key: 'team', label: 'Командный радар' }, { key: 'assign', label: 'Ответственные' }] : []),
+    ];
+    const withGo = (n) => ({ ...n, go: () => this.navigate(n.key), active: s.screen === n.key });
+    const nav = items.map(withGo).map((n) => ({ ...n, bg: n.active ? 'var(--color-bg-surface4)' : 'transparent', weight: n.active ? 500 : 400 }));
+    const primary = ['dashboard', 'registry'];
+    const moreActive = !primary.includes(s.screen);
+    const mobileNav = [
+      ...nav.filter((n) => primary.includes(n.key)).map((n) => ({ ...n, label: n.key === 'dashboard' ? 'Радар' : n.label })),
+      { key: 'more', label: 'Ещё', go: () => this.setState({ more: true }), active: moreActive },
+    ].map((n) => ({ ...n, fg: n.active ? 'var(--color-fg-default)' : 'var(--color-fg-muted)', bar: n.active ? 'var(--color-accent)' : 'transparent', weight: n.active ? 500 : 400 }));
+    const moreNav = nav.filter((n) => !primary.includes(n.key));
+    const t = TITLES[s.screen];
+    const title = typeof t === 'string' ? t : t ? t[s.role] || t.kam : '';
+    const src = s.source;
+    const base = (this.props.apiBase || 'http://localhost:3000').replace(/^https?:\/\//, '');
+    return {
+      notAuthed: !s.authed, authed: s.authed, authLoading: s.authLoading,
+      loginLabel: s.authLoading ? 'Перенаправление в Keycloak…' : 'Войти через Keycloak',
+      roleChips: [['kam', 'КАМ'], ['rukovoditel', 'Руководитель']].map(([k, l]) => ({ label: l, selected: s.role === k, onClick: () => this.setState({ role: k }) })),
+      login: this.login, logout: this.logout,
+      isMobile, isDesktop: !isMobile, showAside: !isMobile && s.aside, showRail: !isMobile && !s.aside, toggleLabel: s.aside ? 'Свернуть панель' : 'Развернуть панель',
+      toggleAside: () => { const v = !this.state.aside; try { localStorage.setItem('crm.aside', v ? 'open' : 'collapsed'); } catch (e) {} this.setState({ aside: v }); }, rootMax: layout === 'mobile' ? '420px' : 'none',
+      headerPad: isMobile ? '12px 16px' : '20px 32px', contentPad: isMobile ? '16px' : '24px 32px 48px', titleSize: isMobile ? '20px' : '28px',
+      nav, mobileNav, moreNav, more: s.more, closeMore: () => this.setState({ more: false }),
+      title, role: s.role, roleLabel: CRM ? CRM.ROLES[s.role].label : '', scopeLabel: CRM ? CRM.ROLES[s.role].scope : '',
+      meName: s.me ? s.me.fullName : '…',
+      sourceLabel: src === 'api' ? 'API' : src === 'fixtures' ? 'Демо-данные' : 'Подключение…',
+      sourceColor: src === 'api' ? 'var(--color-success)' : src === 'fixtures' ? 'var(--color-warning)' : 'var(--color-fg-disabled)',
+      sourceHint: src === 'api' ? 'Данные из ' + base : 'API ' + base + ' недоступен — показаны демо-данные в форме DTO',
+      isDash: s.screen === 'dashboard', isReg: s.screen === 'registry', isRep: s.screen === 'reports', isTeam: s.screen === 'team', isAssign: s.screen === 'assign',
+      demoState: this.props.demoState ?? 'auto', refreshKey: s.refreshKey, preset: s.preset,
+      openInteraction: this.openInteraction, navigate: this.navigate, toast: this.toast,
+      drawerOpen: !!s.drawerId, drawerId: s.drawerId, closeDrawer: this.closeDrawer, interactionChanged: this.interactionChanged,
+      drawerWidth: isMobile ? '100%' : 'min(600px, 100%)', helpWidth: isMobile ? '100%' : '420px',
+      help: s.help, openHelp: () => this.setState({ help: true }), closeHelp: () => this.setState({ help: false }),
+      helpItems: HELP[s.screen] || [],
+      toasts: s.toasts, toastBottom: isMobile ? '80px' : '24px',
+    };
+  }
+}
+</script>
+</body>
+</html>

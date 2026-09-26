@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/fonts/fonts.css">
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/tokens/figma/fig-tokens.css">
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/tokens/colors.css">
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/tokens/typography.css">
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/tokens/base.css">
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/assets/icons/icons.css">
+<script src="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/_ds_bundle.js"></script>
+<script src="crm-data.js"></script>
+</helmet>
+<div data-screen-label="05 Отчёты" style="display:flex;flex-direction:column;gap:24px;font-family:var(--font-sans);color:var(--color-fg-default)">
+  <div style="display:grid;grid-template-columns:{{ topCols }};gap:24px;align-items:start">
+    <section style="display:flex;flex-direction:column;gap:20px;padding:{{ pad }};border-radius:16px;background:var(--color-bg-surface3)">
+      <h2 style="margin:0;font-weight:700;font-size:22px;line-height:1.2">Новый отчёт</h2>
+      <div style="display:grid;grid-template-columns:{{ twoCols }};gap:12px">
+        <label style="display:flex;flex-direction:column;gap:4px"><span style="font-size:14px;line-height:20px;font-weight:300;color:var(--color-fg-soft)">Период с</span><input type="date" value="{{ f.from }}" onChange="{{ setFrom }}" style="height:48px;padding:0 16px;border:none;border-radius:12px;background:#fff;box-shadow:inset 0 0 0 1px var(--color-border-default);font-family:var(--font-sans);font-size:16px;font-weight:300;color:var(--color-fg-default)"></label>
+        <label style="display:flex;flex-direction:column;gap:4px"><span style="font-size:14px;line-height:20px;font-weight:300;color:var(--color-fg-soft)">по</span><input type="date" value="{{ f.to }}" onChange="{{ setTo }}" style="height:48px;padding:0 16px;border:none;border-radius:12px;background:#fff;box-shadow:inset 0 0 0 1px var(--color-border-default);font-family:var(--font-sans);font-size:16px;font-weight:300;color:var(--color-fg-default)"></label>
+        <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Select" label="Вуз" hint="{{ null }}" options="{{ uniOpts }}" value="{{ f.universityId }}" on-change="{{ set.universityId }}" hint-size="100%,72px"></x-import>
+        <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Select" label="ИТ-направление" hint="{{ null }}" options="{{ dirOpts }}" value="{{ f.itDirectionId }}" on-change="{{ set.itDirectionId }}" hint-size="100%,72px"></x-import>
+        <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Select" label="ИТ-продукт" hint="{{ null }}" options="{{ prodOpts }}" value="{{ f.itProductId }}" on-change="{{ set.itProductId }}" hint-size="100%,72px"></x-import>
+        <sc-if value="{{ isRuk }}"><x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Select" label="Ответственный" hint="{{ null }}" options="{{ respOpts }}" value="{{ f.responsibleUserId }}" on-change="{{ set.responsibleUserId }}" hint-size="100%,72px"></x-import></sc-if>
+      </div>
+      <sc-if value="{{ periodError }}"><span style="font-size:12px;line-height:16px;color:var(--color-error)">Дата начала позже даты окончания</span></sc-if>
+      <fieldset style="border:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px">
+        <legend style="padding:0;margin-bottom:8px;font-size:14px;line-height:20px;color:var(--color-fg-soft)">Колонки</legend>
+        <div style="display:flex;flex-wrap:wrap;gap:8px 20px">
+          <sc-for list="{{ columns }}" as="c" hint-placeholder-count="5">
+            <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Checkbox" label="{{ c.label }}" checked="{{ c.on }}" on-change="{{ c.toggle }}" hint-size="auto,24px"></x-import>
+          </sc-for>
+        </div>
+      </fieldset>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <span style="font-size:14px;line-height:20px;color:var(--color-fg-soft)">Формат</span>
+        <div style="display:flex;gap:8px">
+          <sc-for list="{{ formats }}" as="x" hint-placeholder-count="3">
+            <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Tag" removable="{{ false }}" selected="{{ x.selected }}" on-click="{{ x.pick }}" hint-size="64px,32px">{{ x.label }}</x-import>
+          </sc-for>
+        </div>
+      </div>
+      <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" size="m" disabled="{{ cantBuild }}" on-click="{{ build }}" hint-size="220px,48px">Сформировать отчёт</x-import>
+    </section>
+
+    <section style="display:flex;flex-direction:column;gap:12px;padding:{{ pad }};border-radius:16px;box-shadow:inset 0 0 0 1px var(--color-border-muted)">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px">
+        <h2 style="margin:0;font-weight:700;font-size:22px;line-height:1.2">Мои отчёты</h2>
+      </div>
+      <sc-if value="{{ jfOpen }}">
+        <div style="display:flex;flex-direction:column;gap:12px;padding:12px;border-radius:12px;background:var(--color-bg-surface3)">
+          <div style="display:flex;flex-wrap:wrap;gap:6px"><sc-for list="{{ jfStatus }}" as="x"><x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Tag" size="s" removable="{{ false }}" selected="{{ x.selected }}" on-click="{{ x.pick }}" hint-size="auto,24px">{{ x.label }}</x-import></sc-for></div>
+          <div style="max-width:220px"><x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Select" label="Формат" hint="{{ null }}" options="{{ jfFormatOpts }}" value="{{ jfFormatVal }}" on-change="{{ setJfFormat }}" hint-size="100%,72px"></x-import></div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ jfNone }}"><div style="padding:12px 0;font-size:14px;line-height:20px;color:var(--color-fg-muted)">Нет отчётов по выбранным условиям</div></sc-if>
+      <sc-if value="{{ noJobs }}"><div style="padding:24px 0;font-size:14px;line-height:20px;color:var(--color-fg-muted)">Сформированные отчёты появятся здесь. Можно уйти с экрана — о готовности придёт уведомление.</div></sc-if>
+      <sc-for list="{{ jobs }}" as="j" hint-placeholder-count="0">
+        <div style="display:flex;flex-direction:column;gap:8px;padding:12px 0;border-top:1px solid var(--color-border-muted)">
+          <div style="display:flex;justify-content:space-between;gap:12px;align-items:center">
+            <span style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-size:16px;line-height:24px;font-weight:500">{{ j.title }}</span><span style="font-size:12px;line-height:16px;color:var(--color-fg-muted)">{{ j.params }}</span></span>
+            <sc-if value="{{ j.done }}"><x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" variant="outline" size="s" on-click="{{ j.download }}" hint-size="110px,40px">Скачать</x-import></sc-if>
+            <sc-if value="{{ j.failed }}"><x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" variant="outline" size="s" on-click="{{ j.retry }}" hint-size="110px,40px">Повторить</x-import></sc-if>
+          </div>
+          <sc-if value="{{ j.running }}">
+            <div style="display:flex;align-items:center;gap:12px"><span style="flex:1;height:4px;border-radius:2px;background:var(--color-bg-surface3);overflow:hidden"><span style="display:block;height:100%;width:{{ j.pct }};background:var(--color-accent);transition:width 200ms"></span></span><span style="font-size:12px;line-height:16px;color:var(--color-fg-soft)">{{ j.statusText }}</span></div>
+          </sc-if>
+          <sc-if value="{{ j.done }}"><span style="font-size:12px;line-height:16px;color:var(--color-success-strong)">{{ j.statusText }}</span></sc-if>
+          <sc-if value="{{ j.failed }}"><span style="font-size:12px;line-height:16px;color:var(--color-error-strong)">{{ j.statusText }}</span></sc-if>
+        </div>
+      </sc-for>
+    </section>
+  </div>
+
+  <section style="display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
+      <h2 style="margin:0;font-weight:700;font-size:22px;line-height:1.2">Статистика по фильтрам</h2>
+      <span style="font-size:14px;line-height:20px;color:var(--color-fg-muted)">{{ chartsCaption }}</span>
+    </div>
+    <sc-if value="{{ chLoading }}" hint-placeholder-val="{{ true }}">
+      <div style="display:grid;grid-template-columns:{{ chartCols }};gap:16px"><div style="height:280px;border-radius:16px;background:var(--color-bg-surface3);animation:crmPulse 1.2s ease-in-out infinite"></div><div style="height:280px;border-radius:16px;background:var(--color-bg-surface3);animation:crmPulse 1.2s ease-in-out infinite"></div><div style="height:280px;border-radius:16px;background:var(--color-bg-surface3);animation:crmPulse 1.2s ease-in-out infinite"></div></div>
+    </sc-if>
+    <sc-if value="{{ chError }}">
+      <div role="alert" style="display:flex;flex-direction:column;gap:8px;align-items:flex-start;padding:24px;border-radius:16px;background:var(--color-bg-surface3)"><span style="font-weight:700;font-size:18px;line-height:1.2">Графики не загрузились</span><span style="font-size:14px;line-height:20px;color:var(--color-error-strong)">Код: {{ chErr.code }}</span><x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" size="s" on-click="{{ reloadCharts }}" hint-size="120px,40px">Повторить</x-import></div>
+    </sc-if>
+    <sc-if value="{{ chEmpty }}">
+      <div style="padding:32px;border-radius:16px;background:var(--color-bg-surface3);font-size:16px;line-height:24px;color:var(--color-fg-soft)">Нет данных за выбранный период. Расширьте период или уберите фильтры.</div>
+    </sc-if>
+    <sc-if value="{{ chReady }}">
+      <div style="display:grid;grid-template-columns:{{ chartCols }};gap:16px">
+        <div style="display:flex;flex-direction:column;gap:12px;padding:20px;border-radius:16px;box-shadow:inset 0 0 0 1px var(--color-border-muted)">
+          <h3 style="margin:0;font-weight:700;font-size:16px;line-height:1.2">Взаимодействия по статусам</h3>
+          <sc-for list="{{ statusBars }}" as="b"><div style="display:flex;flex-direction:column;gap:4px"><div style="display:flex;justify-content:space-between;gap:8px;font-size:14px;line-height:20px"><span>{{ b.label }}</span><span style="font-weight:500">{{ b.value }}</span></div><span style="height:8px;border-radius:999px;background:var(--color-bg-surface3)"><span style="display:block;height:100%;width:{{ b.pct }};border-radius:999px;background:{{ b.color }}"></span></span></div></sc-for>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px;padding:20px;border-radius:16px;box-shadow:inset 0 0 0 1px var(--color-border-muted)">
+          <h3 style="margin:0;font-weight:700;font-size:16px;line-height:1.2">Новые взаимодействия по месяцам</h3>
+          <div style="flex:1;min-height:180px;display:flex;align-items:flex-end;gap:8px;border-bottom:1px solid var(--color-border-default)">
+            <sc-for list="{{ months }}" as="b"><div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end"><span style="font-size:12px;line-height:16px;font-weight:500">{{ b.value }}</span><span style="width:100%;max-width:40px;height:{{ b.pct }};border-radius:6px 6px 0 0;background:var(--color-accent)"></span></div></sc-for>
+          </div>
+          <div style="display:flex;gap:8px"><sc-for list="{{ months }}" as="b"><span style="flex:1;text-align:center;font-size:12px;line-height:16px;color:var(--color-fg-soft)">{{ b.label }}</span></sc-for></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px;padding:20px;border-radius:16px;box-shadow:inset 0 0 0 1px var(--color-border-muted)">
+          <h3 style="margin:0;font-weight:700;font-size:16px;line-height:1.2">Лицензии по продуктам</h3>
+          <sc-for list="{{ licBars }}" as="b"><div style="display:grid;grid-template-columns:110px 1fr 24px;gap:8px;align-items:center;font-size:14px;line-height:20px"><span>{{ b.label }}</span><span style="height:8px;border-radius:999px;background:var(--color-bg-surface3)"><span style="display:block;height:100%;width:{{ b.pct }};border-radius:999px;background:var(--color-fg-soft)"></span></span><span style="font-weight:500;text-align:right">{{ b.value }}</span></div></sc-for>
+        </div>
+      </div>
+    </sc-if>
+  </section>
+
+  <sc-if value="{{ showCompare }}">
+    <section style="display:flex;flex-direction:column;gap:16px">
+      <h2 style="margin:0;font-weight:700;font-size:22px;line-height:1.2">Сравнение КАМ</h2>
+      <div style="overflow-x:auto;border-radius:16px;box-shadow:inset 0 0 0 1px var(--color-border-muted)">
+        <table style="width:100%;min-width:640px;border-collapse:collapse;font-size:14px;line-height:20px">
+          <thead><tr style="background:var(--color-bg-surface2);color:var(--color-fg-soft);text-align:left"><th style="padding:12px 20px;font-weight:400">КАМ</th><th style="padding:12px;font-weight:400">Всего</th><th style="padding:12px;font-weight:400">Просрочено</th><th style="padding:12px 20px;font-weight:400;width:45%">Распределение по стадиям</th></tr></thead>
+          <tbody>
+            <sc-for list="{{ compare }}" as="k">
+              <tr style="border-top:1px solid var(--color-border-muted)">
+                <td style="padding:12px 20px;font-size:16px;line-height:24px">{{ k.name }}</td>
+                <td style="padding:12px;font-weight:500">{{ k.total }}</td>
+                <td style="padding:12px;font-weight:500;color:{{ k.overColor }}">{{ k.over }}</td>
+                <td style="padding:12px 20px"><div style="display:flex;height:12px;border-radius:999px;overflow:hidden;gap:2px;background:var(--color-bg-surface3)"><sc-for list="{{ k.segs }}" as="g"><span title="{{ g.label }}: {{ g.n }}" style="flex:{{ g.n }};background:{{ g.color }}"></span></sc-for></div></td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px 16px"><sc-for list="{{ legend }}" as="p"><span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;line-height:16px;color:var(--color-fg-soft)"><span style="width:8px;height:8px;border-radius:999px;background:{{ p.color }}"></span>{{ p.label }}</span></sc-for></div>
+    </section>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;role&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;kam&quot;,&quot;rukovoditel&quot;],&quot;default&quot;:&quot;kam&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;isMobile&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;demoState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;auto&quot;,&quot;loading&quot;,&quot;empty&quot;,&quot;error&quot;],&quot;default&quot;:&quot;auto&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;onToast&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(t:object)=&gt;void&quot;}}">
+const waitCRM = () => new Promise((r) => { const t = () => (window.CRM ? r(window.CRM) : setTimeout(t, 30)); t(); });
+const COLS = [['university', 'Наименование вуза'], ['direction', 'ИТ-направление'], ['product', 'ИТ-продукт'], ['status', 'Статус работы с вузом'], ['responsible', 'Ответственный']];
+const JKEY = 'crm.reports.jobs';
+const d0 = new Date(Date.now() - 180 * 864e5).toISOString().slice(0, 10), d1 = new Date().toISOString().slice(0, 10);
+class Component extends DCLogic {
+  state = { jf: { open: false, status: 'all', format: 'all' }, f: { from: d0, to: d1, universityId: 'all', itDirectionId: 'all', itProductId: 'all', responsibleUserId: 'all' }, cols: { university: true, direction: true, product: true, status: true, responsible: true }, format: 'xlsx', jobs: [], cat: { unis: [], dirs: [], prods: [] }, ch: { status: 'loading', data: null, err: null }, rows: [] };
+  componentDidMount() {
+    try { const j = JSON.parse(localStorage.getItem(JKEY) || '[]'); this.setState({ jobs: j.filter((x) => x.status === 'SUCCESS' || x.status === 'FAILED') }); } catch (e) {}
+    waitCRM().then((CRM) => { Promise.all([CRM.api.universities(), CRM.api.directions(), CRM.api.products()]).then(([unis, dirs, prods]) => this.setState({ cat: { unis, dirs, prods } })).catch(() => {}); this.loadCharts(); });
+  }
+  componentDidUpdate(pp) { if (pp.demoState !== this.props.demoState) this.loadCharts(); }
+  componentWillUnmount() { (this.timers || []).forEach(clearInterval); }
+  q() { const f = this.state.f, q = { from: f.from, to: f.to }; ['universityId', 'itDirectionId', 'itProductId', 'responsibleUserId'].forEach((k) => { if (f[k] !== 'all') q[k] = f[k]; }); return q; }
+  setF(p) { this.setState({ f: { ...this.state.f, ...p } }, () => { clearTimeout(this.deb); this.deb = setTimeout(() => this.loadCharts(), 250); }); }
+  async loadCharts() {
+    const CRM = await waitCRM(), ds = this.props.demoState;
+    this.setState({ ch: { ...this.state.ch, status: 'loading' } });
+    if (ds === 'loading') return;
+    if (ds === 'error') return setTimeout(() => this.setState({ ch: { status: 'error', err: { code: 'REPORTS_CHARTS_TIMEOUT' } } }), 300);
+    try {
+      const [data, rows] = await Promise.all([CRM.api.charts(this.q()), CRM.api.interactions(this.q())]);
+      const empty = ds === 'empty' || !data.statusDistribution.reduce((a, b) => a + b.value, 0);
+      this.setState({ ch: { status: empty ? 'empty' : 'ready', data }, rows: ds === 'empty' ? [] : rows });
+    } catch (e) { this.setState({ ch: { status: 'error', err: { code: e.code } } }); }
+  }
+  saveJobs(jobs) { this.setState({ jobs }); try { localStorage.setItem(JKEY, JSON.stringify(jobs.filter((j) => j.status === 'SUCCESS' || j.status === 'FAILED').slice(0, 10))); } catch (e) {} }
+  patchJob(id, p) { this.saveJobs(this.state.jobs.map((j) => (j.id === id ? { ...j, ...p } : j))); }
+  build(existing) {
+    const CRM = window.CRM, s = this.state;
+    const job = existing ? { ...existing, status: 'QUEUED', progress: 0, error: null } : { id: 'job-' + Date.now(), status: 'QUEUED', progress: 0, format: s.format, q: this.q(), cols: COLS.filter(([k]) => s.cols[k]).map(([, l]) => l), createdAt: new Date().toISOString() };
+    this.saveJobs([job, ...s.jobs.filter((j) => j.id !== job.id)]);
+    this.timers = this.timers || [];
+    const t = setInterval(() => { const cur = this.state.jobs.find((j) => j.id === job.id); if (cur && cur.status !== 'SUCCESS' && cur.status !== 'FAILED') this.patchJob(job.id, { status: 'PROCESSING', progress: Math.min(90, (cur.progress || 0) + 12) }); }, 300);
+    this.timers.push(t);
+    const willFail = this.props.demoState === 'error';
+    setTimeout(async () => {
+      try {
+        if (willFail) CRM.failNext('REPORT_GENERATION_FAILED', 'Отчёт не сформирован: превышено время генерации', 500);
+        const res = await CRM.api.exportReport(job.q, job.format);
+        clearInterval(t);
+        this.patchJob(job.id, { status: 'SUCCESS', progress: 100, fileName: res.fileName, url: res.url, rowCount: res.rowCount });
+        this.props.onToast && this.props.onToast({ kind: 'info', title: 'Отчёт готов', text: res.fileName, actionLabel: 'Скачать', action: () => this.download(this.state.jobs.find((j) => j.id === job.id)) });
+      } catch (e) {
+        clearInterval(t);
+        this.patchJob(job.id, { status: 'FAILED', error: { code: e.code, message: e.message } });
+        this.props.onToast && this.props.onToast({ kind: 'error', title: 'Отчёт не сформирован', text: e.message, code: e.code });
+      }
+    }, 2200);
+  }
+  async download(job) {
+    if (!job) return;
+    if (job.url && job.url !== '#' && !/minio\.internal/.test(job.url)) { window.open(job.url, '_blank'); return; }
+    // Демо: выгружаем таблицу, которую Excel открывает как .xls; реальный файл формирует бэкенд.
+    const CRM = window.CRM;
+    if (job.format === 'pdf') { this.props.onToast && this.props.onToast({ kind: 'info', title: 'PDF формирует бэкенд', text: 'В демо-режиме доступна выгрузка xls/xlsx' }); return; }
+    const rows = await CRM.api.interactions(job.q);
+    const map = { 'Наименование вуза': 'universityName', 'ИТ-направление': 'itDirectionName', 'ИТ-продукт': 'itProductName', 'Статус работы с вузом': 'currentStatusName', 'Ответственный': 'responsibleUserName' };
+    const esc = (v) => String(v == null ? '' : v).replace(/[<&>]/g, (c) => ({ '<': '&lt;', '&': '&amp;', '>': '&gt;' })[c]);
+    const html = '<html><head><meta charset="utf-8"></head><body><table border="1"><tr>' + job.cols.map((c) => '<th>' + esc(c) + '</th>').join('') + '</tr>' + rows.map((r) => '<tr>' + job.cols.map((c) => '<td>' + esc(r[map[c]]) + '</td>').join('') + '</tr>').join('') + '</table></body></html>';
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([html], { type: 'application/vnd.ms-excel' })); a.download = (job.fileName || 'otchet').replace(/\.xlsx?$/, '') + '.xls'; a.click();
+  }
+  renderVals() {
+    const s = this.state, f = s.f, CRM = window.CRM, m = !!this.props.isMobile, isRuk = this.props.role === 'rukovoditel';
+    const opt = (list, all) => [{ value: 'all', label: all }, ...list.map((x) => ({ value: x.id, label: x.name }))];
+    const set = {}; ['universityId', 'itDirectionId', 'itProductId', 'responsibleUserId'].forEach((k) => { set[k] = (v) => this.setF({ [k]: v }); });
+    const periodError = f.from && f.to && f.from > f.to;
+    const nameOf = (list, id) => (list.find((x) => x.id === id) || {}).name;
+    const jobs = s.jobs.map((j) => {
+      const parts = [CRM ? CRM.fmtDate(j.q.from) + ' — ' + CRM.fmtDate(j.q.to) : '', nameOf(s.cat.unis, j.q.universityId), nameOf(s.cat.prods, j.q.itProductId), j.cols.length + ' колонок'].filter(Boolean);
+      return { ...j, title: 'Реестр взаимодействий · ' + j.format, params: parts.join(' · '), running: j.status === 'QUEUED' || j.status === 'PROCESSING', done: j.status === 'SUCCESS', failed: j.status === 'FAILED', pct: (j.progress || 5) + '%',
+        statusText: j.status === 'QUEUED' ? 'В очереди' : j.status === 'PROCESSING' ? 'Формируется… ' + j.progress + '%' : j.status === 'SUCCESS' ? 'Готов · ' + (j.rowCount ?? 0) + ' строк' : (j.error ? j.error.message + ' · код ' + j.error.code : 'Ошибка'),
+        download: () => this.download(j), retry: () => this.build(j) };
+    });
+    const d = s.ch.data;
+    const maxOf = (a) => Math.max(1, ...a.map((x) => x.value));
+    const statusList = d ? [...d.statusDistribution].sort((a, b) => b.value - a.value).slice(0, 8) : [];
+    const stMax = maxOf(statusList);
+    const stPhase = (label) => { const st = CRM && CRM.local.STATUSES.find((x) => x.name === label); return st ? CRM.PHASE[st.phase].color : 'var(--color-fg-soft)'; };
+    const monthsRaw = d ? d.interactionsOverTime.slice(-8) : [];
+    const moMax = maxOf(monthsRaw);
+    const licRaw = d ? [...d.licensesByProduct].sort((a, b) => b.value - a.value) : [];
+    const liMax = maxOf(licRaw);
+    const byK = {}; s.rows.forEach((r) => { (byK[r.responsibleUserName] = byK[r.responsibleUserName] || []).push(r); });
+    const compare = !CRM ? [] : Object.entries(byK).map(([name, list]) => { const over = list.filter((r) => r.isOverdue).length; return { name, total: list.length, over, overColor: over ? 'var(--color-error-strong)' : 'var(--color-fg-muted)', segs: CRM.PHASES.map((p) => ({ label: p.label, color: p.color, n: list.filter((r) => r.currentPhase === p.key).length })).filter((g) => g.n) }; }).sort((a, b) => b.over - a.over || b.total - a.total);
+    return {
+      f, set, isRuk, pad: m ? '16px' : '24px', topCols: m ? '1fr' : 'repeat(auto-fit,minmax(min(100%,400px),1fr))', twoCols: m ? '1fr' : 'repeat(auto-fill,minmax(200px,1fr))', chartCols: m ? '1fr' : 'repeat(auto-fit,minmax(min(100%,300px),1fr))',
+      setFrom: (e) => this.setF({ from: e.target.value }), setTo: (e) => this.setF({ to: e.target.value }), periodError,
+      uniOpts: opt(s.cat.unis, 'Все вузы'), dirOpts: opt(s.cat.dirs, 'Все направления'), prodOpts: opt(s.cat.prods, 'Все продукты'),
+      respOpts: [{ value: 'all', label: 'Вся команда' }, ...(CRM ? CRM.local.KAMS.map((u) => ({ value: u.id, label: u.fullName })) : [])],
+      columns: COLS.map(([k, label]) => ({ label, on: s.cols[k], toggle: (v) => this.setState({ cols: { ...this.state.cols, [k]: v } }) })),
+      formats: ['xls', 'xlsx', 'pdf'].map((x) => ({ label: x, selected: s.format === x, pick: () => this.setState({ format: x }) })),
+      cantBuild: periodError || !COLS.some(([k]) => s.cols[k]), build: () => this.build(),
+      jobs: jobs.filter((j) => (s.jf.status === 'all' || (s.jf.status === 'done' ? j.done : s.jf.status === 'failed' ? j.failed : j.running)) && (s.jf.format === 'all' || j.format === s.jf.format)),
+      noJobs: !jobs.length, hasJobs: jobs.length > 0, jfOpen: jobs.length > 0,
+      jfNone: jobs.length > 0 && !jobs.some((j) => (s.jf.status === 'all' || (s.jf.status === 'done' ? j.done : s.jf.status === 'failed' ? j.failed : j.running)) && (s.jf.format === 'all' || j.format === s.jf.format)),
+      toggleJF: () => this.setState({ jf: { ...s.jf, open: !s.jf.open } }),
+      jfLabel: 'Фильтр' + ((s.jf.status !== 'all') + (s.jf.format !== 'all') ? ' · ' + ((s.jf.status !== 'all') + (s.jf.format !== 'all')) : ''),
+      jfStatus: [['all', 'Все'], ['done', 'Готовы'], ['running', 'Формируются'], ['failed', 'С ошибкой']].map(([k, label]) => ({ label, selected: s.jf.status === k, pick: () => this.setState({ jf: { ...this.state.jf, status: k } }) })),
+      jfFormatOpts: [{ value: 'all', label: 'Любой' }, { value: 'xls', label: 'xls' }, { value: 'xlsx', label: 'xlsx' }, { value: 'pdf', label: 'pdf' }], jfFormatVal: s.jf.format,
+      setJfFormat: (v) => this.setState({ jf: { ...this.state.jf, format: v } }),
+      chartsCaption: CRM ? CRM.fmtDate(f.from) + ' — ' + CRM.fmtDate(f.to) : '',
+      chLoading: s.ch.status === 'loading', chError: s.ch.status === 'error', chErr: s.ch.err || {}, chEmpty: s.ch.status === 'empty', chReady: s.ch.status === 'ready', reloadCharts: () => this.loadCharts(),
+      statusBars: statusList.map((b) => ({ ...b, pct: Math.round((b.value / stMax) * 100) + '%', color: stPhase(b.label) })),
+      months: monthsRaw.map((b) => ({ value: b.value, pct: Math.max(4, Math.round((b.value / moMax) * 100)) + '%', label: new Date(b.date).toLocaleDateString('ru-RU', { month: 'short' }).replace('.', '') })),
+      licBars: licRaw.map((b) => ({ ...b, pct: Math.round((b.value / liMax) * 100) + '%' })),
+      showCompare: isRuk && s.ch.status === 'ready' && compare.length > 0, compare, legend: CRM ? CRM.PHASES : [],
+    };
+  }
+}
+</script>
+</body>
+</html>

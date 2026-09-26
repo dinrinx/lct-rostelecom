@@ -1,0 +1,9 @@
+/* px versions of the Figma "size" collection. */
+:root{
+--space-2xs:2px;--space-xs:4px;--space-s:8px;--space-m:12px;--space-l:16px;--space-xl:20px;--space-2xl:24px;--space-3xl:32px;
+--r-none:0px;--r-xs:4px;--r-s:8px;--r-m:12px;--r-l:16px;--r-full:999px;
+--control-h-l:56px;--control-h-m:48px;--control-h-s:40px;
+--shadow-dropdown:0px 8px 24px 0px rgba(15,26,41,0.12);
+--shadow-knob:0px 1px 3px 0px rgba(15,26,41,0.2);
+--ring-focus:inset 0 0 0 2px var(--accent-default);
+}

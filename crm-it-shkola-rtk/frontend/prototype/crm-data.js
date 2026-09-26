@@ -1,0 +1,338 @@
+/* CRM ИТ Школа РТК — клиент API + демо-фикстуры.
+   Формы данных повторяют DTO из backend/src/(модуль)/dto (Swagger — источник истины).
+   Режимы: auto — живой API, при сетевой ошибке фолбэк на фикстуры; api — только API; demo — только фикстуры. */
+(function () {
+  if (window.CRM) return;
+  const DAY = 864e5;
+  const NOW = Date.now();
+  const ago = (d, h = 10) => new Date(NOW - d * DAY + h * 36e5 - 12 * 36e5).toISOString();
+  const ahead = (d) => new Date(NOW + d * DAY).toISOString();
+  const id = (p, n) => p + '-0000-4000-8000-' + String(n).padStart(12, '0');
+  let seed = 7;
+  const rnd = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+  const pick = (a) => a[Math.floor(rnd() * a.length)];
+
+  // --- справочники UI -------------------------------------------------------
+  const PHASES = [
+    { key: 'INITIATION', label: 'Инициация', color: 'var(--color-fg-muted)' },
+    { key: 'NEGOTIATION', label: 'Переговоры', color: 'var(--color-info)' },
+    { key: 'CONTRACTING', label: 'Партнёрство', color: 'var(--color-brand)' },
+    { key: 'IMPLEMENTATION', label: 'Внедрение', color: 'var(--color-warning)' },
+    { key: 'ACTIVE_USE', label: 'Обучение', color: 'var(--color-success)' },
+    { key: 'RENEWAL', label: 'Сопровождение', color: 'var(--color-accent)' },
+    { key: 'TERMINATION', label: 'Завершение', color: 'var(--color-fg-default)' },
+  ];
+  const PHASE = Object.fromEntries(PHASES.map((p) => [p.key, p]));
+  const BUCKETS = [
+    { key: 'OVERDUE', label: 'Просрочены', short: 'Просрочено', color: 'var(--color-error)', fg: 'var(--color-error-strong)' },
+    { key: 'DUE_IN_7_DAYS', label: 'До 7 дней', short: '≤ 7 дней', color: 'var(--color-accent)', fg: 'var(--color-accent-strong)' },
+    { key: 'DUE_IN_30_DAYS', label: 'До 30 дней', short: '≤ 30 дней', color: 'var(--color-warning)', fg: 'var(--color-warning-strong)' },
+    { key: 'DUE_IN_60_DAYS', label: 'До 60 дней', short: '≤ 60 дней', color: 'var(--color-neutral-muted)', fg: 'var(--color-fg-soft)' },
+  ];
+  const ROLES = {
+    kam: { dto: 'KAM', label: 'КАМ', scope: 'Мои вузы' },
+    rukovoditel: { dto: 'RUKOVODITEL', label: 'Руководитель', scope: 'Команда' },
+    administrator: { dto: 'ADMINISTRATOR', label: 'Администратор', scope: 'Все данные' },
+  };
+  const FILE_FORMATS = ['png', 'jpeg', 'jpg', 'pdf', 'zip', 'gzip', 'gz', 'rar', 'doc', 'docx', 'xls', 'xlsx'];
+
+  // --- фикстуры в форме DTO ---------------------------------------------------
+  const RUK = id('c0000000', 2);
+  const USERS = [
+    { id: id('c0000000', 1), email: 'kam@it-shkola-rtk.ru', fullName: 'Иванова Мария Сергеевна', role: 'KAM', isActive: true, managerId: RUK },
+    { id: RUK, email: 'rukovoditel@it-shkola-rtk.ru', fullName: 'Петров Сергей Николаевич', role: 'RUKOVODITEL', isActive: true, managerId: null },
+    { id: id('c0000000', 3), email: 'admin@it-shkola-rtk.ru', fullName: 'Администратор Платформы', role: 'ADMINISTRATOR', isActive: true, managerId: null },
+    { id: id('c0000000', 4), email: 'orlov.da@it-shkola-rtk.ru', fullName: 'Орлов Дмитрий Андреевич', role: 'KAM', isActive: true, managerId: RUK },
+    { id: id('c0000000', 5), email: 'vasilieva.ai@it-shkola-rtk.ru', fullName: 'Васильева Анна Игоревна', role: 'KAM', isActive: true, managerId: RUK },
+    { id: id('c0000000', 6), email: 'gromov.po@it-shkola-rtk.ru', fullName: 'Громов Павел Олегович', role: 'KAM', isActive: true, managerId: RUK },
+    { id: id('c0000000', 7), email: 'sidorova.el@it-shkola-rtk.ru', fullName: 'Сидорова Екатерина Львовна', role: 'KAM', isActive: true, managerId: RUK },
+    { id: id('c0000000', 8), email: 'fedorov.iv@it-shkola-rtk.ru', fullName: 'Фёдоров Илья Викторович', role: 'KAM', isActive: false, managerId: RUK },
+  ];
+  const KAMS = USERS.filter((u) => u.role === 'KAM' && u.isActive);
+  const K = KAMS.map((u) => u.id);
+
+  const DIRECTIONS = [
+    { id: id('a1000000', 1), name: 'DevOps', description: null },
+    { id: id('a1000000', 2), name: 'Анализ данных', description: null },
+    { id: id('a1000000', 3), name: 'Разработка ПО', description: null },
+    { id: id('a1000000', 4), name: 'Инфраструктура и облака', description: null },
+    { id: id('a1000000', 5), name: 'Информационная безопасность', description: null },
+  ];
+  const VENDORS = [
+    ['ООО «Базис»', 'Иванов Иван Иванович', '+7 (900) 111-22-33', 'ivanov.ii@example.ru', 'Почта, Чат в ТГ'],
+    ['ООО «ТДата»', 'Смирнова Анна Петровна', '+7 (911) 222-33-44', 'smirnova.ap@example.ru', 'Чат в ТГ'],
+    ['ПАО «Ростелеком»', 'Кузнецов Дмитрий Сергеевич', '+7 (922) 333-44-55', 'kuznetsov.ds@example.ru', 'Чат в ТГ'],
+    ['ООО «РТК ИТ Плюс»', 'Попова Мария Владимировна', '+7 (933) 444-55-66', 'popova.mv@example.ru', 'Чат в ТГ'],
+    ['ООО «РТК ИТ»', 'Лебедева Елена Дмитриевна', '+7 (955) 666-77-88', 'lebedeva.ed@example.ru', 'Чат в ТГ'],
+  ].map((v, i) => ({ id: id('a2000000', i + 1), name: v[0], contactInfo: null, contactName: v[1], contactPhone: v[2], contactEmail: v[3], contactChannel: v[4], createdAt: ago(40), updatedAt: ago(40) }));
+  const PRODUCTS = [
+    ['Базис Dynamix', 3, 0], ['RT.DataLake', 1, 1], ['RT.Warehouse', 1, 1], ['RT.DataVision', 1, 2], ['AKOLA', 0, 3],
+    ['Яга', 0, 3], ['Web3Gate', 2, 4], ['Аврора SDK', 2, 4], ['Нейрошлюз', 4, 4],
+  ].map((p, i) => ({ id: id('a3000000', i + 1), name: p[0], itDirectionId: DIRECTIONS[p[1]].id, vendorId: VENDORS[p[2]].id }));
+  const UNIVERSITIES = [
+    ['СПбГУ', 'Санкт-Петербург', 0], ['МГТУ им. Н. Э. Баумана', 'Москва', 0], ['НГУ', 'Новосибирская область', 1],
+    ['УрФУ', 'Свердловская область', 1], ['Университет ИТМО', 'Санкт-Петербург', 0], ['КФУ', 'Республика Татарстан', 2],
+    ['ТГУ', 'Томская область', 2], ['ДВФУ', 'Приморский край', 3], ['СФУ', 'Красноярский край', 3],
+    ['МФТИ', 'Московская область', 4], ['ЮФУ', 'Ростовская область', 4], ['ННГУ им. Лобачевского', 'Нижегородская область', null],
+  ].map((u, i) => ({ id: id('a5000000', i + 1), name: u[0], inn: null, region: u[1], website: null, kamId: u[2] == null ? null : K[u[2]] }));
+
+  // Статусы workflow. minDays — минимальная длительность этапа (для критического пути),
+  // deps — от каких этапов зависит начало (по умолчанию — предыдущий). В WorkflowStatusDto этих полей пока нет.
+  const VERSION_ID = id('b0000000', 2);
+  const STATUS_DEFS = [
+    ['Инициация', 'INITIATION', 10, 3],
+    ['Переговоры', 'NEGOTIATION', 14, 7],
+    ['Оформление партнёрства', 'CONTRACTING', 21, 14],
+    ['Передача материалов и лицензий', 'IMPLEMENTATION', 10, 5],
+    ['Внедрение продукта', 'IMPLEMENTATION', 30, 14],
+    ['Подготовка к запуску обучения', 'ACTIVE_USE', 21, 10, [2]],
+    ['Проведение обучения', 'ACTIVE_USE', 120, 30, [4, 5]],
+    ['Сопровождение и актуализация', 'RENEWAL', 60, 14],
+    ['Завершено', 'TERMINATION', null, 0],
+  ];
+  const SLA = {};
+  const META = {};
+  const STATUSES = STATUS_DEFS.map((s, i) => { const st = { id: id('b1000000', i + 1), name: s[0], phase: s[1], order: i + 1, workflowTemplateVersionId: VERSION_ID }; if (s[2]) SLA[st.id] = s[2]; return st; });
+  STATUS_DEFS.forEach((s, i) => { META[STATUSES[i].id] = { minDays: s[3], deps: (s[4] || (i ? [i - 1] : [])).map((j) => STATUSES[j].id) }; });
+  const TEMPLATE = { id: id('b0000000', 1), name: 'Типовой цикл внедрения ИТ-продукта', description: 'Базовый CLM-шаблон для вузов' };
+  const tr = (f, t, name) => ({ id: id('b2000000', f * 100 + t), name, workflowTemplateVersionId: VERSION_ID, fromStatusId: STATUSES[f].id, toStatusId: STATUSES[t].id });
+  const TRANSITIONS = [];
+  for (let i = 0; i < 8; i++) TRANSITIONS.push(tr(i, i + 1, 'Далее'));
+  TRANSITIONS.push(tr(2, 1, 'Вернуть на переговоры'), tr(7, 5, 'Новый учебный поток'));
+  let VERSIONS = [
+    { id: id('b0000000', 3), versionNumber: 1, isActive: false, workflowTemplateId: TEMPLATE.id, statuses: STATUSES.slice(0, 7), transitions: TRANSITIONS.slice(0, 6) },
+    { id: VERSION_ID, versionNumber: 2, isActive: true, workflowTemplateId: TEMPLATE.id, statuses: STATUSES, transitions: TRANSITIONS },
+  ];
+
+  const COMMENTS = [
+    'Взаимодействие создано', 'Провели встречу, согласовали состав программ', 'Договор о партнёрстве подписан',
+    'Лицензии и методички переданы вузу', 'Развернули стенд в лаборатории вуза', 'Программа и расписание утверждены',
+    'Стартовал поток на 48 студентов', 'Обновили документацию и материалы', 'Цикл закрыт, отчёт отправлен',
+  ];
+
+  // Реестр взаимодействий в форме InteractionReportItemDto
+  const INTERACTIONS = [];
+  const HISTORY = {};
+  const FILES = [];
+  const plan = [
+    [0, 0, 2, 26], [0, 3, 4, 12], [1, 2, 1, 18], [1, 1, 5, 9], [4, 0, 0, 14], [4, 7, 3, 4], [1, 6, 2, 9], [0, 8, 7, 40],
+    [2, 1, 1, 5], [2, 3, 4, 35], [3, 4, 5, 30], [3, 5, 0, 11], [2, 2, 7, 12],
+    [5, 6, 3, 14], [5, 7, 1, 2], [6, 8, 6, 36], [6, 6, 0, 4],
+    [7, 4, 3, 19], [7, 5, 1, 8], [8, 3, 2, 1], [8, 2, 6, 14], [7, 0, 8, 6],
+    [9, 7, 2, 25], [9, 8, 3, 7], [10, 6, 0, 3], [10, 1, 4, 13], [9, 0, 6, 60], [11, 3, 1, 6],
+  ];
+  plan.forEach(([u, p, s, days], i) => {
+    const uni = UNIVERSITIES[u], prod = PRODUCTS[p], st = STATUSES[s];
+    const dir = DIRECTIONS.find((d) => d.id === prod.itDirectionId);
+    const resp = uni.kamId || K[4];
+    const user = USERS.find((x) => x.id === resp);
+    const iid = id('b3000000', i + 1);
+    const created = days + s * 11 + 4;
+    INTERACTIONS.push({
+      interactionInstanceId: iid, universityId: uni.id, universityName: uni.name, itDirectionId: dir.id, itDirectionName: dir.name,
+      itProductId: prod.id, itProductName: prod.name, currentStatusId: st.id, currentStatusName: st.name, currentPhase: st.phase,
+      responsibleUserId: resp, responsibleUserName: user.fullName, createdAt: ago(created), updatedAt: ago(days, 14),
+      daysInCurrentStatus: days, isOverdue: !!SLA[st.id] && days > SLA[st.id],
+    });
+    HISTORY[iid] = [];
+    for (let k = 0; k <= s; k++) {
+      const d = k === s ? days : days + (s - k) * 11;
+      const at = ago(d, 11 + (k % 5));
+      HISTORY[iid].push({ id: id('b4000000', i * 20 + k + 1), interactionInstanceId: iid, fromStatusId: k ? STATUSES[k - 1].id : null, toStatusId: STATUSES[k].id, comment: k === 0 ? 'Взаимодействие создано' : COMMENTS[k], changedById: resp, changedAt: at });
+      if (k === 2 || k === 3 || k === 6) {
+        const name = k === 3 ? 'paket-dokumentov.zip' : k === 2 ? 'dogovor-' + (i + 1) + '-podpisan.pdf' : 'foto-obucheniya.jpeg';
+        FILES.push({ id: id('f0000000', FILES.length + 1), fileName: name, mimeType: k === 3 ? 'application/zip' : k === 2 ? 'application/pdf' : 'image/jpeg', size: k === 3 ? 1843200 : k === 2 ? 245760 : 612000, storageKey: 'attachments/' + name, uploadedById: resp, interactionInstanceId: iid, licenseId: null, createdAt: at });
+      }
+    }
+  });
+
+  const LIC_OFFSETS = [[-12, 0, 0], [-5, 1, 1], [-2, 3, 4], [3, 0, 1], [6, 2, 3], [12, 5, 6], [19, 1, 2], [27, 7, 5], [35, 4, 7], [44, 9, 8], [52, 6, 0], [58, 10, 6], [120, 3, 2], [210, 8, 3], [400, 2, 4]];
+  const LICENSES = LIC_OFFSETS.map(([off, u, p], i) => ({
+    id: id('a6000000', i + 1), contractNumber: 'ИТШ-' + (2025 + (i % 2)) + '/' + String(117 + i * 7).padStart(4, '0'), status: off < 0 ? 'TERMINATED' : 'ACTIVE', seats: 25 + (i % 4) * 25,
+    startDate: ago(365 - off), endDate: ahead(off), universityId: UNIVERSITIES[u].id, itProductId: PRODUCTS[p].id, createdAt: ago(365), updatedAt: ago(20),
+  }));
+
+  // --- helpers -----------------------------------------------------------------
+  const clone = (x) => JSON.parse(JSON.stringify(x));
+  const userName = (uid) => (USERS.find((u) => u.id === uid) || {}).fullName || 'Сотрудник';
+  const uniById = (uid) => UNIVERSITIES.find((u) => u.id === uid);
+  const bucketOf = (end) => { const d = Math.ceil((new Date(end) - NOW) / DAY); return d < 0 ? 'OVERDUE' : d <= 7 ? 'DUE_IN_7_DAYS' : d <= 30 ? 'DUE_IN_30_DAYS' : d <= 60 ? 'DUE_IN_60_DAYS' : null; };
+  const scope = (role) => (x) => role === 'kam' ? x.responsibleUserId === K[0] : true;
+  const uniScope = (role) => (u) => role === 'kam' ? u.kamId === K[0] : true;
+
+  function fxInteractions(role, q = {}) {
+    let r = INTERACTIONS.filter(scope(role));
+    if (q.from) r = r.filter((x) => x.updatedAt >= q.from);
+    if (q.to) r = r.filter((x) => x.updatedAt.slice(0, 10) <= q.to);
+    ['universityId', 'itDirectionId', 'itProductId', 'responsibleUserId'].forEach((k) => { if (q[k]) r = r.filter((x) => x[k] === q[k]); });
+    if (q.onlyOverdue) r = r.filter((x) => x.isOverdue);
+    return clone(r);
+  }
+  function fxLicenseRadar(role) {
+    const unis = UNIVERSITIES.filter(uniScope(role)).map((u) => u.id);
+    return { jobId: id('d0000000', 1), generatedAt: new Date().toISOString(), items: LICENSES.filter((l) => unis.includes(l.universityId)).map((l) => ({ licenseId: l.id, contractNumber: l.contractNumber, universityId: l.universityId, universityName: uniById(l.universityId).name, itProductId: l.itProductId, itProductName: PRODUCTS.find((p) => p.id === l.itProductId).name, endDate: l.endDate, bucket: bucketOf(l.endDate) })).filter((x) => x.bucket) };
+  }
+  function fxSlaRadar(role) {
+    return { generatedAt: new Date().toISOString(), items: INTERACTIONS.filter(scope(role)).filter((x) => x.isOverdue).map((x) => ({ interactionInstanceId: x.interactionInstanceId, universityId: x.universityId, universityName: x.universityName, currentStatusId: x.currentStatusId, currentStatusName: x.currentStatusName, phase: x.currentPhase, responsibleUserId: x.responsibleUserId, responsibleUserName: x.responsibleUserName, statusSince: ago(x.daysInCurrentStatus, 14), daysInStatus: x.daysInCurrentStatus, slaThresholdDays: SLA[x.currentStatusId] })) };
+  }
+  function fxCharts(role, q) {
+    const r = fxInteractions(role, q);
+    const by = (f) => { const m = {}; r.forEach((x) => { const k = f(x); m[k] = (m[k] || 0) + 1; }); return m; };
+    const st = by((x) => x.currentStatusName);
+    const months = {}; r.forEach((x) => { const k = x.createdAt.slice(0, 7) + '-01'; months[k] = (months[k] || 0) + 1; });
+    const lic = {}; LICENSES.forEach((l) => { const n = PRODUCTS.find((p) => p.id === l.itProductId).name; lic[n] = (lic[n] || 0) + 1; });
+    return { statusDistribution: Object.entries(st).map(([label, value]) => ({ label, value })), interactionsOverTime: Object.entries(months).sort().map(([date, value]) => ({ date, value })), licensesByProduct: Object.entries(lic).map(([label, value]) => ({ label, value })) };
+  }
+
+  // --- транспорт -----------------------------------------------------------------
+  const cfg = { base: 'http://localhost:3000', role: 'kam', mode: 'auto' };
+  const stats = { total: 0, errors: 0, ms: 0, api: 0, fixtures: 0, last: null };
+  const listeners = new Set();
+  let lastSource = null;
+  const emit = () => listeners.forEach((f) => f({ source: lastSource, stats: { ...stats } }));
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  let failNext = null;
+
+  class ApiError extends Error { constructor(code, message, details, httpStatus) { super(message); this.code = code; this.details = details; this.httpStatus = httpStatus; } }
+
+  async function call(method, path, { body, form, fallback, query } = {}) {
+    const t0 = performance.now();
+    stats.total++;
+    const qs = query ? '?' + Object.entries(query).filter(([, v]) => v !== '' && v != null && v !== false).map(([k, v]) => k + '=' + encodeURIComponent(v)).join('&') : '';
+    const finish = (src) => { stats.ms = Math.round(performance.now() - t0); stats.last = method + ' ' + path; lastSource = src; stats[src === 'api' ? 'api' : 'fixtures']++; emit(); };
+    try {
+      if (failNext) { const f = failNext; failNext = null; await wait(350); throw new ApiError(f.code, f.message, f.details, f.httpStatus); }
+      if (cfg.mode !== 'demo') {
+        let res;
+        try {
+          const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 2500);
+          const headers = { 'X-Dev-Role': cfg.role };
+          if (body) headers['Content-Type'] = 'application/json';
+          res = await fetch(cfg.base.replace(/\/$/, '') + path + qs, { method, headers, body: form || (body ? JSON.stringify(body) : undefined), signal: ctl.signal });
+          clearTimeout(to);
+        } catch (netErr) {
+          if (cfg.mode === 'api' || !fallback) throw new ApiError('NETWORK_UNAVAILABLE', 'Сервер недоступен. Проверьте подключение', { base: cfg.base });
+          res = null;
+        }
+        if (res) {
+          if (!res.ok) {
+            let j = {}; try { j = await res.json(); } catch (e) { }
+            throw new ApiError(j.code || 'HTTP_' + res.status, j.message ? String(j.message) : 'Ошибка сервера', j.details, res.status);
+          }
+          const txt = await res.text();
+          finish('api');
+          return txt ? JSON.parse(txt) : null;
+        }
+      }
+      await wait(220 + Math.round(rnd() * 380));
+      const out = typeof fallback === 'function' ? fallback() : fallback;
+      finish('fixtures');
+      return clone(out === undefined ? null : out);
+    } catch (e) {
+      stats.errors++; stats.ms = Math.round(performance.now() - t0); emit();
+      throw e instanceof ApiError ? e : new ApiError('UNEXPECTED', e.message || 'Непредвиденная ошибка');
+    }
+  }
+
+  const api = {
+    me: () => call('GET', '/auth/me', { fallback: () => USERS.find((u) => u.role === ROLES[cfg.role].dto) }),
+    interactions: (q) => call('GET', '/reports/interactions', { query: q, fallback: () => fxInteractions(cfg.role, q) }),
+    licenseRadar: () => call('GET', '/dashboard/license-radar', { fallback: () => fxLicenseRadar(cfg.role) }),
+    slaRadar: () => call('GET', '/dashboard/sla-radar', { fallback: () => fxSlaRadar(cfg.role) }),
+    interaction: (iid) => call('GET', '/workflow/interactions/' + iid, { fallback: () => { const x = INTERACTIONS.find((i) => i.interactionInstanceId === iid); return { id: iid, universityId: x.universityId, itProductId: x.itProductId, workflowTemplateVersionId: VERSION_ID, currentStatusId: x.currentStatusId, responsibleUserId: x.responsibleUserId, createdAt: x.createdAt, updatedAt: x.updatedAt }; } }),
+    history: (iid) => call('GET', '/workflow/interactions/' + iid + '/history', { fallback: () => HISTORY[iid] || [] }),
+    templateVersion: (vid) => call('GET', '/workflow/template-versions/' + vid, { fallback: () => (vid === VERSION_ID ? activeVersion() : VERSIONS.find((v) => v.id === vid)) || activeVersion() }),
+    addStatus: async (dto) => { const v = activeVersion(); await call('PUT', '/workflow/templates/' + TEMPLATE.id, { body: { statuses: v.statuses.map(({ id, name, phase, order }) => ({ id, name, phase, order })).concat([{ name: dto.name, phase: dto.phase }]), transitions: v.transitions }, fallback: () => null }); return localAddStatus(dto); },
+    files: (iid) => call('GET', '/files', { query: { interactionInstanceId: iid }, fallback: () => FILES.filter((f) => f.interactionInstanceId === iid) }),
+    updateStatus: (iid, dto) => call('PATCH', '/workflow/interactions/' + iid + '/status', { body: dto, fallback: () => {
+      const x = INTERACTIONS.find((i) => i.interactionInstanceId === iid); const st = activeVersion().statuses.find((s) => s.id === dto.toStatusId);
+      const from = x.currentStatusId; const at = new Date().toISOString();
+      if (!st) throw new ApiError('WORKFLOW_STATUS_NOT_FOUND', 'Статус не найден в шаблоне', null, 404);
+      const allowed = activeVersion().transitions.some((t) => t.fromStatusId === x.currentStatusId && t.toStatusId === st.id);
+      if (!allowed) throw new ApiError('WORKFLOW_TRANSITION_FORBIDDEN', 'Переход «' + x.currentStatusName + '» → «' + st.name + '» не разрешён шаблоном', null, 409);
+      Object.assign(x, { currentStatusId: st.id, currentStatusName: st.name, currentPhase: st.phase, updatedAt: at, daysInCurrentStatus: 0, isOverdue: false });
+      (HISTORY[iid] = HISTORY[iid] || []).push({ id: 'local-' + Date.now(), interactionInstanceId: iid, fromStatusId: from, toStatusId: st.id, comment: dto.comment, changedById: userIdForRole(), changedAt: at });
+      return { id: iid, universityId: x.universityId, itProductId: x.itProductId, workflowTemplateVersionId: VERSION_ID, currentStatusId: st.id, responsibleUserId: x.responsibleUserId, createdAt: x.createdAt, updatedAt: at };
+    } }),
+    uploadFile: (file, iid) => { const fd = new FormData(); fd.append('file', file); fd.append('interactionInstanceId', iid); return call('POST', '/files', { form: fd, fallback: () => { const f = { id: 'local-f-' + Date.now(), fileName: file.name, mimeType: file.type || 'application/octet-stream', size: file.size, storageKey: 'attachments/' + file.name, uploadedById: userIdForRole(), interactionInstanceId: iid, licenseId: null, createdAt: new Date().toISOString() }; FILES.push(f); return f; } }); },
+    downloadUrl: (fid) => call('GET', '/files/' + fid + '/download-url', { fallback: () => ({ fileId: fid, url: '#', expiresAt: ahead(0.01) }) }),
+    charts: (q) => call('GET', '/reports/charts', { query: q, fallback: () => fxCharts(cfg.role, q) }),
+    exportReport: (q, format) => call('GET', '/reports/interactions/export', { query: { ...q, format }, fallback: () => ({ format, fileName: 'reestr-vzaimodeystviy-' + new Date().toISOString().slice(0, 10) + '.' + format, url: '#', generatedAt: new Date().toISOString(), rowCount: fxInteractions(cfg.role, q).length }) }),
+    createJob: (type) => call('POST', '/reports/jobs', { body: { type }, fallback: () => ({ id: 'job-' + Date.now(), type, status: 'QUEUED', requestedById: userIdForRole(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), resultUrl: null }) }),
+    universities: () => call('GET', '/catalogs/universities', { fallback: () => UNIVERSITIES.filter(uniScope(cfg.role)) }),
+    directions: () => call('GET', '/catalogs/it-directions', { fallback: DIRECTIONS }),
+    products: () => call('GET', '/catalogs/it-products', { fallback: PRODUCTS }),
+    vendors: () => call('GET', '/catalogs/vendors', { fallback: VENDORS }),
+    licenses: () => call('GET', '/catalogs/licenses', { fallback: LICENSES }),
+    reassign: (uid, kamId) => call('PUT', '/catalogs/universities/' + uid + '/responsible', { body: { kamId }, fallback: () => { const u = uniById(uid); u.kamId = kamId; INTERACTIONS.filter((x) => x.universityId === uid).forEach((x) => { x.responsibleUserId = kamId; x.responsibleUserName = userName(kamId); }); return u; } }),
+    unassign: (uid) => call('PUT', '/catalogs/universities/' + uid, { body: { kamId: null }, fallback: () => { const u = uniById(uid); u.kamId = null; return u; } }),
+    users: () => call('GET', '/admin/users', { fallback: USERS }),
+    updateUser: (uid, dto) => call('PUT', '/admin/users/' + uid, { body: dto, fallback: () => Object.assign(USERS.find((u) => u.id === uid), dto) }),
+    templates: () => call('GET', '/workflow/templates', { fallback: [TEMPLATE] }),
+    updateTemplate: (tid, dto) => call('PUT', '/workflow/templates/' + tid, { body: dto, fallback: () => { const n = Math.max(...VERSIONS.map((v) => v.versionNumber)) + 1; const a = activeVersion(); const arch = { ...a, id: 'local-arch-' + a.versionNumber, isActive: false, statuses: [...a.statuses], transitions: [...a.transitions] }; VERSIONS.splice(VERSIONS.indexOf(a), 0, arch); a.statuses.splice(0, a.statuses.length, ...dto.statuses.map((x) => ({ ...x, workflowTemplateVersionId: a.id }))); a.transitions = dto.transitions.map((t, i) => ({ id: 'local-tr-' + n + '-' + i, workflowTemplateVersionId: a.id, ...t })); a.versionNumber = n; return { ...clone(a), versionNumber: n }; } }),
+    importPreview: () => call('POST', '/catalogs/import/preview', { fallback: { previewId: id('h0000000', 1), fileName: 'Реестр лицензий.xlsx', totalRows: 30, duplicateRows: 2, rows: [
+      { rowNumber: 2, universityName: 'СПбГУ им. Петра Великого', match: 'DUPLICATE_FUZZY', matchedUniversityId: UNIVERSITIES[0].id },
+      { rowNumber: 3, universityName: 'МГТУ им. Н. Э. Баумана', match: 'DUPLICATE_EXACT', matchedUniversityId: UNIVERSITIES[1].id },
+      { rowNumber: 4, universityName: 'Уральский федеральный университет', match: 'DUPLICATE_FUZZY', matchedUniversityId: UNIVERSITIES[3].id },
+      { rowNumber: 5, universityName: 'Самарский университет', match: 'NEW', matchedUniversityId: null },
+      { rowNumber: 6, universityName: 'ПГНИУ', match: 'NEW', matchedUniversityId: null },
+      { rowNumber: 7, universityName: 'ВолгГТУ', match: 'NEW', matchedUniversityId: null },
+    ] } }),
+    importCommit: (previewId) => call('POST', '/catalogs/import/commit', { body: { previewId }, fallback: { id: id('h1000000', 1), fileName: 'Реестр лицензий.xlsx', status: 'SUCCESS', resultSummary: { created: 27, matchedExisting: 2, failed: 1 }, initiatedById: USERS[2].id, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } }),
+    health: () => call('GET', '/health', { fallback: () => ({ status: 'ok', db: 'ok', redis: 'ok', uptime: Math.round((Date.now() - NOW) / 1000) + 5421 }) }),
+  };
+  function activeVersion() { return VERSIONS.find((v) => v.isActive) || VERSIONS[VERSIONS.length - 1]; }
+  // Свой статус: вставляется после выбранного. Обязательный — встраивается в цепочку (прямой переход убирается),
+  // необязательный — дополнительная ветка, которая не удлиняет критический путь.
+  function localAddStatus({ name, phase, afterId, minDays, slaDays, mandatory }) {
+    const v = activeVersion();
+    const idx = v.statuses.findIndex((x) => x.id === afterId);
+    const st = { id: 'custom-' + Date.now(), name, phase, order: 0, workflowTemplateVersionId: v.id, custom: true };
+    v.statuses.splice(idx + 1, 0, st); v.statuses.forEach((x, i) => (x.order = i + 1));
+    if (slaDays) SLA[st.id] = slaDays;
+    const nextIds = v.transitions.filter((t) => t.fromStatusId === afterId && t.name === 'Далее').map((t) => t.toStatusId);
+    const mk = (f, t) => ({ id: 'custom-tr-' + Math.random().toString(36).slice(2), name: 'Далее', workflowTemplateVersionId: v.id, fromStatusId: f, toStatusId: t });
+    if (mandatory) { v.transitions = v.transitions.filter((t) => !(t.fromStatusId === afterId && nextIds.includes(t.toStatusId))); Object.values(META).forEach((m) => { m.deps = m.deps.map((d) => (d === afterId ? st.id : d)); }); }
+    v.transitions.push(mk(afterId, st.id), ...nextIds.map((n) => mk(st.id, n)));
+    META[st.id] = { minDays: Number(minDays) || 0, deps: [afterId], optional: !mandatory, after: afterId };
+    v.versionNumber += 1;
+    return clone(st);
+  }
+  // Метод критического пути по оставшимся этапам: прямой проход (ES/EF), обратный (LS/LF), резерв = LS − ES.
+  function criticalPath(statuses, currentId, daysIn) {
+    const list = [...statuses].sort((a, b) => a.order - b.order);
+    const cur = list.find((x) => x.id === currentId) || list[0];
+    const meta = (x) => META[x.id] || { minDays: 7, deps: [] };
+    const nodes = list.map((x) => { const m = meta(x); const done = x.order < cur.order; const skip = !done && x !== cur && m.optional; return { id: x.id, name: x.name, phase: x.phase, order: x.order, minDays: m.minDays, done, current: x === cur, skip, remaining: !done && !skip }; });
+    const byId = Object.fromEntries(nodes.map((n) => [n.id, n]));
+    const rem = nodes.filter((n) => n.remaining);
+    rem.forEach((n) => { n.dur = n.current ? (n.minDays ? Math.max(1, n.minDays - (daysIn || 0)) : 0) : n.minDays; });
+    const curM = meta(cur);
+    rem.forEach((n) => {
+      const deps = (META[n.id] ? META[n.id].deps : []).map((d) => byId[d]).filter((d) => d && d.remaining);
+      n.preds = deps.map((d) => d.id);
+      if (curM.optional && !n.current && (META[n.id] || { deps: [] }).deps.includes(curM.after)) n.preds.push(cur.id);
+      n.es = Math.max(0, ...n.preds.map((p) => byId[p].ef)); n.ef = n.es + n.dur;
+    });
+    const total = Math.max(0, ...rem.map((n) => n.ef));
+    [...rem].reverse().forEach((n) => { const succ = rem.filter((x) => x.preds.includes(n.id)); n.lf = succ.length ? Math.min(...succ.map((x) => x.ls)) : total; n.ls = n.lf - n.dur; n.slack = n.ls - n.es; n.critical = n.slack === 0; });
+    return { nodes, total, current: cur };
+  }
+  function userIdForRole() { return (USERS.find((u) => u.role === ROLES[cfg.role].dto) || USERS[0]).id; }
+
+  window.CRM = {
+    cfg, api, stats, ApiError, PHASES, PHASE, BUCKETS, ROLES, FILE_FORMATS, SLA, KAM_ME: K[0],
+    local: { USERS, KAMS, get STATUSES() { return activeVersion().statuses; }, UNIVERSITIES, DIRECTIONS, PRODUCTS, get VERSIONS() { return VERSIONS; }, TEMPLATE, LICENSES },
+    userName, bucketOf, criticalPath, activeVersion: () => clone(activeVersion()), activeVersionId: () => activeVersion().id, statusMeta: (sid) => META[sid] || null,
+    setMinDays: (sid, n) => { META[sid] = { ...(META[sid] || { deps: [] }), minDays: Number(n) || 0 }; },
+    configure(o) { Object.assign(cfg, o); },
+    onStatus(f) { listeners.add(f); return () => listeners.delete(f); },
+    get source() { return lastSource; },
+    failNext(code, message, httpStatus) { failNext = { code, message, httpStatus }; },
+    daysLeft: (end) => Math.ceil((new Date(end) - Date.now()) / DAY),
+    fmtDate: (s) => s ? new Date(s).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—',
+    fmtDateTime: (s) => s ? new Date(s).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—',
+    fmtSize: (b) => b > 1048576 ? (b / 1048576).toFixed(1).replace('.', ',') + ' МБ' : Math.max(1, Math.round(b / 1024)) + ' КБ',
+    plural: (n, one, few, many) => { const a = Math.abs(n) % 100, b = a % 10; return a > 10 && a < 20 ? many : b > 1 && b < 5 ? few : b === 1 ? one : many; },
+  };
+})();

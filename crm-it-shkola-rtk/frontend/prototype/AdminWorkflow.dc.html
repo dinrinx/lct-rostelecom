@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/fonts/fonts.css">
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/tokens/figma/fig-tokens.css">
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/tokens/colors.css">
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/tokens/typography.css">
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/tokens/base.css">
+<link rel="stylesheet" href="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/assets/icons/icons.css">
+<script src="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/_ds_bundle.js"></script>
+<script src="crm-data.js"></script>
+</helmet>
+<div data-screen-label="10 Workflow-шаблоны" style="display:flex;flex-direction:column;gap:20px;font-family:var(--font-sans);color:var(--color-fg-default)">
+  <sc-if value="{{ isLoading }}" hint-placeholder-val="{{ true }}"><div style="display:flex;flex-direction:column;gap:8px"><sc-for list="{{ skeleton }}" as="k" hint-placeholder-count="6"><div style="height:88px;border-radius:12px;background:var(--color-bg-surface3);animation:crmPulse 1.2s ease-in-out infinite"></div></sc-for></div></sc-if>
+  <sc-if value="{{ isError }}"><div role="alert" style="display:flex;flex-direction:column;gap:12px;align-items:flex-start;padding:24px;border-radius:16px;background:var(--color-bg-surface3)"><span style="font-weight:700;font-size:18px">Шаблоны не загрузились</span><span style="font-size:14px;color:var(--color-error-strong)">Код: {{ error.code }}</span><x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" size="s" on-click="{{ reload }}" hint-size="120px,40px">Повторить</x-import></div></sc-if>
+
+  <sc-if value="{{ isReady }}">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;padding:20px 24px;border-radius:16px;background:var(--color-bg-surface3)">
+      <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+        <div style="font-weight:700;font-size:22px;line-height:1.2">{{ template.name }}</div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;line-height:20px;color:var(--color-fg-soft)">
+          <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Badge" color="success" variant="soft" hint-size="120px,20px">Версия {{ version.versionNumber }} · активна</x-import>
+          <span>{{ versionsText }}</span>
+          <span>{{ statusCount }}</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <sc-if value="{{ dirty }}"><span style="font-size:14px;line-height:20px;color:var(--color-warning-strong)">Есть несохранённые изменения</span></sc-if>
+        <sc-if value="{{ dirty }}"><x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" variant="outline" size="s" on-click="{{ discard }}" hint-size="120px,40px">Отменить</x-import></sc-if>
+        <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" size="s" disabled="{{ cantSave }}" on-click="{{ askSave }}" hint-size="200px,40px">Сохранить как версию {{ nextVersion }}</x-import>
+      </div>
+    </div>
+    <sc-if value="{{ saveError }}"><div role="alert" style="padding:12px 16px;border-radius:12px;box-shadow:inset 0 0 0 1px var(--color-error);font-size:14px;line-height:20px">Версия не сохранена: {{ saveError.message }} · <span style="color:var(--color-error-strong)">код {{ saveError.code }}</span>. Изменения остались в редакторе.</div></sc-if>
+
+    <div style="display:flex;flex-direction:column;border-radius:16px;box-shadow:inset 0 0 0 1px var(--color-border-muted)">
+      <sc-if value="{{ isDesktop }}"><div style="display:grid;grid-template-columns:40px minmax(0,1.2fr) 190px 110px minmax(0,1.6fr) 44px;gap:16px;padding:12px 20px;background:var(--color-bg-surface2);border-radius:16px 16px 0 0;font-size:14px;line-height:20px;color:var(--color-fg-soft)"><span>№</span><span>Статус</span><span>Стадия CLM</span><span title="Минимальная длительность этапа — для расчёта критического пути">Мин. срок, дн.</span><span>Разрешённые следующие статусы</span><span></span></div></sc-if>
+      <sc-for list="{{ rows }}" as="r" hint-placeholder-count="8">
+        <div style="display:grid;grid-template-columns:{{ rowCols }};gap:12px 16px;align-items:start;padding:16px 20px;border-top:1px solid var(--color-border-muted)">
+          <span style="font-weight:700;font-size:16px;line-height:48px;color:var(--color-fg-muted)">{{ r.order }}</span>
+          <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Input" label="{{ null }}" hint="{{ r.nameHint }}" error="{{ r.nameError }}" placeholder="Название статуса" value="{{ r.name }}" on-change="{{ r.setName }}" hint-size="100%,48px"></x-import>
+          <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Select" label="{{ null }}" hint="{{ null }}" options="{{ phaseOpts }}" value="{{ r.phase }}" on-change="{{ r.setPhase }}" hint-size="100%,48px"></x-import>
+          <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Input" label="{{ null }}" hint="{{ null }}" type="number" placeholder="0" value="{{ r.minDaysStr }}" on-change="{{ r.setMin }}" hint-size="100%,48px"></x-import>
+          <div style="display:flex;flex-direction:column;gap:8px;min-width:0">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;min-height:32px;align-items:center">
+              <sc-for list="{{ r.next }}" as="n"><x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Tag" size="m" on-remove="{{ n.remove }}" hint-size="auto,32px">{{ n.label }}</x-import></sc-for>
+              <sc-if value="{{ r.noNext }}"><span style="font-size:14px;line-height:20px;color:var(--color-fg-muted)">Финальный статус — переходов нет</span></sc-if>
+            </div>
+            <sc-if value="{{ r.canAdd }}"><div style="max-width:320px"><x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Select" label="{{ null }}" hint="{{ null }}" placeholder="Добавить переход" options="{{ r.addOpts }}" value="{{ null }}" on-change="{{ r.add }}" hint-size="100%,48px"></x-import></div></sc-if>
+          </div>
+          <button onClick="{{ r.del }}" aria-label="Удалить статус" title="Удалить статус" style="width:44px;height:48px;border:none;border-radius:12px;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-fg-soft)" style-hover="background:var(--color-bg-surface3)"><span class="ds-icon ds-icon-close" style="width:20px;height:20px"></span></button>
+        </div>
+      </sc-for>
+    </div>
+    <div><x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" variant="secondary" size="m" on-click="{{ addStatus }}" hint-size="180px,48px">Добавить статус</x-import></div>
+  </sc-if>
+
+  <sc-if value="{{ confirm }}">
+    <div onClick="{{ cancel }}" style="position:fixed;inset:0;background:rgba(15,26,40,.4);z-index:70"></div>
+    <div role="dialog" aria-modal="true" style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(520px,calc(100% - 32px));background:#fff;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:16px;z-index:71">
+      <div style="font-weight:700;font-size:22px;line-height:1.2">Создать версию {{ nextVersion }}?</div>
+      <div style="font-size:16px;line-height:24px;color:var(--color-fg-soft);text-wrap:pretty">Изменения сохранятся как новая версия шаблона. Существующие процессы ({{ activeCount }}) продолжат работать по версии {{ version.versionNumber }}. Новые взаимодействия будут создаваться по версии {{ nextVersion }}.</div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
+        <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" variant="secondary" size="m" on-click="{{ cancel }}" hint-size="100px,48px">Отмена</x-import>
+        <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" size="m" disabled="{{ saving }}" on-click="{{ save }}" hint-size="200px,48px">{{ saveLabel }}</x-import>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;isMobile&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;demoState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;auto&quot;,&quot;loading&quot;,&quot;error&quot;],&quot;default&quot;:&quot;auto&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;onToast&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(t:object)=&gt;void&quot;}}">
+const waitCRM = () => new Promise((r) => { const t = () => (window.CRM ? r(window.CRM) : setTimeout(t, 30)); t(); });
+class Component extends DCLogic {
+  state = { status: 'loading', error: null, template: null, version: null, versions: [], draft: null, dirty: false, confirm: false, saving: false, saveError: null, activeCount: 0 };
+  componentDidMount() { this.load(); }
+  componentDidUpdate(pp) { if (pp.demoState !== this.props.demoState) this.load(); }
+  async load() {
+    const CRM = await waitCRM(), ds = this.props.demoState;
+    this.setState({ status: 'loading', error: null });
+    if (ds === 'loading') return;
+    if (ds === 'error') return setTimeout(() => this.setState({ status: 'error', error: { code: 'WORKFLOW_TEMPLATES_UNAVAILABLE' } }), 300);
+    try {
+      const templates = await CRM.api.templates();
+      // В WorkflowTemplateDto нет ссылки на активную версию — берём её id из локального справочника.
+      const active = CRM.local.VERSIONS.find((v) => v.isActive);
+      const [version, rows] = await Promise.all([CRM.api.templateVersion(active.id), CRM.api.interactions({})]);
+      this.setState({ status: 'ready', template: templates[0], version, versions: CRM.local.VERSIONS, activeCount: rows.length, draft: this.toDraft(version), dirty: false });
+    } catch (e) { this.setState({ status: 'error', error: { code: e.code } }); }
+  }
+  toDraft(v) { return { statuses: v.statuses.map((s) => ({ ...s, minDays: (window.CRM.statusMeta(s.id) || { minDays: 0 }).minDays })).sort((a, b) => a.order - b.order), transitions: v.transitions.map((t) => ({ ...t })) }; }
+  edit(fn) { const d = { statuses: this.state.draft.statuses.map((s) => ({ ...s })), transitions: [...this.state.draft.transitions] }; fn(d); d.statuses.forEach((s, i) => (s.order = i + 1)); this.setState({ draft: d, dirty: true, saveError: null }); }
+  async save() {
+    const CRM = window.CRM, s = this.state;
+    this.setState({ saving: true });
+    try {
+      const v = await CRM.api.updateTemplate(s.template.id, { statuses: s.draft.statuses.map(({ id, name, phase, order }) => ({ id, name, phase, order })), transitions: s.draft.transitions.map(({ fromStatusId, toStatusId, name }) => ({ fromStatusId, toStatusId, name })) });
+      s.draft.statuses.forEach((x) => CRM.setMinDays(x.id, x.minDays));
+      this.setState({ saving: false, confirm: false, version: { ...v, statuses: s.draft.statuses, transitions: s.draft.transitions }, dirty: false, versions: CRM.local.VERSIONS });
+      this.props.onToast && this.props.onToast({ kind: 'success', title: 'Создана версия ' + v.versionNumber, text: 'Текущие процессы остались на прежней версии' });
+    } catch (e) { this.setState({ saving: false, confirm: false, saveError: { code: e.code, message: e.message } }); }
+  }
+  renderVals() {
+    const s = this.state, CRM = window.CRM, m = !!this.props.isMobile;
+    const base = { isLoading: s.status === 'loading', isError: s.status === 'error', isReady: s.status === 'ready' && !!s.draft, error: s.error || {}, reload: () => this.load(), skeleton: [1, 2, 3, 4, 5, 6], isDesktop: !m, rows: [], phaseOpts: [], template: {}, version: {} };
+    if (!base.isReady || !CRM) return base;
+    const d = s.draft;
+    const nameOf = (id) => (d.statuses.find((x) => x.id === id) || {}).name || '—';
+    const maxV = Math.max(...s.versions.map((v) => v.versionNumber), s.version.versionNumber);
+    const hasEmpty = d.statuses.some((x) => !x.name.trim());
+    const rows = d.statuses.map((st, i) => {
+      const out = d.transitions.filter((t) => t.fromStatusId === st.id);
+      const taken = new Set(out.map((t) => t.toStatusId));
+      const addOpts = d.statuses.filter((x) => x.id !== st.id && !taken.has(x.id)).map((x) => ({ value: x.id, label: x.order + '. ' + x.name }));
+      return { ...st, nameError: !st.name.trim(), nameHint: !st.name.trim() ? 'Введите название' : null,
+        setName: (v) => this.edit((dd) => { dd.statuses[i].name = v; }), minDaysStr: String(st.minDays ?? ''), setMin: (v) => this.edit((dd) => { dd.statuses[i].minDays = Math.max(0, parseInt(v, 10) || 0); }), setPhase: (v) => this.edit((dd) => { dd.statuses[i].phase = v; }),
+        next: out.map((t) => ({ label: nameOf(t.toStatusId), remove: () => this.edit((dd) => { dd.transitions = dd.transitions.filter((x) => x !== t); }) })), noNext: !out.length,
+        canAdd: addOpts.length > 0, addOpts, add: (v) => this.edit((dd) => { dd.transitions.push({ id: 'new-' + Date.now(), name: 'Далее', fromStatusId: st.id, toStatusId: v }); }),
+        del: () => this.edit((dd) => { dd.statuses.splice(i, 1); dd.transitions = dd.transitions.filter((t) => t.fromStatusId !== st.id && t.toStatusId !== st.id); }) };
+    });
+    return { ...base, template: s.template, version: s.version, nextVersion: maxV + 1, dirty: s.dirty, cantSave: !s.dirty || hasEmpty,
+      versionsText: 'Архив: ' + s.versions.filter((v) => !v.isActive && v.versionNumber !== s.version.versionNumber).map((v) => 'v' + v.versionNumber).join(', '),
+      statusCount: d.statuses.length + ' ' + CRM.plural(d.statuses.length, 'статус', 'статуса', 'статусов') + ' · ' + d.transitions.length + ' ' + CRM.plural(d.transitions.length, 'переход', 'перехода', 'переходов'),
+      phaseOpts: CRM.PHASES.map((p) => ({ value: p.key, label: p.label })), rowCols: m ? '28px 1fr' : '40px minmax(0,1.2fr) 190px 110px minmax(0,1.6fr) 44px', rows,
+      addStatus: () => this.edit((dd) => { dd.statuses.push({ id: 'new-st-' + Date.now(), name: '', minDays: 7, phase: 'RENEWAL', order: dd.statuses.length + 1, workflowTemplateVersionId: s.version.id }); }),
+      discard: () => this.setState({ draft: this.toDraft(s.version), dirty: false, saveError: null }),
+      askSave: () => this.setState({ confirm: true }), confirm: s.confirm, cancel: () => this.setState({ confirm: false }), save: () => this.save(), saving: s.saving, saveLabel: s.saving ? 'Сохраняем…' : 'Создать версию ' + (maxV + 1),
+      activeCount: s.activeCount, saveError: s.saveError };
+  }
+}
+</script>
+</body>
+</html>

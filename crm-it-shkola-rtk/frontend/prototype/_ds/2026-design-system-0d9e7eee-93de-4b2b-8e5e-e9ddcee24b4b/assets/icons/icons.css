@@ -1,0 +1,8 @@
+/* Icon glyphs copied from the Figma UI-kit, rendered as masks so they take currentColor. */
+.ds-icon{display:inline-block;flex-shrink:0;background-color:currentColor;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center}
+.ds-icon-chevron{-webkit-mask-image:url("./chevron-down.svg");mask-image:url("./chevron-down.svg");-webkit-mask-size:14px 8px;mask-size:14px 8px}
+.ds-icon-check{-webkit-mask-image:url("./check.svg");mask-image:url("./check.svg");-webkit-mask-size:14px 10px;mask-size:14px 10px}
+.ds-icon-checkbox{-webkit-mask-image:url("./checkbox-check.svg");mask-image:url("./checkbox-check.svg");-webkit-mask-size:12px 8.5px;mask-size:12px 8.5px}
+.ds-icon-close{-webkit-mask-image:url("./close.svg");mask-image:url("./close.svg");-webkit-mask-size:10px 10px;mask-size:10px 10px}
+.ds-icon-close-s{-webkit-mask-image:url("./close.svg");mask-image:url("./close.svg");-webkit-mask-size:7.5px 7.5px;mask-size:7.5px 7.5px}
+.ds-icon-resize{-webkit-mask-image:url("./resize.svg");mask-image:url("./resize.svg");-webkit-mask-size:10px 10px;mask-size:10px 10px}

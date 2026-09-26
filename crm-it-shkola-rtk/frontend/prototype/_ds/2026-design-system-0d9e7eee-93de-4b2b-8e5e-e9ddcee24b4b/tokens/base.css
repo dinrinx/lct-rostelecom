@@ -1,0 +1,2 @@
+body{font-family:var(--font-sans);color:var(--text-body);-webkit-font-smoothing:antialiased}
+a{color:var(--color-accent);text-decoration:none}a:hover{color:var(--color-accent-hover)}
