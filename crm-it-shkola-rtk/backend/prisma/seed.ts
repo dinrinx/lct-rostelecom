@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { join } from 'path';
 import { PrismaClient } from '@prisma/client';
 import ExcelJS from 'exceljs';
@@ -109,7 +110,57 @@ async function seedVendorsCatalog(rows: VendorRow[]) {
   return { productsByName };
 }
 
-async function seedDemoUniversitiesAndLicenses(productsByName: Map<string, string>) {
+// Реальные User-записи под RBAC: без них некому быть "ответственным КАМом" —
+// University.kamId остался бы null навсегда, и построчную видимость (КАМ видит
+// только свои вузы, Руководитель — команду) было бы не на чем продемонстрировать.
+// Email — канонические, те же что в dev-режиме авторизации (DevRoleGuard) и в
+// realm-export.json тестовых пользователей Keycloak (test-kam и т.д. используют
+// другие email вида test-kam@it-school-crm.local — это НЕ те же записи; матчинг
+// в keycloak-режиме идёт по email из токена, так что для сквозного теста через
+// Keycloak реальным test-* пользователям нужны соответствующие User-записи —
+// см. README/условия задачи).
+async function seedUsers() {
+  const administrator = await prisma.user.create({
+    data: {
+      email: 'admin@it-shkola-rtk.ru',
+      fullName: 'Администратор Платформы',
+      role: 'ADMINISTRATOR',
+    },
+  });
+
+  const rukovoditel = await prisma.user.create({
+    data: {
+      email: 'rukovoditel@it-shkola-rtk.ru',
+      fullName: 'Петров Сергей Николаевич',
+      role: 'RUKOVODITEL',
+    },
+  });
+
+  const kam1 = await prisma.user.create({
+    data: {
+      email: 'kam@it-shkola-rtk.ru',
+      fullName: 'Иванова Мария Сергеевна',
+      role: 'KAM',
+      managerId: rukovoditel.id,
+    },
+  });
+
+  const kam2 = await prisma.user.create({
+    data: {
+      email: 'kam2@it-shkola-rtk.ru',
+      fullName: 'Сидорова Ольга Викторовна',
+      role: 'KAM',
+      managerId: rukovoditel.id,
+    },
+  });
+
+  return { administrator, rukovoditel, kam1, kam2 };
+}
+
+async function seedDemoUniversitiesAndLicenses(
+  productsByName: Map<string, string>,
+  kamIds: { kam1: string; kam2: string },
+) {
   const productIds = [...productsByName.values()];
 
   const demoDirection = await prisma.itDirection.create({
@@ -120,12 +171,21 @@ async function seedDemoUniversitiesAndLicenses(productsByName: Map<string, strin
   });
   void demoDirection; // направление создано для полноты каталога, продукты берём реальные
 
+  // Разнесены по двум КАМам одной команды, чтобы построчная видимость (RBAC) была
+  // видна сразу: kam1 — 2 вуза, kam2 — 1, Руководитель (их менеджер) — все 3.
+  const universitySeeds: Array<{ name: string; kamId: string }> = [
+    { name: 'СПбГУ (демо)', kamId: kamIds.kam1 },
+    { name: 'МГТУ им. Баумана (демо)', kamId: kamIds.kam2 },
+    { name: 'НГУ (демо)', kamId: kamIds.kam1 },
+  ];
+
   const universities = await Promise.all(
-    ['СПбГУ (демо)', 'МГТУ им. Баумана (демо)', 'НГУ (демо)'].map((name) =>
+    universitySeeds.map(({ name, kamId }) =>
       prisma.university.create({
         data: {
           name,
           region: 'демо-регион',
+          kamId,
         },
       }),
     ),
@@ -162,23 +222,28 @@ async function seedDemoUniversitiesAndLicenses(productsByName: Map<string, strin
 
 async function resetSeedManagedTables() {
   // Порядок важен из-за внешних ключей. Затрагиваем только то, что заполняет этот seed.
+  // University.kamId ссылается на User — university.deleteMany() обязан идти раньше user.deleteMany().
   await prisma.license.deleteMany();
   await prisma.responsiblePerson.deleteMany();
   await prisma.itProduct.deleteMany();
   await prisma.vendor.deleteMany();
   await prisma.itDirection.deleteMany();
   await prisma.university.deleteMany();
+  await prisma.user.deleteMany();
 }
 
 async function main() {
   await resetSeedManagedTables();
 
+  const { rukovoditel, kam1, kam2 } = await seedUsers();
+  void rukovoditel;
+
   const rows = await readVendorRows();
   const { productsByName } = await seedVendorsCatalog(rows);
-  await seedDemoUniversitiesAndLicenses(productsByName);
+  await seedDemoUniversitiesAndLicenses(productsByName, { kam1: kam1.id, kam2: kam2.id });
 
   console.log(
-    `Готово: вендоров и продуктов из ${rows.length} строк файла, плюс синтетические вузы/лицензии.`,
+    `Готово: вендоров и продуктов из ${rows.length} строк файла, плюс синтетические вузы/лицензии, плюс 4 демо-пользователя (admin/rukovoditel/kam/kam2).`,
   );
 }
 

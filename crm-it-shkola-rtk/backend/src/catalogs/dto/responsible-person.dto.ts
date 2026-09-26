@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, OmitType, PartialType } from '@nestjs/swagger';
 
 export class ResponsiblePersonDto {
   @ApiProperty({ example: 'a3f0c2f0-1111-4a11-9a11-000000000001' })
@@ -25,3 +25,7 @@ export class ResponsiblePersonDto {
   @ApiPropertyOptional({ example: 'a3f0c2f0-3333-4a11-9a11-000000000020' })
   itProductId?: string | null;
 }
+
+export class CreateResponsiblePersonDto extends OmitType(ResponsiblePersonDto, ['id'] as const) {}
+
+export class UpdateResponsiblePersonDto extends PartialType(CreateResponsiblePersonDto) {}

@@ -1,0 +1,110 @@
+{
+  "realm": "it-school-crm",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": false,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": false,
+  "accessTokenLifespan": 300,
+
+  "roles": {
+    "client": {
+      "it-school-crm-backend": [
+        { "name": "kam", "description": "КАМ — видит и ведёт свои вузы" },
+        { "name": "rukovoditel", "description": "Руководитель — видит команду, переназначает ответственных" },
+        { "name": "administrator", "description": "Администратор платформы — каталоги, workflow-шаблоны, пользователи" }
+      ]
+    }
+  },
+
+  "clients": [
+    {
+      "clientId": "it-school-crm-backend",
+      "name": "CRM ИТ Школа РТК",
+      "description": "Public-клиент для фронта (Authorization Code + PKCE). directAccessGrantsEnabled включён только для dev-проверки логина тестовых пользователей curl'ом — не для прода.",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "http://localhost:5173/*",
+        "http://localhost:4200/*",
+        "http://localhost:3000/*",
+        "http://localhost:8081/*"
+      ],
+      "webOrigins": ["+"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "defaultClientScopes": ["openid", "web-origins", "acr", "profile", "roles", "email"],
+      "protocolMappers": [
+        {
+          "name": "client-roles-flat-claim",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-client-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "multivalued": "true",
+            "user.attribute": "",
+            "access.token.claim": "true",
+            "id.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "claim.name": "roles",
+            "jsonType.label": "String",
+            "usermodel.clientRoleMapping.clientId": "it-school-crm-backend"
+          }
+        },
+        {
+          "name": "backend-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "it-school-crm-backend",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        }
+      ]
+    }
+  ],
+
+  "users": [
+    {
+      "username": "test-kam",
+      "enabled": true,
+      "email": "test-kam@it-school-crm.local",
+      "emailVerified": true,
+      "firstName": "Тест",
+      "lastName": "КАМ",
+      "credentials": [{ "type": "password", "value": "Kam-Dev123!", "temporary": false }],
+      "clientRoles": { "it-school-crm-backend": ["kam"] }
+    },
+    {
+      "username": "test-rukovoditel",
+      "enabled": true,
+      "email": "test-rukovoditel@it-school-crm.local",
+      "emailVerified": true,
+      "firstName": "Тест",
+      "lastName": "Руководитель",
+      "credentials": [{ "type": "password", "value": "Ruk-Dev123!", "temporary": false }],
+      "clientRoles": { "it-school-crm-backend": ["rukovoditel"] }
+    },
+    {
+      "username": "test-admin",
+      "enabled": true,
+      "email": "test-admin@it-school-crm.local",
+      "emailVerified": true,
+      "firstName": "Тест",
+      "lastName": "Администратор",
+      "credentials": [{ "type": "password", "value": "Admin-Dev123!", "temporary": false }],
+      "clientRoles": { "it-school-crm-backend": ["administrator"] }
+    }
+  ]
+}

@@ -47,12 +47,16 @@ services:
       timeout: 5s
       retries: 10
 
-  # Dev-режим бэкенда (AUTH_MODE=dev, заголовок X-Dev-Role) не требует Keycloak —
-  # сервис поднят на будущее для реального OIDC-флоу (Шаг 1 плана), realm пока не импортирован.
+  # Realm it-school-crm импортируется из infra/keycloak/realm-export.json при каждом
+  # старте контейнера (--import-realm). Образ quay.io/keycloak/keycloak — Quarkus-дистрибутив
+  # (Keycloak 17+), поэтому легаси-переменная KEYCLOAK_IMPORT тут не работает: нужно
+  # класть файл(ы) в /opt/keycloak/data/import и явно просить импорт флагом команды.
+  # Dev-режим бэкенда (AUTH_MODE=dev, заголовок X-Dev-Role) продолжает работать
+  # независимо от Keycloak — см. backend/.env.example.
   keycloak:
     image: quay.io/keycloak/keycloak:26.0
     restart: unless-stopped
-    command: start-dev
+    command: start-dev --import-realm
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
@@ -60,6 +64,7 @@ services:
       - "8080:8080"
     volumes:
       - keycloak-data:/opt/keycloak/data
+      - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
 
 volumes:
   postgres-data:

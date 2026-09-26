@@ -1,6 +1,24 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put } from '@nestjs/common';
-import { ApiBody, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  Put,
+  Query,
+  Req,
+  Res,
+  UseInterceptors,
+} from '@nestjs/common';
+import { ApiBody, ApiOkResponse, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import type { Response } from 'express';
 import { CatalogsService } from './catalogs.service';
+import { CatalogScopeInterceptor, RequestWithCatalogScope } from './catalog-scope.interceptor';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { UserRoleDto } from '../auth/dto/user.dto';
 import { CreateVendorDto, UpdateVendorDto, VendorDto } from './dto/vendor.dto';
 import { CreateItDirectionDto, ItDirectionDto, UpdateItDirectionDto } from './dto/it-direction.dto';
 import { CreateItProductDto, ItProductDto, UpdateItProductDto } from './dto/it-product.dto';
@@ -10,243 +28,412 @@ import {
   UniversityDto,
   UpdateUniversityDto,
 } from './dto/university.dto';
-import { ResponsiblePersonDto } from './dto/responsible-person.dto';
+import {
+  CreateResponsiblePersonDto,
+  ResponsiblePersonDto,
+  UpdateResponsiblePersonDto,
+} from './dto/responsible-person.dto';
 import { CreateLicenseDto, LicenseDto, UpdateLicenseDto } from './dto/license.dto';
 import { CommitImportDto, ImportJobDto, ImportPreviewResultDto } from './dto/import-job.dto';
-import {
-  IMPORT_JOB_FIXTURE,
-  IMPORT_PREVIEW_FIXTURE,
-  IT_DIRECTION_FIXTURES,
-  IT_PRODUCT_FIXTURES,
-  LICENSE_FIXTURES,
-  RESPONSIBLE_PERSON_FIXTURES,
-  UNIVERSITY_FIXTURES,
-  VENDOR_FIXTURES,
-} from './fixtures/catalogs.fixtures';
+import { IMPORT_JOB_FIXTURE, IMPORT_PREVIEW_FIXTURE } from './fixtures/catalogs.fixtures';
 
+// Пагинация одинакова для всех списков: query-параметры page/pageSize,
+// тело ответа остаётся тем же массивом DTO (форма зафиксирована в Swagger
+// на шаге 0.4 и фронт уже на неё смотрит), а общее количество записей до
+// пагинации передаётся в заголовке ответа X-Total-Count.
+const PAGE_QUERY = { name: 'page', required: false, example: 1 } as const;
+const PAGE_SIZE_QUERY = { name: 'pageSize', required: false, example: 20 } as const;
+const TOTAL_COUNT_HEADER = {
+  'X-Total-Count': { description: 'Общее количество записей без учёта пагинации', schema: { type: 'integer' } },
+};
+const ANY_ROLE = [UserRoleDto.KAM, UserRoleDto.RUKOVODITEL, UserRoleDto.ADMINISTRATOR] as const;
+
+// CatalogScopeInterceptor считает видимость (какие kamId видны текущему
+// пользователю) один раз за запрос и кладёт в request.catalogScope — используется
+// эндпоинтами вузов/лицензий/ответственных для построчной RBAC-фильтрации.
 @ApiTags('catalogs')
 @Controller('catalogs')
+@UseInterceptors(CatalogScopeInterceptor)
 export class CatalogsController {
   constructor(private readonly catalogsService: CatalogsService) {}
 
-  // --- Вендоры -----------------------------------------------------------
+  // --- Вендоры (глобальный справочник, без построчных ограничений) --------
 
   @Get('vendors')
-  @ApiOperation({ summary: 'Список вендоров каталога' })
-  @ApiOkResponse({ type: VendorDto, isArray: true })
-  getVendors(): VendorDto[] {
-    return VENDOR_FIXTURES;
+  @Roles(...ANY_ROLE)
+  @ApiOperation({ summary: 'Список вендоров каталога (с пагинацией)' })
+  @ApiQuery(PAGE_QUERY)
+  @ApiQuery(PAGE_SIZE_QUERY)
+  @ApiOkResponse({ type: VendorDto, isArray: true, headers: TOTAL_COUNT_HEADER })
+  async getVendors(
+    @Res({ passthrough: true }) res: Response,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+  ): Promise<VendorDto[]> {
+    const { items, total } = await this.catalogsService.listVendors(page, pageSize);
+    res.setHeader('X-Total-Count', String(total));
+    return items;
   }
 
   @Get('vendors/:id')
+  @Roles(...ANY_ROLE)
   @ApiOperation({ summary: 'Вендор по идентификатору' })
-  @ApiParam({ name: 'id', example: VENDOR_FIXTURES[0].id })
+  @ApiParam({ name: 'id' })
   @ApiOkResponse({ type: VendorDto })
-  getVendorById(@Param('id') id: string): VendorDto {
-    return VENDOR_FIXTURES.find((vendor) => vendor.id === id) ?? VENDOR_FIXTURES[0];
+  getVendorById(@Param('id') id: string): Promise<VendorDto> {
+    return this.catalogsService.getVendorById(id);
   }
 
   @Post('vendors')
+  @Roles(UserRoleDto.ADMINISTRATOR)
   @ApiOperation({ summary: 'Создать вендора' })
   @ApiBody({ type: CreateVendorDto })
   @ApiOkResponse({ type: VendorDto })
-  createVendor(@Body() _dto: CreateVendorDto): VendorDto {
-    return VENDOR_FIXTURES[0];
+  createVendor(@Body() dto: CreateVendorDto): Promise<VendorDto> {
+    return this.catalogsService.createVendor(dto);
   }
 
   @Put('vendors/:id')
+  @Roles(UserRoleDto.ADMINISTRATOR)
   @ApiOperation({ summary: 'Обновить вендора' })
-  @ApiParam({ name: 'id', example: VENDOR_FIXTURES[0].id })
+  @ApiParam({ name: 'id' })
   @ApiBody({ type: UpdateVendorDto })
   @ApiOkResponse({ type: VendorDto })
-  updateVendor(@Param('id') id: string, @Body() _dto: UpdateVendorDto): VendorDto {
-    return VENDOR_FIXTURES.find((vendor) => vendor.id === id) ?? VENDOR_FIXTURES[0];
+  updateVendor(@Param('id') id: string, @Body() dto: UpdateVendorDto): Promise<VendorDto> {
+    return this.catalogsService.updateVendor(id, dto);
   }
 
   @Delete('vendors/:id')
+  @Roles(UserRoleDto.ADMINISTRATOR)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Удалить вендора' })
-  @ApiParam({ name: 'id', example: VENDOR_FIXTURES[0].id })
-  deleteVendor(@Param('id') _id: string): void {
-    return undefined;
+  @ApiParam({ name: 'id' })
+  deleteVendor(@Param('id') id: string): Promise<void> {
+    return this.catalogsService.deleteVendor(id);
   }
 
-  // --- ИТ-направления ------------------------------------------------------
+  // --- ИТ-направления (глобальный справочник) -------------------------------
 
   @Get('it-directions')
-  @ApiOperation({ summary: 'Список ИТ-направлений' })
-  @ApiOkResponse({ type: ItDirectionDto, isArray: true })
-  getItDirections(): ItDirectionDto[] {
-    return IT_DIRECTION_FIXTURES;
+  @Roles(...ANY_ROLE)
+  @ApiOperation({ summary: 'Список ИТ-направлений (с пагинацией)' })
+  @ApiQuery(PAGE_QUERY)
+  @ApiQuery(PAGE_SIZE_QUERY)
+  @ApiOkResponse({ type: ItDirectionDto, isArray: true, headers: TOTAL_COUNT_HEADER })
+  async getItDirections(
+    @Res({ passthrough: true }) res: Response,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+  ): Promise<ItDirectionDto[]> {
+    const { items, total } = await this.catalogsService.listItDirections(page, pageSize);
+    res.setHeader('X-Total-Count', String(total));
+    return items;
   }
 
   @Post('it-directions')
+  @Roles(UserRoleDto.ADMINISTRATOR)
   @ApiOperation({ summary: 'Создать ИТ-направление' })
   @ApiBody({ type: CreateItDirectionDto })
   @ApiOkResponse({ type: ItDirectionDto })
-  createItDirection(@Body() _dto: CreateItDirectionDto): ItDirectionDto {
-    return IT_DIRECTION_FIXTURES[0];
+  createItDirection(@Body() dto: CreateItDirectionDto): Promise<ItDirectionDto> {
+    return this.catalogsService.createItDirection(dto);
   }
 
   @Put('it-directions/:id')
+  @Roles(UserRoleDto.ADMINISTRATOR)
   @ApiOperation({ summary: 'Обновить ИТ-направление' })
-  @ApiParam({ name: 'id', example: IT_DIRECTION_FIXTURES[0].id })
+  @ApiParam({ name: 'id' })
   @ApiBody({ type: UpdateItDirectionDto })
   @ApiOkResponse({ type: ItDirectionDto })
-  updateItDirection(@Param('id') id: string, @Body() _dto: UpdateItDirectionDto): ItDirectionDto {
-    return IT_DIRECTION_FIXTURES.find((direction) => direction.id === id) ?? IT_DIRECTION_FIXTURES[0];
+  updateItDirection(@Param('id') id: string, @Body() dto: UpdateItDirectionDto): Promise<ItDirectionDto> {
+    return this.catalogsService.updateItDirection(id, dto);
   }
 
   @Delete('it-directions/:id')
+  @Roles(UserRoleDto.ADMINISTRATOR)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Удалить ИТ-направление' })
-  @ApiParam({ name: 'id', example: IT_DIRECTION_FIXTURES[0].id })
-  deleteItDirection(@Param('id') _id: string): void {
-    return undefined;
+  @ApiParam({ name: 'id' })
+  deleteItDirection(@Param('id') id: string): Promise<void> {
+    return this.catalogsService.deleteItDirection(id);
   }
 
-  // --- ИТ-продукты -----------------------------------------------------
+  // --- ИТ-продукты (глобальный справочник) ------------------------------
 
   @Get('it-products')
-  @ApiOperation({ summary: 'Список ИТ-продуктов каталога' })
-  @ApiOkResponse({ type: ItProductDto, isArray: true })
-  getItProducts(): ItProductDto[] {
-    return IT_PRODUCT_FIXTURES;
+  @Roles(...ANY_ROLE)
+  @ApiOperation({ summary: 'Список ИТ-продуктов каталога (с пагинацией и фильтрами)' })
+  @ApiQuery(PAGE_QUERY)
+  @ApiQuery(PAGE_SIZE_QUERY)
+  @ApiQuery({ name: 'itDirectionId', required: false })
+  @ApiQuery({ name: 'vendorId', required: false })
+  @ApiOkResponse({ type: ItProductDto, isArray: true, headers: TOTAL_COUNT_HEADER })
+  async getItProducts(
+    @Res({ passthrough: true }) res: Response,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+    @Query('itDirectionId') itDirectionId?: string,
+    @Query('vendorId') vendorId?: string,
+  ): Promise<ItProductDto[]> {
+    const { items, total } = await this.catalogsService.listItProducts(page, pageSize, itDirectionId, vendorId);
+    res.setHeader('X-Total-Count', String(total));
+    return items;
   }
 
   @Post('it-products')
+  @Roles(UserRoleDto.ADMINISTRATOR)
   @ApiOperation({ summary: 'Создать ИТ-продукт' })
   @ApiBody({ type: CreateItProductDto })
   @ApiOkResponse({ type: ItProductDto })
-  createItProduct(@Body() _dto: CreateItProductDto): ItProductDto {
-    return IT_PRODUCT_FIXTURES[0];
+  createItProduct(@Body() dto: CreateItProductDto): Promise<ItProductDto> {
+    return this.catalogsService.createItProduct(dto);
   }
 
   @Put('it-products/:id')
+  @Roles(UserRoleDto.ADMINISTRATOR)
   @ApiOperation({ summary: 'Обновить ИТ-продукт' })
-  @ApiParam({ name: 'id', example: IT_PRODUCT_FIXTURES[0].id })
+  @ApiParam({ name: 'id' })
   @ApiBody({ type: UpdateItProductDto })
   @ApiOkResponse({ type: ItProductDto })
-  updateItProduct(@Param('id') id: string, @Body() _dto: UpdateItProductDto): ItProductDto {
-    return IT_PRODUCT_FIXTURES.find((product) => product.id === id) ?? IT_PRODUCT_FIXTURES[0];
+  updateItProduct(@Param('id') id: string, @Body() dto: UpdateItProductDto): Promise<ItProductDto> {
+    return this.catalogsService.updateItProduct(id, dto);
   }
 
   @Delete('it-products/:id')
+  @Roles(UserRoleDto.ADMINISTRATOR)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Удалить ИТ-продукт' })
-  @ApiParam({ name: 'id', example: IT_PRODUCT_FIXTURES[0].id })
-  deleteItProduct(@Param('id') _id: string): void {
-    return undefined;
+  @ApiParam({ name: 'id' })
+  deleteItProduct(@Param('id') id: string): Promise<void> {
+    return this.catalogsService.deleteItProduct(id);
   }
 
-  // --- Вузы --------------------------------------------------------------
+  // --- Вузы: построчная видимость по роли ---------------------------------
 
   @Get('universities')
-  @ApiOperation({ summary: 'Список вузов' })
-  @ApiOkResponse({ type: UniversityDto, isArray: true })
-  getUniversities(): UniversityDto[] {
-    return UNIVERSITY_FIXTURES;
+  @Roles(...ANY_ROLE)
+  @ApiOperation({
+    summary:
+      'Список вузов (с пагинацией). КАМ видит только свои, Руководитель — команду, Администратор — всё',
+  })
+  @ApiQuery(PAGE_QUERY)
+  @ApiQuery(PAGE_SIZE_QUERY)
+  @ApiQuery({ name: 'kamId', required: false, description: 'Фильтр по ответственному КАМу' })
+  @ApiOkResponse({ type: UniversityDto, isArray: true, headers: TOTAL_COUNT_HEADER })
+  async getUniversities(
+    @Req() request: RequestWithCatalogScope,
+    @Res({ passthrough: true }) res: Response,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+    @Query('kamId') kamId?: string,
+  ): Promise<UniversityDto[]> {
+    const { items, total } = await this.catalogsService.listUniversities(request.catalogScope!, page, pageSize, kamId);
+    res.setHeader('X-Total-Count', String(total));
+    return items;
   }
 
   @Get('universities/:id')
-  @ApiOperation({ summary: 'Вуз по идентификатору' })
-  @ApiParam({ name: 'id', example: UNIVERSITY_FIXTURES[0].id })
+  @Roles(...ANY_ROLE)
+  @ApiOperation({ summary: 'Вуз по идентификатору (403, если вне зоны видимости роли)' })
+  @ApiParam({ name: 'id' })
   @ApiOkResponse({ type: UniversityDto })
-  getUniversityById(@Param('id') id: string): UniversityDto {
-    return UNIVERSITY_FIXTURES.find((university) => university.id === id) ?? UNIVERSITY_FIXTURES[0];
+  getUniversityById(@Req() request: RequestWithCatalogScope, @Param('id') id: string): Promise<UniversityDto> {
+    return this.catalogsService.getUniversityById(id, request.catalogScope!);
   }
 
   @Post('universities')
+  @Roles(UserRoleDto.ADMINISTRATOR)
   @ApiOperation({ summary: 'Создать вуз' })
   @ApiBody({ type: CreateUniversityDto })
   @ApiOkResponse({ type: UniversityDto })
-  createUniversity(@Body() _dto: CreateUniversityDto): UniversityDto {
-    return UNIVERSITY_FIXTURES[0];
+  createUniversity(@Body() dto: CreateUniversityDto): Promise<UniversityDto> {
+    return this.catalogsService.createUniversity(dto);
   }
 
   @Put('universities/:id')
+  @Roles(UserRoleDto.ADMINISTRATOR)
   @ApiOperation({ summary: 'Обновить вуз' })
-  @ApiParam({ name: 'id', example: UNIVERSITY_FIXTURES[0].id })
+  @ApiParam({ name: 'id' })
   @ApiBody({ type: UpdateUniversityDto })
   @ApiOkResponse({ type: UniversityDto })
-  updateUniversity(@Param('id') id: string, @Body() _dto: UpdateUniversityDto): UniversityDto {
-    return UNIVERSITY_FIXTURES.find((university) => university.id === id) ?? UNIVERSITY_FIXTURES[0];
+  updateUniversity(@Param('id') id: string, @Body() dto: UpdateUniversityDto): Promise<UniversityDto> {
+    return this.catalogsService.updateUniversity(id, dto);
   }
 
   @Delete('universities/:id')
+  @Roles(UserRoleDto.ADMINISTRATOR)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Удалить вуз' })
-  @ApiParam({ name: 'id', example: UNIVERSITY_FIXTURES[0].id })
-  deleteUniversity(@Param('id') _id: string): void {
-    return undefined;
+  @ApiParam({ name: 'id' })
+  deleteUniversity(@Param('id') id: string): Promise<void> {
+    return this.catalogsService.deleteUniversity(id);
   }
 
   @Put('universities/:id/responsible')
-  @ApiOperation({ summary: 'Переназначить КАМа, ответственного за вуз' })
-  @ApiParam({ name: 'id', example: UNIVERSITY_FIXTURES[0].id })
+  @Roles(UserRoleDto.RUKOVODITEL, UserRoleDto.ADMINISTRATOR)
+  @ApiOperation({
+    summary:
+      'Переназначить/снять КАМа, ответственного за вуз (kamId: null — снять). Руководитель — только в своей команде и по своим вузам',
+  })
+  @ApiParam({ name: 'id' })
   @ApiBody({ type: ReassignUniversityResponsibleDto })
   @ApiOkResponse({ type: UniversityDto })
   reassignUniversityResponsible(
+    @Req() request: RequestWithCatalogScope,
     @Param('id') id: string,
-    @Body() _dto: ReassignUniversityResponsibleDto,
-  ): UniversityDto {
-    return UNIVERSITY_FIXTURES.find((university) => university.id === id) ?? UNIVERSITY_FIXTURES[0];
+    @Body() dto: ReassignUniversityResponsibleDto,
+  ): Promise<UniversityDto> {
+    return this.catalogsService.reassignUniversityResponsible(id, dto.kamId, request.catalogScope!);
   }
+
+  // --- Ответственные: видимость наследуется от связанного вуза -----------
 
   @Get('responsible-persons')
-  @ApiOperation({ summary: 'Контактные лица (по вузам и продуктам вендоров)' })
-  @ApiOkResponse({ type: ResponsiblePersonDto, isArray: true })
-  getResponsiblePersons(): ResponsiblePersonDto[] {
-    return RESPONSIBLE_PERSON_FIXTURES;
+  @Roles(...ANY_ROLE)
+  @ApiOperation({
+    summary:
+      'Контактные лица (по вузам и продуктам вендоров). Контакты без вуза видны всем, привязанные к вузу — по видимости роли',
+  })
+  @ApiQuery(PAGE_QUERY)
+  @ApiQuery(PAGE_SIZE_QUERY)
+  @ApiQuery({ name: 'universityId', required: false })
+  @ApiQuery({ name: 'itProductId', required: false })
+  @ApiOkResponse({ type: ResponsiblePersonDto, isArray: true, headers: TOTAL_COUNT_HEADER })
+  async getResponsiblePersons(
+    @Req() request: RequestWithCatalogScope,
+    @Res({ passthrough: true }) res: Response,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+    @Query('universityId') universityId?: string,
+    @Query('itProductId') itProductId?: string,
+  ): Promise<ResponsiblePersonDto[]> {
+    const { items, total } = await this.catalogsService.listResponsiblePersons(
+      request.catalogScope!,
+      page,
+      pageSize,
+      universityId,
+      itProductId,
+    );
+    res.setHeader('X-Total-Count', String(total));
+    return items;
   }
 
-  // --- Лицензии/договоры -------------------------------------------------
+  @Get('responsible-persons/:id')
+  @Roles(...ANY_ROLE)
+  @ApiOperation({ summary: 'Ответственный по идентификатору' })
+  @ApiParam({ name: 'id' })
+  @ApiOkResponse({ type: ResponsiblePersonDto })
+  getResponsiblePersonById(
+    @Req() request: RequestWithCatalogScope,
+    @Param('id') id: string,
+  ): Promise<ResponsiblePersonDto> {
+    return this.catalogsService.getResponsiblePersonById(id, request.catalogScope!);
+  }
+
+  @Post('responsible-persons')
+  @Roles(UserRoleDto.ADMINISTRATOR)
+  @ApiOperation({ summary: 'Создать ответственного (контакт вуза и/или продукта вендора)' })
+  @ApiBody({ type: CreateResponsiblePersonDto })
+  @ApiOkResponse({ type: ResponsiblePersonDto })
+  createResponsiblePerson(@Body() dto: CreateResponsiblePersonDto): Promise<ResponsiblePersonDto> {
+    return this.catalogsService.createResponsiblePerson(dto);
+  }
+
+  @Put('responsible-persons/:id')
+  @Roles(UserRoleDto.ADMINISTRATOR)
+  @ApiOperation({ summary: 'Обновить ответственного' })
+  @ApiParam({ name: 'id' })
+  @ApiBody({ type: UpdateResponsiblePersonDto })
+  @ApiOkResponse({ type: ResponsiblePersonDto })
+  updateResponsiblePerson(
+    @Param('id') id: string,
+    @Body() dto: UpdateResponsiblePersonDto,
+  ): Promise<ResponsiblePersonDto> {
+    return this.catalogsService.updateResponsiblePerson(id, dto);
+  }
+
+  @Delete('responsible-persons/:id')
+  @Roles(UserRoleDto.ADMINISTRATOR)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Удалить ответственного' })
+  @ApiParam({ name: 'id' })
+  deleteResponsiblePerson(@Param('id') id: string): Promise<void> {
+    return this.catalogsService.deleteResponsiblePerson(id);
+  }
+
+  // --- Лицензии/договоры: видимость наследуется от вуза -------------------
 
   @Get('licenses')
-  @ApiOperation({ summary: 'Список лицензий/договоров (источник для радара лицензий и SLA)' })
-  @ApiOkResponse({ type: LicenseDto, isArray: true })
-  getLicenses(): LicenseDto[] {
-    return LICENSE_FIXTURES;
+  @Roles(...ANY_ROLE)
+  @ApiOperation({
+    summary:
+      'Список лицензий/договоров (источник для радара лицензий и SLA), с пагинацией, фильтрами и видимостью по роли',
+  })
+  @ApiQuery(PAGE_QUERY)
+  @ApiQuery(PAGE_SIZE_QUERY)
+  @ApiQuery({ name: 'universityId', required: false })
+  @ApiQuery({ name: 'itProductId', required: false })
+  @ApiOkResponse({ type: LicenseDto, isArray: true, headers: TOTAL_COUNT_HEADER })
+  async getLicenses(
+    @Req() request: RequestWithCatalogScope,
+    @Res({ passthrough: true }) res: Response,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+    @Query('universityId') universityId?: string,
+    @Query('itProductId') itProductId?: string,
+  ): Promise<LicenseDto[]> {
+    const { items, total } = await this.catalogsService.listLicenses(
+      request.catalogScope!,
+      page,
+      pageSize,
+      universityId,
+      itProductId,
+    );
+    res.setHeader('X-Total-Count', String(total));
+    return items;
   }
 
   @Get('licenses/:id')
+  @Roles(...ANY_ROLE)
   @ApiOperation({ summary: 'Лицензия/договор по идентификатору' })
-  @ApiParam({ name: 'id', example: LICENSE_FIXTURES[0].id })
+  @ApiParam({ name: 'id' })
   @ApiOkResponse({ type: LicenseDto })
-  getLicenseById(@Param('id') id: string): LicenseDto {
-    return LICENSE_FIXTURES.find((license) => license.id === id) ?? LICENSE_FIXTURES[0];
+  getLicenseById(@Req() request: RequestWithCatalogScope, @Param('id') id: string): Promise<LicenseDto> {
+    return this.catalogsService.getLicenseById(id, request.catalogScope!);
   }
 
   @Post('licenses')
+  @Roles(UserRoleDto.ADMINISTRATOR)
   @ApiOperation({ summary: 'Создать лицензию/договор' })
   @ApiBody({ type: CreateLicenseDto })
   @ApiOkResponse({ type: LicenseDto })
-  createLicense(@Body() _dto: CreateLicenseDto): LicenseDto {
-    return LICENSE_FIXTURES[0];
+  createLicense(@Body() dto: CreateLicenseDto): Promise<LicenseDto> {
+    return this.catalogsService.createLicense(dto);
   }
 
   @Put('licenses/:id')
+  @Roles(UserRoleDto.ADMINISTRATOR)
   @ApiOperation({ summary: 'Обновить лицензию/договор' })
-  @ApiParam({ name: 'id', example: LICENSE_FIXTURES[0].id })
+  @ApiParam({ name: 'id' })
   @ApiBody({ type: UpdateLicenseDto })
   @ApiOkResponse({ type: LicenseDto })
-  updateLicense(@Param('id') id: string, @Body() _dto: UpdateLicenseDto): LicenseDto {
-    return LICENSE_FIXTURES.find((license) => license.id === id) ?? LICENSE_FIXTURES[0];
+  updateLicense(@Param('id') id: string, @Body() dto: UpdateLicenseDto): Promise<LicenseDto> {
+    return this.catalogsService.updateLicense(id, dto);
   }
 
   @Delete('licenses/:id')
+  @Roles(UserRoleDto.ADMINISTRATOR)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Удалить лицензию/договор' })
-  @ApiParam({ name: 'id', example: LICENSE_FIXTURES[0].id })
-  deleteLicense(@Param('id') _id: string): void {
-    return undefined;
+  @ApiParam({ name: 'id' })
+  deleteLicense(@Param('id') id: string): Promise<void> {
+    return this.catalogsService.deleteLicense(id);
   }
 
-  // --- Импорт xlsx с маппингом и дедупом ----------------------------------
+  // --- Импорт xlsx с маппингом и дедупом (пока стаб — отдельный шаг плана) ---
 
-  // Превью не пишет в БД — только показывает построчный маппинг и найденные
-  // дубли/фаззи-совпадения по названию вуза, чтобы админ подтвердил перед записью.
   @Post('import/preview')
+  @Roles(UserRoleDto.ADMINISTRATOR)
   @ApiOperation({ summary: 'Превью xlsx-импорта: маппинг полей, дедуп/фаззи-матчинг по вузу' })
   @ApiOkResponse({ type: ImportPreviewResultDto })
   previewImport(): ImportPreviewResultDto {
@@ -254,6 +441,7 @@ export class CatalogsController {
   }
 
   @Post('import/commit')
+  @Roles(UserRoleDto.ADMINISTRATOR)
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiOperation({ summary: 'Подтвердить и записать результат импорта, полученный в превью' })
   @ApiBody({ type: CommitImportDto })
