@@ -52,10 +52,10 @@ export async function renderInteractionsXlsx(items: InteractionReportItemDto[]):
 // колонки, перенос на новую страницу по мере заполнения. Не финальный отчёт
 // для заказчика, только для проверки данных на фронте.
 const PDF_COLUMNS: Array<{ label: string; width: number; get: (item: InteractionReportItemDto) => string }> = [
-  { label: 'Вуз', width: 140, get: (i) => i.universityName },
+  { label: 'Вуз', width: 140, get: (i) => i.universityName ?? '— (требует проверки)' },
   { label: 'Продукт', width: 110, get: (i) => i.itProductName ?? '—' },
   { label: 'Статус', width: 130, get: (i) => i.currentStatusName },
-  { label: 'Ответственный', width: 140, get: (i) => i.responsibleUserName },
+  { label: 'Ответственный', width: 140, get: (i) => i.responsibleUserName ?? '—' },
   { label: 'Дней в статусе', width: 90, get: (i) => String(i.daysInCurrentStatus) },
   { label: 'Просрочено', width: 90, get: (i) => (i.isOverdue ? 'да' : 'нет') },
 ];

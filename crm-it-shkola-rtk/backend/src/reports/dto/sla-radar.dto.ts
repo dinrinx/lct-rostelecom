@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { WorkflowPhaseDto } from '../../workflow/dto/workflow-status.dto';
 
 // Взаимодействие, зависшее на одном статусе дольше SLA-порога для его фазы
@@ -7,11 +7,12 @@ export class SlaRadarItemDto {
   @ApiProperty({ example: 'b3000000-0000-4000-8000-000000000001' })
   interactionInstanceId!: string;
 
-  @ApiProperty({ example: 'a5000000-0000-4000-8000-000000000001' })
-  universityId!: string;
+  // Nullable — заявки из интеграции с needsReview=true могут быть без вуза.
+  @ApiPropertyOptional({ example: 'a5000000-0000-4000-8000-000000000001', nullable: true })
+  universityId?: string | null;
 
-  @ApiProperty({ example: 'СПбГУ (демо)' })
-  universityName!: string;
+  @ApiPropertyOptional({ example: 'СПбГУ (демо)', nullable: true })
+  universityName?: string | null;
 
   @ApiProperty({ example: 'b1000000-0000-4000-8000-000000000002' })
   currentStatusId!: string;
@@ -22,11 +23,11 @@ export class SlaRadarItemDto {
   @ApiProperty({ enum: WorkflowPhaseDto, example: WorkflowPhaseDto.CONTRACTING })
   phase!: WorkflowPhaseDto;
 
-  @ApiProperty({ example: 'c0000000-0000-4000-8000-000000000001' })
-  responsibleUserId!: string;
+  @ApiPropertyOptional({ example: 'c0000000-0000-4000-8000-000000000001', nullable: true })
+  responsibleUserId?: string | null;
 
-  @ApiProperty({ example: 'Иванова Мария Сергеевна' })
-  responsibleUserName!: string;
+  @ApiPropertyOptional({ example: 'Иванова Мария Сергеевна', nullable: true })
+  responsibleUserName?: string | null;
 
   @ApiProperty({ example: '2026-09-06T14:30:00.000Z' })
   statusSince!: string;

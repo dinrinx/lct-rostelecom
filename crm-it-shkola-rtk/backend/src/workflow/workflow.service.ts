@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import {
@@ -11,11 +11,14 @@ import { WorkflowTemplateVersionDto, WorkflowTemplateWithActiveVersionDto } from
 import { WorkflowStatusDto } from './dto/workflow-status.dto';
 import { CreateInteractionInstanceDto } from './dto/create-interaction-instance.dto';
 import { TransitionInteractionInstanceDto } from './dto/transition-interaction-instance.dto';
+import { AssignInteractionInstanceDto } from './dto/assign-interaction-instance.dto';
 import { InteractionInstanceDto, StatusHistoryEntryDto } from './dto/interaction-instance.dto';
+import { UserRoleDto } from '../auth/dto/user.dto';
 import type { CatalogScope } from '../catalogs/catalog-scope.interceptor';
 import {
   assertUniversityOrUnassignedVisible,
   assertUniversityVisible,
+  assertUserHasKamRole,
   universityWhereForScope,
 } from '../catalogs/catalogs.service';
 
@@ -289,6 +292,82 @@ export class WorkflowService {
     }
     assertUniversityOrUnassignedVisible(instance.university, scope);
     return toInstanceDto(instance);
+  }
+
+  // Закрывает гэп из integrations/sync: заявка без вуза (needsReview=true)
+  // не может остаться так навсегда — вуз/ответственный назначаются сюда вручную
+  // (RUKOVODITEL/ADMINISTRATOR, см. workflow.controller.ts). needsReview снимается
+  // автоматически, как только у инстанса есть И вуз, И ответственный — до этого
+  // момента, даже если назначили что-то одно, инстанс остаётся "требует проверки".
+  async assignInstance(
+    instanceId: string,
+    dto: AssignInteractionInstanceDto,
+    scope: CatalogScope,
+  ): Promise<InteractionInstanceDto> {
+    if (!dto.universityId && !dto.responsibleUserId) {
+      throw new BadRequestException({
+        code: 'WORKFLOW_ASSIGNMENT_EMPTY',
+        message: 'Нужно указать хотя бы одно из полей: universityId, responsibleUserId',
+      });
+    }
+
+    const instance = await this.prisma.interactionInstance.findUnique({
+      where: { id: instanceId },
+      include: { university: true },
+    });
+    if (!instance) {
+      throw new NotFoundException({
+        code: 'WORKFLOW_INSTANCE_NOT_FOUND',
+        message: `Взаимодействие с id "${instanceId}" не найдено`,
+      });
+    }
+    // Текущее состояние (может быть без вуза вовсе) — та же видимость, что и на чтении.
+    assertUniversityOrUnassignedVisible(instance.university, scope);
+
+    let universityId = instance.universityId;
+    let universityKamId: string | null = instance.university?.kamId ?? null;
+    if (dto.universityId) {
+      const university = await this.prisma.university.findUnique({ where: { id: dto.universityId } });
+      if (!university) {
+        throw new NotFoundException({
+          code: 'UNIVERSITY_NOT_FOUND',
+          message: `Вуз с id "${dto.universityId}" не найден`,
+        });
+      }
+      // Целевой вуз тоже должен быть в зоне видимости — иначе Руководитель мог бы
+      // тайно "раздать" чужой (не своей команды) вуз через этот эндпоинт.
+      assertUniversityVisible(university, scope);
+      universityId = dto.universityId;
+      universityKamId = university.kamId;
+    }
+
+    let responsibleUserId = instance.responsibleUserId;
+    if (dto.responsibleUserId) {
+      await assertUserHasKamRole(this.prisma, dto.responsibleUserId);
+      if (scope.role === UserRoleDto.RUKOVODITEL && !scope.visibleKamIds?.includes(dto.responsibleUserId)) {
+        throw new ForbiddenException({
+          code: 'CATALOG_SCOPE_FORBIDDEN',
+          message: 'Руководитель может назначать ответственным только КАМа из своей команды',
+        });
+      }
+      responsibleUserId = dto.responsibleUserId;
+    } else if (!responsibleUserId && universityKamId) {
+      // Тот же дефолт, что и в createInstance: вуз назначен, ответственный —
+      // явно не передан -> берём КАМа этого вуза, а не оставляем instance
+      // с назначенным вузом, но без единого владельца процесса.
+      responsibleUserId = universityKamId;
+    }
+
+    const updated = await this.prisma.interactionInstance.update({
+      where: { id: instanceId },
+      data: {
+        universityId,
+        responsibleUserId,
+        needsReview: !(universityId && responsibleUserId),
+      },
+    });
+
+    return toInstanceDto(updated);
   }
 
   // Инстанс всегда заводится на активной версии активного шаблона — выбор

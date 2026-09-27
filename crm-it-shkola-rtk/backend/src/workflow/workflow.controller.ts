@@ -7,6 +7,7 @@ import { CreateWorkflowTemplateDto, UpdateWorkflowTemplateDto } from './dto/work
 import { InteractionInstanceDto, StatusHistoryEntryDto } from './dto/interaction-instance.dto';
 import { CreateInteractionInstanceDto } from './dto/create-interaction-instance.dto';
 import { TransitionInteractionInstanceDto } from './dto/transition-interaction-instance.dto';
+import { AssignInteractionInstanceDto } from './dto/assign-interaction-instance.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRoleDto } from '../auth/dto/user.dto';
 import { CatalogScopeInterceptor, RequestWithCatalogScope } from '../catalogs/catalog-scope.interceptor';
@@ -16,6 +17,10 @@ const ANY_ROLE = [UserRoleDto.KAM, UserRoleDto.RUKOVODITEL, UserRoleDto.ADMINIST
 // в этой задаче явно описан только как "видит все инстансы команды", без права
 // создавать/переводить за своих КАМов, поэтому в это множество не входит.
 const ACTOR_ROLES = [UserRoleDto.KAM, UserRoleDto.ADMINISTRATOR] as const;
+// Ручное назначение вуза/ответственного на needsReview-инстанс — явно только
+// Руководитель/Админ по формулировке задачи ("назначает вручную rukovoditel/admin"),
+// КАМ сюда не входит: он не должен сам себе назначать чужие/ничейные заявки.
+const ASSIGNMENT_ROLES = [UserRoleDto.RUKOVODITEL, UserRoleDto.ADMINISTRATOR] as const;
 
 // Определяет пользователя, выполняющего действие (changedById/responsibleUserId
 // по умолчанию) — DevRoleGuard уже резолвит currentUserId по email канонического
@@ -133,6 +138,28 @@ export class WorkflowController {
     @Req() request: RequestWithCatalogScope,
   ): Promise<InteractionInstanceDto> {
     return this.workflowService.createInstance(dto, request.catalogScope!);
+  }
+
+  @Put('instances/:id/assignment')
+  @ApiOperation({
+    summary: 'Назначить вуз и/или ответственного инстансу без них (needsReview=true из integrations/sync)',
+    description:
+      'Не мутирует статус/историю — только universityId/responsibleUserId (+пересчитывает needsReview). ' +
+      'Хотя бы одно из полей обязательно. Если передан только universityId — ответственным по умолчанию ' +
+      'становится кАМ этого вуза (University.kamId), как и при создании инстанса вручную. ' +
+      'Руководитель может назначать вуз/ответственного только в пределах своей команды.',
+  })
+  @ApiHeader({ name: 'X-Dev-Role', required: false, example: 'rukovoditel' })
+  @ApiParam({ name: 'id', example: 'b3000000-0000-4000-8000-000000000001' })
+  @ApiBody({ type: AssignInteractionInstanceDto })
+  @ApiOkResponse({ type: InteractionInstanceDto })
+  @Roles(...ASSIGNMENT_ROLES)
+  assignInstance(
+    @Param('id') id: string,
+    @Body() dto: AssignInteractionInstanceDto,
+    @Req() request: RequestWithCatalogScope,
+  ): Promise<InteractionInstanceDto> {
+    return this.workflowService.assignInstance(id, dto, request.catalogScope!);
   }
 
   @Post('instances/:id/transition')

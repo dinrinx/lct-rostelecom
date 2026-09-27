@@ -1,83 +1,90 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put } from '@nestjs/common';
-import { ApiBody, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { BadRequestException, Body, Controller, Get, HttpCode, HttpStatus, Post, Put, Req } from '@nestjs/common';
+import { ApiBody, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { IntegrationsService } from './integrations.service';
 import { OrderDto } from './dto/order.dto';
 import { SyncRunDto } from './dto/sync-log.dto';
 import { CourseMappingDto, UpsertCourseMappingDto } from './dto/course-mapping.dto';
-import {
-  COURSE_MAPPING_FIXTURES,
-  ORDER_FIXTURES,
-  SYNC_RUN_FIXTURES,
-} from './fixtures/orders.fixtures';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { UserRoleDto } from '../auth/dto/user.dto';
+import type { RequestWithDevRole } from '../auth/guards/dev-role.guard';
 
+// Весь модуль — только ADMINISTRATOR (см. docs/backend-plan.md, Integrations:
+// "Админ / системный вызов" для sync). RBAC по вузам/КАМам здесь не нужен —
+// интеграция работает на уровне всей системы, не отдельного вуза.
 @ApiTags('integrations')
 @Controller('integrations')
 export class IntegrationsController {
   constructor(private readonly integrationsService: IntegrationsService) {}
 
   @Get('orders')
-  @ApiOperation({ summary: 'Список заявок, полученных из внешней интеграции (сайт/LMS)' })
+  @Roles(UserRoleDto.ADMINISTRATOR)
+  @ApiOperation({
+    summary: 'Список заявок, полученных из внешней интеграции (сайт/LMS)',
+    description:
+      'МОК: читает backend/fixtures/integrations/orders.json вместо реального обращения к внешнему API. ' +
+      'Контракт (форма заявки, см. OrderDto) принят самостоятельно по итогам разбора реального экспортного файла от организаторов — ' +
+      'в проде здесь был бы HTTP-вызов к сайту/LMS с тем же самым выходным контрактом.',
+  })
   @ApiOkResponse({ type: OrderDto, isArray: true })
-  getOrders(): OrderDto[] {
-    return ORDER_FIXTURES;
-  }
-
-  @Get('orders/:externalId')
-  @ApiOperation({ summary: 'Заявка по номеру (внешний «Номер заявки»)' })
-  @ApiParam({ name: 'externalId', example: ORDER_FIXTURES[0].externalId })
-  @ApiOkResponse({ type: OrderDto })
-  getOrderByExternalId(@Param('externalId') externalId: string): OrderDto {
-    return ORDER_FIXTURES.find((order) => order.externalId === externalId) ?? ORDER_FIXTURES[0];
-  }
-
-  // Webhook приёма заявки от внешней системы (сайт/LMS); тело запроса приходит
-  // в исходном виде (см. маппинг в OrderDto), контроллер отдаёт уже нормализованную заявку.
-  @Post('orders')
-  @HttpCode(HttpStatus.ACCEPTED)
-  @ApiOperation({ summary: 'Приём заявки из внешней системы (сайт/LMS)' })
-  @ApiBody({ type: OrderDto })
-  @ApiOkResponse({ type: OrderDto })
-  receiveOrder(@Body() _dto: OrderDto): OrderDto {
-    return ORDER_FIXTURES[0];
+  getOrders(): Promise<OrderDto[]> {
+    return this.integrationsService.getOrders();
   }
 
   // Забирает заявки мок-адаптера, создаёт/обновляет workflow-инстансы;
-  // дедуп — по «Номер заявки» (externalId).
+  // дедуп — по «Номер заявки» (externalId). Вуз НЕ выводится из заявки —
+  // только курс/направление/продукт через course-mapping; каждый созданный
+  // инстанс получает needsReview=true, universityId=null, responsibleUserId=null —
+  // руководитель/админ назначают вуз и ответственного вручную.
   @Post('sync')
   @HttpCode(HttpStatus.ACCEPTED)
-  @ApiOperation({ summary: 'Забрать заявки и создать/обновить workflow-инстансы без дублей' })
+  @Roles(UserRoleDto.ADMINISTRATOR)
+  @ApiOperation({
+    summary: 'Забрать заявки и создать/обновить workflow-инстансы без дублей',
+    description:
+      'МОК: в реальной интеграции это был бы вызов внешнего API сайта/LMS (см. GET /integrations/orders); ' +
+      'здесь синхронизация читает тот же фиктивный адаптер. Заявка не содержит вуза — маппинг заявка→вуз ' +
+      'НЕ выполняется автоматически: определяется только направление/продукт (через course-mapping), ' +
+      'а вуз и ответственный назначаются вручную (needsReview=true до назначения).',
+  })
   @ApiOkResponse({ type: SyncRunDto })
-  runSync(): SyncRunDto {
-    return SYNC_RUN_FIXTURES[0];
+  runSync(@Req() request: RequestWithDevRole): Promise<SyncRunDto> {
+    if (!request.currentUserId) {
+      throw new BadRequestException({ code: 'CURRENT_USER_REQUIRED', message: 'Не удалось определить текущего пользователя' });
+    }
+    return this.integrationsService.runSync(request.currentUserId);
   }
 
   @Get('sync/log')
+  @Roles(UserRoleDto.ADMINISTRATOR)
   @ApiOperation({ summary: 'История запусков синхронизации' })
   @ApiOkResponse({ type: SyncRunDto, isArray: true })
-  getSyncLog(): SyncRunDto[] {
-    return SYNC_RUN_FIXTURES;
+  getSyncLog(): Promise<SyncRunDto[]> {
+    return this.integrationsService.getSyncLog();
   }
 
   @Get('course-mapping')
+  @Roles(UserRoleDto.ADMINISTRATOR)
   @ApiOperation({ summary: 'Таблица соответствий «Курс» -> ИТ-направление/ИТ-продукт' })
   @ApiOkResponse({ type: CourseMappingDto, isArray: true })
-  getCourseMapping(): CourseMappingDto[] {
-    return COURSE_MAPPING_FIXTURES;
+  getCourseMapping(): Promise<CourseMappingDto[]> {
+    return this.integrationsService.getCourseMapping();
   }
 
   @Post('course-mapping')
+  @Roles(UserRoleDto.ADMINISTRATOR)
   @ApiOperation({ summary: 'Добавить соответствие «Курс» -> ИТ-продукт' })
   @ApiBody({ type: UpsertCourseMappingDto })
   @ApiOkResponse({ type: CourseMappingDto })
-  createCourseMapping(@Body() _dto: UpsertCourseMappingDto): CourseMappingDto {
-    return COURSE_MAPPING_FIXTURES[0];
+  createCourseMapping(@Body() dto: UpsertCourseMappingDto): Promise<CourseMappingDto> {
+    return this.integrationsService.createCourseMapping(dto);
   }
 
   @Put('course-mapping')
+  @Roles(UserRoleDto.ADMINISTRATOR)
   @ApiOperation({ summary: 'Изменить соответствие «Курс» -> ИТ-продукт' })
   @ApiBody({ type: UpsertCourseMappingDto })
   @ApiOkResponse({ type: CourseMappingDto })
-  updateCourseMapping(@Body() _dto: UpsertCourseMappingDto): CourseMappingDto {
-    return COURSE_MAPPING_FIXTURES[0];
+  updateCourseMapping(@Body() dto: UpsertCourseMappingDto): Promise<CourseMappingDto> {
+    return this.integrationsService.updateCourseMapping(dto);
   }
 }

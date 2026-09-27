@@ -98,6 +98,28 @@ export function assertUniversityOrUnassignedVisible(
   assertUniversityVisible(university, scope);
 }
 
+// kamId/responsibleUserId — это "ответственный КАМ" по контракту (см. комментарий
+// в schema.prisma над University.kamId и InteractionInstance.responsibleUserId);
+// без этой проверки ADMINISTRATOR/RUKOVODITEL мог молча назначить ответственным
+// пользователя с ролью RUKOVODITEL/ADMINISTRATOR, что ломает семантику построчного
+// RBAC (CatalogScopeInterceptor: только КАМы имеют "свои вузы"). Общая для
+// University.kamId (catalogs) и InteractionInstance.responsibleUserId (workflow).
+export async function assertUserHasKamRole(prisma: PrismaService, userId: string): Promise<void> {
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
+  if (!user) {
+    throw new BadRequestException({
+      code: 'KAM_NOT_FOUND',
+      message: `Пользователь с id "${userId}" не найден`,
+    });
+  }
+  if (user.role !== UserRoleDto.KAM) {
+    throw new BadRequestException({
+      code: 'RESPONSIBLE_MUST_BE_KAM',
+      message: `Ответственным может быть только пользователь с ролью KAM (у "${userId}" роль ${user.role})`,
+    });
+  }
+}
+
 function toVendorDto(vendor: Vendor): VendorDto {
   return {
     id: vendor.id,
@@ -352,24 +374,8 @@ export class CatalogsService {
     return toUniversityDto(university);
   }
 
-  // kamId — это "ответственный КАМ" по контракту (см. комментарий в schema.prisma
-  // над University.kamId); без этой проверки ADMINISTRATOR мог молча назначить
-  // ответственным пользователя с ролью RUKOVODITEL/ADMINISTRATOR, что ломает
-  // семантику построчного RBAC (CatalogScopeInterceptor).
   private async assertUserHasKamRole(userId: string): Promise<void> {
-    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
-    if (!user) {
-      throw new BadRequestException({
-        code: 'KAM_NOT_FOUND',
-        message: `Пользователь с id "${userId}" не найден`,
-      });
-    }
-    if (user.role !== UserRoleDto.KAM) {
-      throw new BadRequestException({
-        code: 'RESPONSIBLE_MUST_BE_KAM',
-        message: `Ответственным за вуз может быть только пользователь с ролью KAM (у "${userId}" роль ${user.role})`,
-      });
-    }
+    return assertUserHasKamRole(this.prisma, userId);
   }
 
   // --- Ответственные -----------------------------------------------------

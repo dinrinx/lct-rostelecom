@@ -41,13 +41,20 @@ const EXPORT_COLUMNS: Array<{ header: string; key: keyof InteractionReportItemDt
 
 // Видимость взаимодействий по роли: Администратор — все; КАМ/Руководитель —
 // где ответственный из их зоны видимости ИЛИ вуз из их зоны (так Руководитель
-// видит и процессы вузов, у которых ответственного сняли).
+// видит и процессы вузов, у которых ответственного сняли). Инстансы вовсе без
+// вуза (needsReview из интеграции, см. integrations/sync) — та же политика,
+// что и для University без kamId: КАМ не видит (не его вуз, разбирать нечего),
+// Руководитель видит и берёт на себя триаж (includeUnassigned).
 function interactionWhereForScope(scope: CatalogScope): Prisma.InteractionInstanceWhereInput {
   if (scope.visibleKamIds === null) {
     return {};
   }
   return {
-    OR: [{ responsibleUserId: { in: scope.visibleKamIds } }, { university: universityWhereForScope(scope) }],
+    OR: [
+      { responsibleUserId: { in: scope.visibleKamIds } },
+      { university: universityWhereForScope(scope) },
+      ...(scope.includeUnassigned ? [{ universityId: null }] : []),
+    ],
   };
 }
 
@@ -116,7 +123,7 @@ export class ReportsService {
       return {
         interactionInstanceId: instance.id,
         universityId: instance.universityId,
-        universityName: instance.university.name,
+        universityName: instance.university?.name ?? null,
         itDirectionId: instance.itProduct?.itDirection.id ?? null,
         itDirectionName: instance.itProduct?.itDirection.name ?? null,
         itProductId: instance.itProductId,
@@ -125,11 +132,12 @@ export class ReportsService {
         currentStatusName: instance.currentStatus.name,
         currentPhase: instance.currentStatus.phase as WorkflowPhaseDto,
         responsibleUserId: instance.responsibleUserId,
-        responsibleUserName: instance.responsibleUser.fullName,
+        responsibleUserName: instance.responsibleUser?.fullName ?? null,
         createdAt: instance.createdAt.toISOString(),
         updatedAt: instance.updatedAt.toISOString(),
         daysInCurrentStatus,
         isOverdue: slaDays !== null && daysInCurrentStatus > slaDays,
+        needsReview: instance.needsReview,
       };
     });
 
