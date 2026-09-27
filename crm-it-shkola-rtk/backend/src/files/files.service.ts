@@ -94,7 +94,7 @@ export class FilesService {
   async getDownloadUrl(id: string): Promise<FileDownloadUrlDto> {
     const file = await this.findOrThrow(id);
     const url = await this.withStorage(() =>
-      this.minio.presignedDownloadUrl(file.storageKey, DOWNLOAD_URL_EXPIRY_SECONDS),
+      this.minio.presignedDownloadUrl(file.storageKey, DOWNLOAD_URL_EXPIRY_SECONDS, file.fileName),
     );
 
     return {
@@ -104,8 +104,7 @@ export class FilesService {
     };
   }
 
-  // MinIO может быть недоступен (в частности, на этом стенде — образ
-  // minio/minio закрыт на Docker Hub без логина, см. .env.example). Не даём
+  // MinIO может быть недоступен (не поднят контейнер, сеть). Не даём
   // сырой сетевой ошибке всплыть 500-кой — единая схема кодов ошибок должна
   // соблюдаться и здесь.
   private async withStorage<T>(action: () => Promise<T>): Promise<T> {

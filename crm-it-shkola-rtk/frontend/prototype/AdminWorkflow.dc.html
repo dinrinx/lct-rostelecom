@@ -87,8 +87,7 @@ class Component extends DCLogic {
     if (ds === 'error') return setTimeout(() => this.setState({ status: 'error', error: { code: 'WORKFLOW_TEMPLATES_UNAVAILABLE' } }), 300);
     try {
       const templates = await CRM.api.templates();
-      // В WorkflowTemplateDto нет ссылки на активную версию — берём её id из локального справочника.
-      const active = CRM.local.VERSIONS.find((v) => v.isActive);
+      const active = templates[0].activeVersion || CRM.local.VERSIONS.find((v) => v.isActive);
       const [version, rows] = await Promise.all([CRM.api.templateVersion(active.id), CRM.api.interactions({})]);
       this.setState({ status: 'ready', template: templates[0], version, versions: CRM.local.VERSIONS, activeCount: rows.length, draft: this.toDraft(version), dirty: false });
     } catch (e) { this.setState({ status: 'error', error: { code: e.code } }); }
@@ -99,9 +98,10 @@ class Component extends DCLogic {
     const CRM = window.CRM, s = this.state;
     this.setState({ saving: true });
     try {
-      const v = await CRM.api.updateTemplate(s.template.id, { statuses: s.draft.statuses.map(({ id, name, phase, order }) => ({ id, name, phase, order })), transitions: s.draft.transitions.map(({ fromStatusId, toStatusId, name }) => ({ fromStatusId, toStatusId, name })) });
+      // Сроки этапов уходят в API вместе со статусами (minDays) — фиксируем их до сохранения.
       s.draft.statuses.forEach((x) => CRM.setMinDays(x.id, x.minDays));
-      this.setState({ saving: false, confirm: false, version: { ...v, statuses: s.draft.statuses, transitions: s.draft.transitions }, dirty: false, versions: CRM.local.VERSIONS });
+      const v = await CRM.api.updateTemplate(s.template.id, { statuses: s.draft.statuses.map(({ id, name, phase, order }) => ({ id, name, phase, order })), transitions: s.draft.transitions.map(({ fromStatusId, toStatusId, name }) => ({ fromStatusId, toStatusId, name })) });
+      this.setState({ saving: false, confirm: false, version: v, draft: this.toDraft(v), dirty: false, versions: CRM.local.VERSIONS });
       this.props.onToast && this.props.onToast({ kind: 'success', title: 'Создана версия ' + v.versionNumber, text: 'Текущие процессы остались на прежней версии' });
     } catch (e) { this.setState({ saving: false, confirm: false, saveError: { code: e.code, message: e.message } }); }
   }

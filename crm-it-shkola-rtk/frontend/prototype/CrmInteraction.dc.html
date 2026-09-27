@@ -206,8 +206,9 @@ class Component extends DCLogic {
     const commentMissing = form.touched && !form.comment.trim();
     const sorted = [...history].sort((a, b) => b.changedAt.localeCompare(a.changedAt));
     const timeline = sorted.map((h, i) => {
-      const hs = version.statuses.find((x) => x.id === h.toStatusId) || { name: 'Статус', phase: 'INITIATION' };
-      const fs = h.fromStatusId && version.statuses.find((x) => x.id === h.fromStatusId);
+      // Переход мог быть сделан в прежней версии шаблона — тогда берём имя/фазу из самой записи истории.
+      const hs = version.statuses.find((x) => x.id === h.toStatusId) || { name: h.toStatusName || 'Статус', phase: h.toStatusPhase || 'INITIATION' };
+      const fs = h.fromStatusId && (version.statuses.find((x) => x.id === h.fromStatusId) || (h.fromStatusName ? { name: h.fromStatusName } : null));
       const hf = files.filter((f) => Math.abs(new Date(f.createdAt) - new Date(h.changedAt)) < 120000);
       return { ...h, statusName: hs.name, color: CRM.PHASE[hs.phase].color, date: CRM.fmtDateTime(h.changedAt), author: CRM.userName(h.changedById), fromText: fs ? ' · из «' + fs.name + '»' : '', line: i === sorted.length - 1 ? 'none' : 'block',
         files: hf.map((f) => ({ ...f, ext: (f.fileName.split('.').pop() || '').toUpperCase().slice(0, 4), sizeText: CRM.fmtSize(f.size), download: () => CRM.api.downloadUrl(f.id).then((d) => { if (d.url && d.url !== '#') window.open(d.url, '_blank'); else this.props.onToast && this.props.onToast({ kind: 'info', title: 'Ссылка на скачивание готова', text: f.fileName + ' · демо-режим, файл не хранится' }); }).catch((e) => this.props.onToast && this.props.onToast({ kind: 'error', title: 'Не удалось получить файл', code: e.code })) })) };

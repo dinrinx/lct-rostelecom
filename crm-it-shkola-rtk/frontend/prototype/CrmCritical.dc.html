@@ -95,8 +95,9 @@ class Component extends DCLogic {
     const f2 = (t) => new Date(t).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
     const c = CRM.criticalPath(v.statuses, r.currentStatusId, r.daysInCurrentStatus);
     const hist = [...(this.state.hist[r.interactionInstanceId] || [])].sort((a, b) => a.changedAt.localeCompare(b.changedAt));
+    // Факт по этапам: по id статуса, а для переходов из прежней версии шаблона — по названию.
     const actual = {};
-    hist.forEach((h, i) => { actual[h.toStatusId] = [new Date(h.changedAt).getTime(), i + 1 < hist.length ? new Date(hist[i + 1].changedAt).getTime() : now]; });
+    hist.forEach((h, i) => { const span = [new Date(h.changedAt).getTime(), i + 1 < hist.length ? new Date(hist[i + 1].changedAt).getTime() : now]; actual[h.toStatusId] = span; if (h.toStatusName) actual['name:' + h.toStatusName] = span; });
     const start = hist.length ? new Date(hist[0].changedAt).getTime() : new Date(r.createdAt).getTime();
     const finish = now + c.total * DAY;
     const span = Math.max(DAY, Math.max(finish, now + 7 * DAY) - start) * 1.03;
@@ -107,7 +108,7 @@ class Component extends DCLogic {
     while (d.getTime() < start + span) { ticks.push({ left: pct(d.getTime()), label: d.toLocaleDateString('ru-RU', { month: 'short' }).replace('.', '') }); d.setMonth(d.getMonth() + step); }
     const gantt = c.nodes.map((n) => {
       const bars = []; let state = '', stateFg = 'var(--color-fg-muted)', weight = 400, nameFg = 'var(--color-fg-default)', dates = '—', slackText = null;
-      const a = actual[n.id];
+      const a = actual[n.id] || actual['name:' + n.name];
       if (n.done) { nameFg = 'var(--color-fg-soft)'; if (a) { bars.push({ left: pct(a[0]), width: w(a[0], a[1]), bg: 'var(--color-neutral-muted)', ring: 'none', title: f(a[0]) + ' — ' + f(a[1]) }); dates = f(a[0]) + ' — ' + f(a[1]); state = 'Пройден'; } else state = 'Пропущен'; }
       else if (n.skip) { nameFg = 'var(--color-fg-soft)'; state = 'Необязательный'; }
       else {

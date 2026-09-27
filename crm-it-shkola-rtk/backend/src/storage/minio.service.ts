@@ -59,7 +59,12 @@ export class MinioService implements OnModuleInit {
     });
   }
 
-  async presignedDownloadUrl(storageKey: string, expirySeconds: number): Promise<string> {
-    return this.client.presignedGetObject(this.bucket, storageKey, expirySeconds);
+  // downloadFileName — имя, под которым браузер сохранит файл (Content-Disposition
+  // в ответе MinIO); без него файл скачивался бы под storage-ключом (uuid).
+  async presignedDownloadUrl(storageKey: string, expirySeconds: number, downloadFileName?: string): Promise<string> {
+    const responseHeaders = downloadFileName
+      ? { 'response-content-disposition': `attachment; filename*=UTF-8''${encodeURIComponent(downloadFileName)}` }
+      : undefined;
+    return this.client.presignedGetObject(this.bucket, storageKey, expirySeconds, responseHeaders);
   }
 }

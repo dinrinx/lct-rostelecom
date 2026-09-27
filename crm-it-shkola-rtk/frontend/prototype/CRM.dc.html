@@ -23,6 +23,51 @@
 html,body{margin:0;background:#fff;font-family:var(--font-sans);color:var(--color-fg-default);-webkit-font-smoothing:antialiased}
 a{color:var(--color-accent-strong)}a:hover{color:var(--color-accent-hover)}
 button{font-family:var(--font-sans)}
+/* Экран входа — макет Figma «Авторизация — 1512». Промо-панель скрывается на узких экранах. */
+.auth{min-height:100vh;display:flex;background:#fff}
+.auth-promo{width:664px;flex-shrink:0;background:#1D0C3A;color:#fff;display:flex;flex-direction:column;justify-content:space-between;padding:48px 56px;gap:40px}
+.auth-logo{display:flex;align-items:center;gap:12px;color:inherit;text-decoration:none}
+.auth-logo img{width:32px;height:32px;display:block}
+.auth-logo b{display:block;font-weight:700;font-size:18px;line-height:20px}
+.auth-logo small{display:block;margin-top:2px;font-size:10px;line-height:12px;letter-spacing:.6px;text-transform:uppercase}
+.auth-eyebrow{align-self:flex-start;background:#fff;border-radius:16px;padding:12px 20px;font-weight:700;font-size:22px;line-height:24px;color:var(--color-brand)}
+.auth-headline{margin:0;font-weight:700;font-size:42px;line-height:44px}
+.auth-lead{margin:0;font-weight:300;font-size:18px;line-height:26px}
+.auth-radar{position:relative;width:552px;max-width:100%;height:340px;flex-shrink:0}
+.auth-radar .grid{position:absolute;left:140px;top:10px;width:321px;height:321px}
+.auth-radar .dot{position:absolute;display:block}
+.auth-card{position:absolute;display:flex;gap:12px;align-items:flex-start;padding:16px;background:#fff;border-radius:12px;color:var(--color-fg-default);white-space:nowrap}
+.auth-card img{width:20px;height:20px;padding:2px;display:block}
+.auth-card b{display:block;font-weight:700;font-size:14px;line-height:20px}
+.auth-card span{display:block;margin-top:4px;font-weight:300;font-size:12px;line-height:16px}
+.auth-caption{font-size:12px;line-height:16px;letter-spacing:.48px;text-transform:uppercase}
+.auth-main{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:40px;padding:32px 48px 40px}
+.auth-top{width:100%;display:flex;justify-content:flex-end;align-items:center;gap:16px}
+.auth-top .auth-logo{display:none;margin-right:auto;color:var(--color-fg-default)}
+.auth-help{position:relative;font-size:14px;line-height:20px;color:var(--color-fg-soft)}
+.auth-help summary{list-style:none;display:flex;align-items:center;gap:8px;cursor:pointer}
+.auth-help summary::-webkit-details-marker{display:none}
+.auth-help summary:hover{color:var(--color-fg-default)}
+.auth-help summary img{width:20px;height:20px;padding:2px}
+.auth-help p{position:absolute;right:0;top:32px;z-index:2;width:280px;margin:0;padding:16px;background:#fff;border-radius:12px;box-shadow:0 8px 24px rgba(15,26,41,.12),0 0 0 1px var(--color-border-muted);font-weight:300;color:var(--color-fg-default)}
+.auth-form{width:100%;max-width:440px;display:flex;flex-direction:column;gap:32px}
+.auth-lock{width:48px;height:48px;border-radius:8px;background:var(--color-accent-muted);display:flex;align-items:center;justify-content:center}
+.auth-lock img{width:16px;height:20px}
+.auth-title{margin:0;font-weight:700;font-size:28px;line-height:32px}
+.auth-sub{margin:12px 0 0;font-weight:300;font-size:16px;line-height:24px;color:var(--color-fg-soft)}
+.auth-note{display:flex;align-items:center;gap:8px;font-weight:300;font-size:12px;line-height:16px;color:var(--color-fg-soft)}
+.auth-note img{width:16px;height:16px;padding:1.3px 3.3px}
+.auth-divider{height:1px;background:var(--color-border-muted)}
+.auth-noaccess{font-size:14px;line-height:20px}
+.auth-noaccess b{font-weight:700}
+.auth-noaccess span{font-weight:300;color:var(--color-fg-soft)}
+.auth-link{align-self:flex-start;display:inline-flex;align-items:center;gap:8px;font-size:14px;line-height:20px;text-decoration:none;color:var(--color-accent-strong)}
+.auth-link:hover{color:var(--color-accent-hover)}
+.auth-link img{width:16px;height:16px;padding:4px 3.3px}
+.auth-dev{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;line-height:16px;color:var(--color-fg-muted)}
+.auth-footer{width:100%;max-width:440px;font-weight:300;font-size:12px;line-height:16px;color:var(--color-fg-muted)}
+@media (max-width:1180px){.auth-promo{width:520px;padding:40px}.auth-radar{transform:scale(.78);transform-origin:left center;height:270px}}
+@media (max-width:960px){.auth-promo{display:none}.auth-main{padding:24px 16px 32px}.auth-top .auth-logo{display:flex}}
 @keyframes crmPulse{0%,100%{opacity:1}50%{opacity:.45}}
 @keyframes crmSlideL{from{transform:translateX(-24px);opacity:0}to{transform:none;opacity:1}}
 @keyframes crmSlide{from{transform:translateX(24px);opacity:0}to{transform:none;opacity:1}}
@@ -30,27 +75,58 @@ button{font-family:var(--font-sans)}
 </helmet>
 
 <sc-if value="{{ notAuthed }}" hint-placeholder-val="{{ true }}">
-  <div data-screen-label="01 Авторизация" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 16px;background:var(--color-bg-surface3)">
-    <div style="width:100%;max-width:440px;background:#fff;border-radius:16px;padding:40px 32px;display:flex;flex-direction:column;gap:24px">
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <div style="font-weight:700;font-size:28px;line-height:1.2">ИТ Школа РТК</div>
-        <div style="font-size:16px;line-height:24px;color:var(--color-fg-soft)">CRM взаимодействия с вузами</div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <div style="font-size:14px;line-height:20px;color:var(--color-fg-soft)">Войти как</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <sc-for list="{{ roleChips }}" as="c" hint-placeholder-count="2">
-            <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Tag" removable="{{ false }}" selected="{{ c.selected }}" on-click="{{ c.onClick }}" hint-size="auto,32px">{{ c.label }}</x-import>
-          </sc-for>
+  <div data-screen-label="01 Авторизация" class="auth">
+    <section class="auth-promo" aria-hidden="true">
+      <div style="display:flex;flex-direction:column;gap:56px">
+        <div class="auth-logo"><img src="assets/auth/logo-mark.svg" alt=""><div><b>ИТ Школа</b><small>Ростелеком</small></div></div>
+        <div style="display:flex;flex-direction:column;gap:24px">
+          <div class="auth-eyebrow">CRM для команды ИТ Школы</div>
+          <h2 class="auth-headline">Вузы. Команда.<br>Общий результат.</h2>
+          <p class="auth-lead">Вся работа с вузами — в одном месте.<br>От первого контакта до продления лицензии.</p>
         </div>
-        <div style="font-size:12px;line-height:16px;color:var(--color-fg-muted)">Dev-режим: роль передаётся заголовком X-Dev-Role. После подключения Keycloak роль придёт из токена.</div>
       </div>
-      <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" size="l" disabled="{{ authLoading }}" on-click="{{ login }}" style="align-self:flex-start" hint-size="260px,56px">{{ loginLabel }}</x-import>
-      <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:14px;line-height:20px">
-        <a href="Admin.dc.html">Вход в админ-панель</a>
-        <span style="color:var(--color-fg-muted)">Единый вход через Keycloak (OIDC)</span>
+      <div class="auth-radar">
+        <img class="grid" src="assets/auth/radar-grid.svg" alt="">
+        <img class="dot" src="assets/auth/radar-center.svg" alt="" style="left:294px;top:164px;width:12px;height:12px">
+        <img class="dot" src="assets/auth/blip-orange.svg" alt="" style="left:368px;top:106px;width:8px;height:8px">
+        <img class="dot" src="assets/auth/blip-red.svg" alt="" style="left:222px;top:210px;width:8px;height:8px">
+        <div class="auth-card" style="left:0;top:36px"><img src="assets/auth/icon-clock.svg" alt=""><div><b>Лицензии под контролем</b><span>Напомним о сроках заранее</span></div></div>
+        <div class="auth-card" style="left:300px;top:236px"><img src="assets/auth/icon-check.svg" alt="" style="padding:5.2px 3.3px"><div><b>Следующий шаг понятен</b><span>Статусы, сроки и история работы</span></div></div>
       </div>
-    </div>
+      <div class="auth-caption">Платформа взаимодействия с вузами</div>
+    </section>
+    <main class="auth-main">
+      <div class="auth-top">
+        <div class="auth-logo"><img src="assets/auth/logo-mark.svg" alt=""><div><b>ИТ Школа</b><small>Ростелеком</small></div></div>
+        <details class="auth-help">
+          <summary><img src="assets/auth/icon-help.svg" alt="">Помощь</summary>
+          <p>Вход выполняется через единый корпоративный аккаунт (Keycloak). Если не получается войти или нет нужной роли — напишите администратору ИТ Школы.</p>
+        </details>
+      </div>
+      <div class="auth-form">
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div class="auth-lock"><img src="assets/auth/icon-lock.svg" alt=""></div>
+          <div>
+            <h1 class="auth-title">Вход в рабочее пространство</h1>
+            <p class="auth-sub">Используйте корпоративную учётную запись, чтобы продолжить работу с вашими вузами.</p>
+          </div>
+        </div>
+        <div style="display:flex;align-items:flex-start"><x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" size="l" disabled="{{ authLoading }}" on-click="{{ login }}" hint-size="357px,56px">{{ loginLabel }}</x-import></div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="auth-note"><img src="assets/auth/icon-lock-sm.svg" alt="">Безопасный вход через единый корпоративный аккаунт</div>
+          <div class="auth-dev">
+            <span>Dev-режим · войти как</span>
+            <sc-for list="{{ roleChips }}" as="c" hint-placeholder-count="2">
+              <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Tag" removable="{{ false }}" selected="{{ c.selected }}" on-click="{{ c.onClick }}" hint-size="auto,32px">{{ c.label }}</x-import>
+            </sc-for>
+          </div>
+        </div>
+        <div class="auth-divider"></div>
+        <div class="auth-noaccess"><b>Нет доступа к системе?</b> <span>Обратитесь к администратору ИТ Школы.</span></div>
+        <a class="auth-link" href="Admin.dc.html">Вход в админ-панель<img src="assets/auth/icon-arrow-r.svg" alt=""></a>
+      </div>
+      <div class="auth-footer">© 2026 ИТ Школа Ростелекома</div>
+    </main>
   </div>
 </sc-if>
 
@@ -60,7 +136,7 @@ button{font-family:var(--font-sans)}
     <sc-if value="{{ showAside }}" hint-placeholder-val="{{ true }}">
       <aside style="width:248px;flex-shrink:0;background:var(--color-bg-surface2);display:flex;flex-direction:column;gap:24px;padding:24px 16px;position:sticky;top:0;height:100vh;animation:crmSlideL 150ms ease-out">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding-left:12px">
-          <div style="font-weight:700;font-size:18px;line-height:1.2;white-space:nowrap">ИТ Школа РТК</div>
+          <div class="auth-logo" style="color:var(--color-fg-default)"><img src="assets/auth/logo-mark.svg" alt=""><div><b>ИТ Школа</b><small style="color:var(--color-fg-soft)">Ростелеком</small></div></div>
           <button onClick="{{ toggleAside }}" aria-label="{{ toggleLabel }}" title="{{ toggleLabel }}" style="width:40px;height:40px;flex-shrink:0;border:none;border-radius:12px;background:transparent;color:var(--color-fg-soft);cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:var(--color-bg-surface4);color:var(--color-fg-default)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg></button>
         </div>
         <nav style="display:flex;flex-direction:column;gap:2px">
@@ -102,7 +178,7 @@ button{font-family:var(--font-sans)}
           <dc-import name="CrmRegistry" role="{{ role }}" is-mobile="{{ isMobile }}" demo-state="{{ demoState }}" refresh-key="{{ refreshKey }}" preset="{{ preset }}" on-open="{{ openInteraction }}" on-changed="{{ interactionChanged }}" on-toast="{{ toast }}" hint-size="100%,720px"></dc-import>
         </sc-if>
         <sc-if value="{{ isRep }}" hint-placeholder-val="{{ false }}">
-          <dc-import name="CrmReports" role="{{ role }}" is-mobile="{{ isMobile }}" demo-state="{{ demoState }}" on-toast="{{ toast }}" hint-size="100%,720px"></dc-import>
+          <dc-import name="CrmReports" role="{{ role }}" is-mobile="{{ isMobile }}" demo-state="{{ demoState }}" on-open="{{ openInteraction }}" on-toast="{{ toast }}" hint-size="100%,720px"></dc-import>
         </sc-if>
         <sc-if value="{{ isTeam }}" hint-placeholder-val="{{ false }}">
           <dc-import name="CrmTeam" mode="radar" role="{{ role }}" is-mobile="{{ isMobile }}" demo-state="{{ demoState }}" refresh-key="{{ refreshKey }}" on-navigate="{{ navigate }}" on-toast="{{ toast }}" hint-size="100%,600px"></dc-import>
@@ -194,7 +270,7 @@ const HELP = {
     { t: 'Фильтры', d: 'Период, вуз, направление, продукт и стадия. Выбор сохраняется между сессиями.' },
     { t: 'Только просроченные', d: 'Оставляет взаимодействия, где время в статусе превышает норму SLA.' },
     { t: 'Карточка', d: 'Нажмите на строку — карточка откроется сбоку, фильтры останутся на месте.' },
-    { t: 'Доска', d: 'Взаимодействия разложены по статусам. Перетащите карточку в другой столбец, чтобы сменить статус: подсвечиваются только разрешённые шаблоном переходы. Кнопка «Свой статус» добавляет новый этап в шаблон.' },
+    { t: 'Доска', d: 'Взаимодействия разложены по статусам. Перетащите карточку в другой столбец, чтобы сменить статус: подсвечиваются только разрешённые шаблоном переходы. Новые статусы добавляет администратор в редакторе workflow-шаблона.' },
     { t: 'Критический путь', d: 'Показывает самую длинную цепочку обязательных этапов до статуса «Завершено». Быстрее этого срока взаимодействие закончить нельзя. Этапы с запасом можно сдвигать без потери срока.' },
   ],
   reports: [
@@ -282,7 +358,7 @@ class Component extends DCLogic {
     const base = (this.props.apiBase || 'http://localhost:3000').replace(/^https?:\/\//, '');
     return {
       notAuthed: !s.authed, authed: s.authed, authLoading: s.authLoading,
-      loginLabel: s.authLoading ? 'Перенаправление в Keycloak…' : 'Войти через Keycloak',
+      loginLabel: s.authLoading ? 'Перенаправление…' : 'Войти через корпоративный аккаунт',
       roleChips: [['kam', 'КАМ'], ['rukovoditel', 'Руководитель']].map(([k, l]) => ({ label: l, selected: s.role === k, onClick: () => this.setState({ role: k }) })),
       login: this.login, logout: this.logout,
       isMobile, isDesktop: !isMobile, showAside: !isMobile && s.aside, showRail: !isMobile && !s.aside, toggleLabel: s.aside ? 'Свернуть панель' : 'Развернуть панель',

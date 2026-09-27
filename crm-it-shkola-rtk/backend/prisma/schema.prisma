@@ -202,6 +202,17 @@ model WorkflowStatus {
   phase WorkflowPhase
   order Int
 
+  // Норматив SLA (дней в статусе) — источник для радара SLA и флага isOverdue
+  // в реестре. null — у статуса нет норматива (как правило, финальный статус).
+  slaDays Int?
+  // Минимальная длительность этапа (дней) — вход для расчёта критического пути.
+  minDays Int @default(0)
+  // Необязательный этап — дополнительная ветка, не удлиняет критический путь.
+  isOptional Boolean @default(false)
+  // От каких статусов ЭТОЙ ЖЕ версии зависит начало этапа (граф критического
+  // пути). Пусто — этап начинается сразу (обычно только первый статус).
+  dependsOnStatusIds String[] @default([])
+
   workflowTemplateVersionId String
   workflowTemplateVersion   WorkflowTemplateVersion @relation(fields: [workflowTemplateVersionId], references: [id])
 

@@ -1,3 +1,4 @@
+import { WorkflowPhaseDto } from './workflow-status.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class InteractionInstanceDto {
@@ -38,6 +39,17 @@ export class StatusHistoryEntryDto {
 
   @ApiProperty({ example: 'b1000000-0000-4000-8000-000000000002' })
   toStatusId!: string;
+
+  // Имена/фаза денормализованы: процесс мог переехать на новую версию шаблона
+  // (migrateInstances), а история ссылается на статусы той версии, где был переход.
+  @ApiProperty({ example: 'Оформление партнёрства' })
+  toStatusName!: string;
+
+  @ApiProperty({ enum: WorkflowPhaseDto, example: WorkflowPhaseDto.CONTRACTING })
+  toStatusPhase!: WorkflowPhaseDto;
+
+  @ApiPropertyOptional({ example: 'Переговоры', nullable: true })
+  fromStatusName?: string | null;
 
   @ApiPropertyOptional({ example: 'Договор подписан, переходим к внедрению' })
   comment?: string | null;

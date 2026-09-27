@@ -10,7 +10,6 @@ import { TransitionInteractionInstanceDto } from './dto/transition-interaction-i
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRoleDto } from '../auth/dto/user.dto';
 import type { RequestWithDevRole } from '../auth/guards/dev-role.guard';
-import { WORKFLOW_TEMPLATE_VERSION_FIXTURES } from './fixtures/workflow.fixtures';
 
 const ANY_ROLE = [UserRoleDto.KAM, UserRoleDto.RUKOVODITEL, UserRoleDto.ADMINISTRATOR] as const;
 
@@ -43,7 +42,9 @@ export class WorkflowController {
   @ApiOperation({ summary: 'Список шаблонов workflow с активной версией (статусы+переходы)' })
   @ApiHeader({ name: 'X-Dev-Role', required: false, example: 'administrator' })
   @ApiOkResponse({ type: WorkflowTemplateWithActiveVersionDto, isArray: true })
-  @Roles(UserRoleDto.ADMINISTRATOR)
+  // Чтение шаблона нужно всем ролям (доска и карточка взаимодействия строятся
+  // по статусам активной версии); изменять — только Администратору/Руководителю.
+  @Roles(...ANY_ROLE)
   getTemplates(): Promise<WorkflowTemplateWithActiveVersionDto[]> {
     return this.workflowService.listTemplates();
   }
@@ -76,13 +77,12 @@ export class WorkflowController {
 
   @Get('template-versions/:id')
   @ApiOperation({ summary: 'Версия шаблона со статусами и переходами' })
-  @ApiParam({ name: 'id', example: WORKFLOW_TEMPLATE_VERSION_FIXTURES[0].id })
+  @ApiParam({ name: 'id', example: 'b0000000-0000-4000-8000-000000000002' })
+  @ApiHeader({ name: 'X-Dev-Role', required: false, example: 'kam' })
   @ApiOkResponse({ type: WorkflowTemplateVersionDto })
-  getTemplateVersionById(@Param('id') id: string): WorkflowTemplateVersionDto {
-    return (
-      WORKFLOW_TEMPLATE_VERSION_FIXTURES.find((version) => version.id === id) ??
-      WORKFLOW_TEMPLATE_VERSION_FIXTURES[0]
-    );
+  @Roles(...ANY_ROLE)
+  getTemplateVersionById(@Param('id') id: string): Promise<WorkflowTemplateVersionDto> {
+    return this.workflowService.getTemplateVersion(id);
   }
 
   // Ниже — реальные эндпоинты взаимодействий (InteractionInstance/StatusHistoryEntry).

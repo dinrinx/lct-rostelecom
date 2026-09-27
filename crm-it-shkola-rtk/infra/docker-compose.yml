@@ -30,7 +30,7 @@ services:
       retries: 10
 
   minio:
-    image: minio/minio:latest
+    image: pgsty/minio:latest # официальный minio/minio больше не публикуется на Docker Hub
     restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:

@@ -44,12 +44,17 @@ function toHistoryEntryDto(entry: {
   changedById: string;
   attachmentId: string | null;
   changedAt: Date;
+  toStatus: { name: string; phase: string };
+  fromStatus: { name: string } | null;
 }): StatusHistoryEntryDto {
   return {
     id: entry.id,
     interactionInstanceId: entry.interactionInstanceId,
     fromStatusId: entry.fromStatusId,
     toStatusId: entry.toStatusId,
+    toStatusName: entry.toStatus.name,
+    toStatusPhase: entry.toStatus.phase as WorkflowStatusDto['phase'],
+    fromStatusName: entry.fromStatus?.name ?? null,
     comment: entry.comment,
     changedById: entry.changedById,
     attachmentId: entry.attachmentId,
@@ -60,8 +65,28 @@ function toHistoryEntryDto(entry: {
 // Prisma-enum WorkflowPhase и Swagger-enum WorkflowPhaseDto имеют одинаковые
 // строковые значения, но разные типы — приводим на границе маппинга в DTO
 // (тот же приём, что и для LicenseStatus в catalogs.service.ts).
-function toStatusDto(status: { id: string; name: string; phase: string; order: number; workflowTemplateVersionId: string }): WorkflowStatusDto {
-  return status as unknown as WorkflowStatusDto;
+export function toStatusDto(status: {
+  id: string;
+  name: string;
+  phase: string;
+  order: number;
+  workflowTemplateVersionId: string;
+  slaDays: number | null;
+  minDays: number;
+  isOptional: boolean;
+  dependsOnStatusIds: string[];
+}): WorkflowStatusDto {
+  return {
+    id: status.id,
+    name: status.name,
+    phase: status.phase as WorkflowStatusDto['phase'],
+    order: status.order,
+    workflowTemplateVersionId: status.workflowTemplateVersionId,
+    slaDays: status.slaDays,
+    minDays: status.minDays,
+    isOptional: status.isOptional,
+    dependsOnStatusIds: status.dependsOnStatusIds,
+  };
 }
 
 @Injectable()
@@ -73,17 +98,18 @@ export class WorkflowService {
       orderBy: { createdAt: 'asc' },
       include: {
         versions: {
-          where: { isActive: true },
+          orderBy: { versionNumber: 'asc' },
           include: {
             statuses: { orderBy: { order: 'asc' } },
             transitions: true,
+            _count: { select: { interactionInstances: true } },
           },
         },
       },
     });
 
     return templates.map((template) => {
-      const activeVersion = template.versions[0];
+      const activeVersion = template.versions.find((version) => version.isActive);
       return {
         id: template.id,
         name: template.name,
@@ -98,8 +124,38 @@ export class WorkflowService {
               transitions: activeVersion.transitions,
             }
           : null,
+        versions: template.versions.map((version) => ({
+          id: version.id,
+          versionNumber: version.versionNumber,
+          isActive: version.isActive,
+          createdAt: version.createdAt.toISOString(),
+          instanceCount: version._count.interactionInstances,
+        })),
       };
     });
+  }
+
+  // Версия (в том числе архивная) нужна карточке взаимодействия: инстанс
+  // привязан к своей версии, и допустимые переходы/SLA берутся именно из неё.
+  async getTemplateVersion(id: string): Promise<WorkflowTemplateVersionDto> {
+    const version = await this.prisma.workflowTemplateVersion.findUnique({
+      where: { id },
+      include: { statuses: { orderBy: { order: 'asc' } }, transitions: true },
+    });
+    if (!version) {
+      throw new NotFoundException({
+        code: 'WORKFLOW_TEMPLATE_VERSION_NOT_FOUND',
+        message: `Версия шаблона workflow с id "${id}" не найдена`,
+      });
+    }
+    return {
+      id: version.id,
+      versionNumber: version.versionNumber,
+      isActive: version.isActive,
+      workflowTemplateId: version.workflowTemplateId,
+      statuses: version.statuses.map(toStatusDto),
+      transitions: version.transitions,
+    };
   }
 
   async createTemplate(dto: CreateWorkflowTemplateDto): Promise<WorkflowTemplateVersionDto> {
@@ -123,7 +179,9 @@ export class WorkflowService {
 
     const template = await this.prisma.workflowTemplate.findUnique({
       where: { id },
-      include: { versions: { orderBy: { versionNumber: 'desc' }, take: 1 } },
+      include: {
+        versions: { orderBy: { versionNumber: 'desc' } },
+      },
     });
 
     if (!template) {
@@ -134,6 +192,7 @@ export class WorkflowService {
     }
 
     const nextVersionNumber = (template.versions[0]?.versionNumber ?? 0) + 1;
+    const previousActive = template.versions.find((version) => version.isActive);
 
     return this.prisma.$transaction(async (tx) => {
       // Правка НЕ мутирует текущую версию: старая версия помечается isActive=false
@@ -158,8 +217,41 @@ export class WorkflowService {
         data: { workflowTemplateId: id, versionNumber: nextVersionNumber, isActive: true },
       });
 
-      return this.createStatusesAndTransitions(tx, version.id, dto.statuses, dto.transitions);
+      const created = await this.createStatusesAndTransitions(tx, version.id, dto.statuses, dto.transitions);
+
+      if (dto.migrateInstances && previousActive) {
+        await this.migrateInstances(tx, previousActive.id, version.id, dto.statuses, created.statuses);
+      }
+
+      return created;
     });
+  }
+
+  // Перенос процессов на новую версию (опция migrateInstances): статус нового
+  // инстанса ищется по sourceStatusId — id статуса прежней версии, продолжением
+  // которого является новый. Инстансы, чей текущий статус не перенесён в новую
+  // версию (удалён), остаются на старой версии — молча терять их нельзя.
+  // История переходов не переписывается: StatusHistoryEntry append-only и
+  // продолжает ссылаться на статусы той версии, в которой переход был сделан.
+  private async migrateInstances(
+    tx: Prisma.TransactionClient,
+    fromVersionId: string,
+    toVersionId: string,
+    inputs: WorkflowStatusInputDto[],
+    createdStatuses: WorkflowStatusDto[],
+  ): Promise<void> {
+    const newIdByOrder = new Map(createdStatuses.map((status) => [status.order, status.id]));
+    for (const input of inputs) {
+      if (!input.sourceStatusId) continue;
+      const newStatusId = newIdByOrder.get(input.order);
+      if (!newStatusId) continue;
+      // Сырой SQL, а не updateMany: Prisma проставила бы @updatedAt, и у всех процессов
+      // «Обновлено» стало бы «сегодня» — хотя по самому процессу ничего не происходило.
+      await tx.$executeRaw`
+        UPDATE "InteractionInstance"
+        SET "workflowTemplateVersionId" = ${toVersionId}, "currentStatusId" = ${newStatusId}
+        WHERE "workflowTemplateVersionId" = ${fromVersionId} AND "currentStatusId" = ${input.sourceStatusId}`;
+    }
   }
 
   async listInstances(): Promise<InteractionInstanceDto[]> {
@@ -331,6 +423,7 @@ export class WorkflowService {
     const entries = await this.prisma.statusHistoryEntry.findMany({
       where: { interactionInstanceId: instanceId },
       orderBy: { changedAt: 'asc' },
+      include: { toStatus: { select: { name: true, phase: true } }, fromStatus: { select: { name: true } } },
     });
 
     return entries.map(toHistoryEntryDto);
@@ -357,6 +450,17 @@ export class WorkflowService {
       });
     }
 
+    for (const status of statuses) {
+      for (const dependsOn of status.dependsOnOrders ?? []) {
+        if (!orders.has(dependsOn) || dependsOn === status.order) {
+          throw new BadRequestException({
+            code: 'WORKFLOW_STATUS_DEPENDENCY_INVALID',
+            message: `Статус "${status.name}" зависит от order ${dependsOn}, которого нет среди statuses (или ссылается сам на себя)`,
+          });
+        }
+      }
+    }
+
     for (const transition of transitions ?? []) {
       if (!orders.has(transition.fromStatusOrder) || !orders.has(transition.toStatusOrder)) {
         throw new BadRequestException({
@@ -381,11 +485,31 @@ export class WorkflowService {
           name: input.name,
           phase: input.phase,
           order: input.order,
+          slaDays: input.slaDays ?? null,
+          minDays: input.minDays ?? 0,
+          isOptional: input.isOptional ?? false,
           workflowTemplateVersionId: versionId,
         },
       });
       statusIdByOrder.set(input.order, status.id);
       statuses.push(status);
+    }
+
+    // Зависимости задаются через order (id новых статусов клиенту ещё не известны),
+    // поэтому проставляем их вторым проходом, когда все id уже созданы.
+    // Не указаны — этап идёт после предыдущего по order (линейная цепочка).
+    const sortedOrders = [...statusIdByOrder.keys()].sort((a, b) => a - b);
+    for (const status of statuses) {
+      const input = statusInputs.find((candidate) => candidate.order === status.order)!;
+      const previousOrder = sortedOrders[sortedOrders.indexOf(status.order) - 1];
+      const dependsOnOrders = input.dependsOnOrders ?? (previousOrder !== undefined ? [previousOrder] : []);
+      status.dependsOnStatusIds = dependsOnOrders.map((order) => statusIdByOrder.get(order)!);
+      if (status.dependsOnStatusIds.length) {
+        await tx.workflowStatus.update({
+          where: { id: status.id },
+          data: { dependsOnStatusIds: status.dependsOnStatusIds },
+        });
+      }
     }
 
     const transitions = [];
