@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { join } from 'path';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, WorkflowPhase } from '@prisma/client';
 import ExcelJS from 'exceljs';
 
 const prisma = new PrismaClient();
@@ -218,11 +218,128 @@ async function seedDemoUniversitiesAndLicenses(
       });
     }
   }
+
+  return { universities };
+}
+
+// 7 CLM-макростадий (WorkflowPhase) — по одному представительному статусу на
+// стадию, в порядке прохождения. Название шаблона и первого статуса совпадают
+// со stub-фикстурами workflow.controller.ts (WORKFLOW_TEMPLATE_FIXTURES) —
+// это уже согласованный с фронтом контракт, менять не нужно.
+const WORKFLOW_STATUS_SEEDS: Array<{ name: string; phase: WorkflowPhase }> = [
+  { name: 'Первый контакт', phase: 'INITIATION' },
+  { name: 'Переговоры условий', phase: 'NEGOTIATION' },
+  { name: 'Согласование договора', phase: 'CONTRACTING' },
+  { name: 'Внедрение', phase: 'IMPLEMENTATION' },
+  { name: 'Активное использование', phase: 'ACTIVE_USE' },
+  { name: 'Продление', phase: 'RENEWAL' },
+  { name: 'Завершение сотрудничества', phase: 'TERMINATION' },
+];
+
+async function seedWorkflow(
+  universities: Array<{ id: string; kamId: string | null }>,
+  productIds: string[],
+  kamIds: { kam1: string; kam2: string },
+) {
+  const template = await prisma.workflowTemplate.create({
+    data: {
+      name: 'Типовой цикл внедрения ИТ-продукта',
+      description: 'Базовый CLM-шаблон для вузов',
+    },
+  });
+
+  const version = await prisma.workflowTemplateVersion.create({
+    data: {
+      workflowTemplateId: template.id,
+      versionNumber: 1,
+      isActive: true,
+    },
+  });
+
+  const statuses = [];
+  for (let i = 0; i < WORKFLOW_STATUS_SEEDS.length; i++) {
+    const { name, phase } = WORKFLOW_STATUS_SEEDS[i];
+    statuses.push(
+      await prisma.workflowStatus.create({
+        data: {
+          name,
+          phase,
+          order: i + 1,
+          workflowTemplateVersionId: version.id,
+        },
+      }),
+    );
+  }
+
+  // Линейная цепочка переходов между соседними статусами — минимальный
+  // допустимый граф, достаточный для демонстрации истории и радара SLA.
+  for (let i = 0; i < statuses.length - 1; i++) {
+    await prisma.workflowTransition.create({
+      data: {
+        workflowTemplateVersionId: version.id,
+        fromStatusId: statuses[i].id,
+        toStatusId: statuses[i + 1].id,
+      },
+    });
+  }
+
+  const now = new Date();
+  const daysAgo = (days: number) => new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+
+  // 3 тестовых инстанса на разных стадиях цикла, привязанных к реальным
+  // вузам/КАМам из демо-каталога — чтобы RBAC-видимость и радар SLA было на
+  // чём проверить сразу после seed, без ручного создания через API.
+  const instanceSeeds = [
+    { universityIndex: 0, statusIndex: 2, kamId: kamIds.kam1 }, // СПбГУ -> Согласование договора
+    { universityIndex: 1, statusIndex: 4, kamId: kamIds.kam2 }, // МГТУ -> Активное использование
+    { universityIndex: 2, statusIndex: 0, kamId: kamIds.kam1 }, // НГУ -> Первый контакт
+  ];
+
+  for (const seed of instanceSeeds) {
+    const university = universities[seed.universityIndex];
+    if (!university || productIds.length === 0) continue;
+
+    const itProductId = productIds[seed.universityIndex % productIds.length];
+
+    const instance = await prisma.interactionInstance.create({
+      data: {
+        universityId: university.id,
+        itProductId,
+        workflowTemplateVersionId: version.id,
+        currentStatusId: statuses[seed.statusIndex].id,
+        responsibleUserId: seed.kamId,
+      },
+    });
+
+    // Append-only история: путь от начала цепочки до текущего статуса,
+    // с разнесёнными по времени датами (для наглядности радара "зависших" статусов).
+    for (let step = 0; step <= seed.statusIndex; step++) {
+      await prisma.statusHistoryEntry.create({
+        data: {
+          interactionInstanceId: instance.id,
+          fromStatusId: step === 0 ? null : statuses[step - 1].id,
+          toStatusId: statuses[step].id,
+          comment: step === 0 ? 'Взаимодействие создано' : `Переход в статус «${statuses[step].name}»`,
+          changedById: seed.kamId,
+          changedAt: daysAgo((seed.statusIndex - step) * 10 + 1),
+        },
+      });
+    }
+  }
+
+  return { template, version, statuses };
 }
 
 async function resetSeedManagedTables() {
   // Порядок важен из-за внешних ключей. Затрагиваем только то, что заполняет этот seed.
   // University.kamId ссылается на User — university.deleteMany() обязан идти раньше user.deleteMany().
+  await prisma.fileAttachment.deleteMany();
+  await prisma.statusHistoryEntry.deleteMany();
+  await prisma.interactionInstance.deleteMany();
+  await prisma.workflowTransition.deleteMany();
+  await prisma.workflowStatus.deleteMany();
+  await prisma.workflowTemplateVersion.deleteMany();
+  await prisma.workflowTemplate.deleteMany();
   await prisma.license.deleteMany();
   await prisma.responsiblePerson.deleteMany();
   await prisma.itProduct.deleteMany();
@@ -240,10 +357,14 @@ async function main() {
 
   const rows = await readVendorRows();
   const { productsByName } = await seedVendorsCatalog(rows);
-  await seedDemoUniversitiesAndLicenses(productsByName, { kam1: kam1.id, kam2: kam2.id });
+  const { universities } = await seedDemoUniversitiesAndLicenses(productsByName, {
+    kam1: kam1.id,
+    kam2: kam2.id,
+  });
+  await seedWorkflow(universities, [...productsByName.values()], { kam1: kam1.id, kam2: kam2.id });
 
   console.log(
-    `Готово: вендоров и продуктов из ${rows.length} строк файла, плюс синтетические вузы/лицензии, плюс 4 демо-пользователя (admin/rukovoditel/kam/kam2).`,
+    `Готово: вендоров и продуктов из ${rows.length} строк файла, плюс синтетические вузы/лицензии, плюс 4 демо-пользователя (admin/rukovoditel/kam/kam2), плюс workflow-шаблон с 7 статусами и 3 тестовых взаимодействия.`,
   );
 }
 

@@ -20,6 +20,9 @@ export class HealthDto {
   @ApiProperty({ enum: ConnectionStatusDto, example: ConnectionStatusDto.OK, description: 'Соединение с Redis' })
   redis!: ConnectionStatusDto;
 
+  @ApiProperty({ enum: ConnectionStatusDto, example: ConnectionStatusDto.OK, description: 'Соединение с MinIO' })
+  minio!: ConnectionStatusDto;
+
   @ApiProperty({ example: 128.42, description: 'Время работы процесса, секунды' })
   uptime!: number;
 }

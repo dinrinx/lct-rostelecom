@@ -9,12 +9,14 @@ import { AuthModule } from './auth/auth.module';
 import { HealthModule } from './health/health.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RedisModule } from './redis/redis.module';
+import { MinioModule } from './storage/minio.module';
 import { DevRoleGuard } from './auth/guards/dev-role.guard';
 
 @Module({
   imports: [
     PrismaModule,
     RedisModule,
+    MinioModule,
     CatalogsModule,
     WorkflowModule,
     ReportsModule,

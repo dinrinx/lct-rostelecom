@@ -32,3 +32,15 @@ export class WorkflowTemplateVersionDto {
   @ApiProperty({ type: WorkflowTransitionDto, isArray: true })
   transitions!: WorkflowTransitionDto[];
 }
+
+// Форма ответа GET /workflow/templates: шаблон + его текущая активная версия
+// (статусы+переходы) — раньше GET отдавал только id/name/description без версии,
+// это расширение контракта, а не совместимое дополнение.
+export class WorkflowTemplateWithActiveVersionDto extends WorkflowTemplateDto {
+  @ApiPropertyOptional({
+    type: WorkflowTemplateVersionDto,
+    nullable: true,
+    description: 'Активная версия шаблона; null — если у шаблона ещё нет ни одной версии',
+  })
+  activeVersion?: WorkflowTemplateVersionDto | null;
+}

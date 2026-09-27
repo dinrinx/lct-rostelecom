@@ -281,7 +281,15 @@ model StatusHistoryEntry {
   changedById String
   changedBy   User   @relation("StatusHistoryChangedBy", fields: [changedById], references: [id])
 
+  // Файл, приложенный именно к этому переходу (например, подписанный договор
+  // при переходе в CONTRACTING) — отдельно от FileAttachment.interactionInstanceId,
+  // который просто привязывает файл к взаимодействию в целом, без указания
+  // на конкретный шаг истории.
+  attachmentId String?
+  attachment   FileAttachment? @relation(fields: [attachmentId], references: [id])
+
   @@index([interactionInstanceId])
+  @@index([attachmentId])
   @@index([toStatusId])
 }
 
@@ -303,6 +311,8 @@ model FileAttachment {
 
   licenseId String?
   license   License? @relation(fields: [licenseId], references: [id])
+
+  statusHistoryEntries StatusHistoryEntry[]
 
   @@index([interactionInstanceId])
   @@index([licenseId])

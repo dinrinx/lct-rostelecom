@@ -1,44 +1,77 @@
-import { Body, Controller, Get, Param, Patch, Post, Put } from '@nestjs/common';
-import { ApiBody, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Param, Post, Put, Req } from '@nestjs/common';
+import { ApiBody, ApiHeader, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { BadRequestException } from '@nestjs/common';
 import { WorkflowService } from './workflow.service';
-import { WorkflowTemplateDto, WorkflowTemplateVersionDto } from './dto/workflow-template.dto';
+import { WorkflowTemplateVersionDto, WorkflowTemplateWithActiveVersionDto } from './dto/workflow-template.dto';
 import { CreateWorkflowTemplateDto, UpdateWorkflowTemplateDto } from './dto/workflow-template-write.dto';
 import { InteractionInstanceDto, StatusHistoryEntryDto } from './dto/interaction-instance.dto';
-import { UpdateInteractionStatusDto } from './dto/update-interaction-status.dto';
-import {
-  INTERACTION_INSTANCE_FIXTURES,
-  STATUS_HISTORY_FIXTURES,
-  WORKFLOW_TEMPLATE_FIXTURES,
-  WORKFLOW_TEMPLATE_VERSION_FIXTURES,
-} from './fixtures/workflow.fixtures';
+import { CreateInteractionInstanceDto } from './dto/create-interaction-instance.dto';
+import { TransitionInteractionInstanceDto } from './dto/transition-interaction-instance.dto';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { UserRoleDto } from '../auth/dto/user.dto';
+import type { RequestWithDevRole } from '../auth/guards/dev-role.guard';
+import { WORKFLOW_TEMPLATE_VERSION_FIXTURES } from './fixtures/workflow.fixtures';
+
+const ANY_ROLE = [UserRoleDto.KAM, UserRoleDto.RUKOVODITEL, UserRoleDto.ADMINISTRATOR] as const;
+
+// Определяет пользователя, выполняющего действие (changedById/responsibleUserId
+// по умолчанию) — DevRoleGuard уже резолвит currentUserId по email канонического
+// dev-пользователя роли (или из Keycloak-токена) для ЛЮБОЙ распознанной роли,
+// включая ADMINISTRATOR, так что в норме это поле всегда заполнено; explicit-
+// проверка здесь — на случай если guard когда-нибудь начнёт пропускать
+// ADMINISTRATOR без identity.
+function requireActorId(request: RequestWithDevRole): string {
+  if (!request.currentUserId) {
+    throw new BadRequestException({
+      code: 'WORKFLOW_ACTOR_UNKNOWN',
+      message: 'Не удалось определить пользователя, выполняющего действие (нет currentUserId)',
+    });
+  }
+  return request.currentUserId;
+}
 
 @ApiTags('workflow')
 @Controller('workflow')
 export class WorkflowController {
   constructor(private readonly workflowService: WorkflowService) {}
 
+  // Список/создание/редактирование шаблонов — доступ только Администратору
+  // (см. docs/backend-plan.md, раздел Admin). @Roles() уже проверяется реальным
+  // DevRoleGuard (X-Dev-Role в dev-режиме / Keycloak JWT в остальных) — тем же,
+  // что и в catalogs/admin, отдельного шага для RBAC здесь не нужно.
   @Get('templates')
-  @ApiOperation({ summary: 'Список шаблонов workflow' })
-  @ApiOkResponse({ type: WorkflowTemplateDto, isArray: true })
-  getTemplates(): WorkflowTemplateDto[] {
-    return WORKFLOW_TEMPLATE_FIXTURES;
+  @ApiOperation({ summary: 'Список шаблонов workflow с активной версией (статусы+переходы)' })
+  @ApiHeader({ name: 'X-Dev-Role', required: false, example: 'administrator' })
+  @ApiOkResponse({ type: WorkflowTemplateWithActiveVersionDto, isArray: true })
+  @Roles(UserRoleDto.ADMINISTRATOR)
+  getTemplates(): Promise<WorkflowTemplateWithActiveVersionDto[]> {
+    return this.workflowService.listTemplates();
   }
 
   @Post('templates')
   @ApiOperation({ summary: 'Создать шаблон workflow вместе с первой версией (статусы+переходы)' })
+  @ApiHeader({ name: 'X-Dev-Role', required: false, example: 'administrator' })
   @ApiBody({ type: CreateWorkflowTemplateDto })
   @ApiOkResponse({ type: WorkflowTemplateVersionDto })
-  createTemplate(@Body() _dto: CreateWorkflowTemplateDto): WorkflowTemplateVersionDto {
-    return WORKFLOW_TEMPLATE_VERSION_FIXTURES[0];
+  @Roles(UserRoleDto.ADMINISTRATOR)
+  createTemplate(@Body() dto: CreateWorkflowTemplateDto): Promise<WorkflowTemplateVersionDto> {
+    return this.workflowService.createTemplate(dto);
   }
 
   @Put('templates/:id')
-  @ApiOperation({ summary: 'Редактирование шаблона — создаёт новую версию (статусы+переходы)' })
-  @ApiParam({ name: 'id', example: WORKFLOW_TEMPLATE_FIXTURES[0].id })
+  @ApiOperation({
+    summary:
+      'Редактирование шаблона — НЕ мутирует текущую версию, а создаёт новую WorkflowTemplateVersion ' +
+      '(isActive=true), предыдущую помечает isActive=false. Существующие InteractionInstance остаются ' +
+      'привязаны к своей версии и не переезжают на новую автоматически.',
+  })
+  @ApiHeader({ name: 'X-Dev-Role', required: false, example: 'administrator' })
+  @ApiParam({ name: 'id', example: 'b0000000-0000-4000-8000-000000000001' })
   @ApiBody({ type: UpdateWorkflowTemplateDto })
   @ApiOkResponse({ type: WorkflowTemplateVersionDto })
-  updateTemplate(@Param('id') _id: string, @Body() _dto: UpdateWorkflowTemplateDto): WorkflowTemplateVersionDto {
-    return WORKFLOW_TEMPLATE_VERSION_FIXTURES[0];
+  @Roles(UserRoleDto.ADMINISTRATOR)
+  updateTemplate(@Param('id') id: string, @Body() dto: UpdateWorkflowTemplateDto): Promise<WorkflowTemplateVersionDto> {
+    return this.workflowService.updateTemplate(id, dto);
   }
 
   @Get('template-versions/:id')
@@ -52,44 +85,65 @@ export class WorkflowController {
     );
   }
 
-  @Get('interactions')
+  // Ниже — реальные эндпоинты взаимодействий (InteractionInstance/StatusHistoryEntry).
+  // Путь переименован interactions -> instances по явному запросу; список/getById
+  // тоже переведены на Prisma в рамках этого же изменения — иначе только что
+  // созданные инстансы не были бы видны нигде, кроме нового /transition-эндпоинта.
+  @Get('instances')
   @ApiOperation({ summary: 'Список взаимодействий с вузами' })
+  @ApiHeader({ name: 'X-Dev-Role', required: false, example: 'kam' })
   @ApiOkResponse({ type: InteractionInstanceDto, isArray: true })
-  getInteractions(): InteractionInstanceDto[] {
-    return INTERACTION_INSTANCE_FIXTURES;
+  @Roles(...ANY_ROLE)
+  getInstances(): Promise<InteractionInstanceDto[]> {
+    return this.workflowService.listInstances();
   }
 
-  @Get('interactions/:id')
+  @Get('instances/:id')
   @ApiOperation({ summary: 'Взаимодействие по идентификатору' })
-  @ApiParam({ name: 'id', example: INTERACTION_INSTANCE_FIXTURES[0].id })
+  @ApiHeader({ name: 'X-Dev-Role', required: false, example: 'kam' })
+  @ApiParam({ name: 'id', example: 'b3000000-0000-4000-8000-000000000001' })
   @ApiOkResponse({ type: InteractionInstanceDto })
-  getInteractionById(@Param('id') id: string): InteractionInstanceDto {
-    return (
-      INTERACTION_INSTANCE_FIXTURES.find((interaction) => interaction.id === id) ??
-      INTERACTION_INSTANCE_FIXTURES[0]
-    );
+  @Roles(...ANY_ROLE)
+  getInstanceById(@Param('id') id: string): Promise<InteractionInstanceDto> {
+    return this.workflowService.getInstanceById(id);
   }
 
-  @Patch('interactions/:id/status')
-  @ApiOperation({ summary: 'Точечное обновление статуса взаимодействия (без полной перезагрузки сущности)' })
-  @ApiParam({ name: 'id', example: INTERACTION_INSTANCE_FIXTURES[0].id })
-  @ApiBody({ type: UpdateInteractionStatusDto })
+  @Post('instances')
+  @ApiOperation({ summary: 'Создать взаимодействие на активной версии активного шаблона для вуза' })
+  @ApiHeader({ name: 'X-Dev-Role', required: false, example: 'kam' })
+  @ApiBody({ type: CreateInteractionInstanceDto })
   @ApiOkResponse({ type: InteractionInstanceDto })
-  updateInteractionStatus(
+  @Roles(...ANY_ROLE)
+  createInstance(@Body() dto: CreateInteractionInstanceDto): Promise<InteractionInstanceDto> {
+    return this.workflowService.createInstance(dto);
+  }
+
+  @Post('instances/:id/transition')
+  @ApiOperation({
+    summary:
+      'Переход в новый статус — проверяется по WorkflowTransition версии этого инстанса (400, если переход ' +
+      'не разрешён), пишет append-only StatusHistoryEntry и обновляет currentStatusId.',
+  })
+  @ApiHeader({ name: 'X-Dev-Role', required: false, example: 'kam' })
+  @ApiParam({ name: 'id', example: 'b3000000-0000-4000-8000-000000000001' })
+  @ApiBody({ type: TransitionInteractionInstanceDto })
+  @ApiOkResponse({ type: InteractionInstanceDto })
+  @Roles(...ANY_ROLE)
+  transition(
     @Param('id') id: string,
-    @Body() _dto: UpdateInteractionStatusDto,
-  ): InteractionInstanceDto {
-    return (
-      INTERACTION_INSTANCE_FIXTURES.find((interaction) => interaction.id === id) ??
-      INTERACTION_INSTANCE_FIXTURES[0]
-    );
+    @Body() dto: TransitionInteractionInstanceDto,
+    @Req() request: RequestWithDevRole,
+  ): Promise<InteractionInstanceDto> {
+    return this.workflowService.transition(id, dto, requireActorId(request));
   }
 
-  @Get('interactions/:id/history')
-  @ApiOperation({ summary: 'Журнал переходов по статусам взаимодействия' })
-  @ApiParam({ name: 'id', example: INTERACTION_INSTANCE_FIXTURES[0].id })
+  @Get('instances/:id/history')
+  @ApiOperation({ summary: 'Вся история переходов по статусам взаимодействия, по возрастанию времени' })
+  @ApiHeader({ name: 'X-Dev-Role', required: false, example: 'kam' })
+  @ApiParam({ name: 'id', example: 'b3000000-0000-4000-8000-000000000001' })
   @ApiOkResponse({ type: StatusHistoryEntryDto, isArray: true })
-  getInteractionHistory(@Param('id') id: string): StatusHistoryEntryDto[] {
-    return STATUS_HISTORY_FIXTURES.filter((entry) => entry.interactionInstanceId === id);
+  @Roles(...ANY_ROLE)
+  getInstanceHistory(@Param('id') id: string): Promise<StatusHistoryEntryDto[]> {
+    return this.workflowService.getHistory(id);
   }
 }

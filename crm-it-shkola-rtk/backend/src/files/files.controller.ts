@@ -1,9 +1,27 @@
-import { Controller, Get, Param, Post, Query, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, Post, Query, Req, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBody, ApiConsumes, ApiOkResponse, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiHeader, ApiOkResponse, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { FilesService } from './files.service';
 import { FileAttachmentDto, FileDownloadUrlDto } from './dto/file-attachment.dto';
-import { FILE_ATTACHMENT_FIXTURES, FILE_DOWNLOAD_URL_FIXTURE } from './fixtures/files.fixtures';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { UserRoleDto } from '../auth/dto/user.dto';
+import type { RequestWithDevRole } from '../auth/guards/dev-role.guard';
+
+const ANY_ROLE = [UserRoleDto.KAM, UserRoleDto.RUKOVODITEL, UserRoleDto.ADMINISTRATOR] as const;
+
+// См. requireActorId в workflow.controller.ts — тот же случай: DevRoleGuard
+// в норме резолвит currentUserId для любой распознанной роли (включая
+// ADMINISTRATOR, через email канонического dev-пользователя), но guard формально
+// не требует identity именно для ADMINISTRATOR, так что явная проверка нужна.
+function requireActorId(request: RequestWithDevRole): string {
+  if (!request.currentUserId) {
+    throw new BadRequestException({
+      code: 'FILE_ACTOR_UNKNOWN',
+      message: 'Не удалось определить пользователя, загружающего файл (нет currentUserId)',
+    });
+  }
+  return request.currentUserId;
+}
 
 @ApiTags('files')
 @Controller('files')
@@ -12,20 +30,23 @@ export class FilesController {
 
   @Get()
   @ApiOperation({ summary: 'Список файлов, привязанных к взаимодействию или лицензии' })
+  @ApiHeader({ name: 'X-Dev-Role', required: false, example: 'kam' })
   @ApiQuery({ name: 'interactionInstanceId', required: false })
   @ApiQuery({ name: 'licenseId', required: false })
   @ApiOkResponse({ type: FileAttachmentDto, isArray: true })
+  @Roles(...ANY_ROLE)
   getFiles(
-    @Query('interactionInstanceId') _interactionInstanceId?: string,
-    @Query('licenseId') _licenseId?: string,
-  ): FileAttachmentDto[] {
-    return FILE_ATTACHMENT_FIXTURES;
+    @Query('interactionInstanceId') interactionInstanceId?: string,
+    @Query('licenseId') licenseId?: string,
+  ): Promise<FileAttachmentDto[]> {
+    return this.filesService.listFiles(interactionInstanceId, licenseId);
   }
 
-  @Post()
+  @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
-  @ApiOperation({ summary: 'Загрузить файл в MinIO и создать вложение' })
+  @ApiOperation({ summary: 'Загрузить файл в MinIO (бакет из .env) и создать вложение, вернуть его id' })
+  @ApiHeader({ name: 'X-Dev-Role', required: false, example: 'kam' })
   @ApiBody({
     schema: {
       type: 'object',
@@ -37,23 +58,26 @@ export class FilesController {
     },
   })
   @ApiOkResponse({ type: FileAttachmentDto })
-  uploadFile(@UploadedFile() _file: any): FileAttachmentDto {
-    return FILE_ATTACHMENT_FIXTURES[0];
+  @Roles(...ANY_ROLE)
+  uploadFile(
+    @UploadedFile() file: Express.Multer.File,
+    @Body('interactionInstanceId') interactionInstanceId: string | undefined,
+    @Body('licenseId') licenseId: string | undefined,
+    @Req() request: RequestWithDevRole,
+  ): Promise<FileAttachmentDto> {
+    return this.filesService.uploadFile(file, requireActorId(request), interactionInstanceId, licenseId);
   }
 
+  // Отдаёт signed URL, а не метаданные — содержимое (и даже факт его
+  // существования как отдельного метаданные-эндпоинта) через backend не
+  // проксируется. Для метаданных (fileName/size/mimeType) есть GET /files.
   @Get(':id')
-  @ApiOperation({ summary: 'Метаданные файла по идентификатору' })
-  @ApiParam({ name: 'id', example: FILE_ATTACHMENT_FIXTURES[0].id })
-  @ApiOkResponse({ type: FileAttachmentDto })
-  getFileById(@Param('id') id: string): FileAttachmentDto {
-    return FILE_ATTACHMENT_FIXTURES.find((file) => file.id === id) ?? FILE_ATTACHMENT_FIXTURES[0];
-  }
-
-  @Get(':id/download-url')
-  @ApiOperation({ summary: 'Временная presigned-ссылка на скачивание из MinIO' })
-  @ApiParam({ name: 'id', example: FILE_ATTACHMENT_FIXTURES[0].id })
+  @ApiOperation({ summary: 'Временная presigned-ссылка на скачивание файла из MinIO' })
+  @ApiHeader({ name: 'X-Dev-Role', required: false, example: 'kam' })
+  @ApiParam({ name: 'id', example: 'f0000000-0000-4000-8000-000000000001' })
   @ApiOkResponse({ type: FileDownloadUrlDto })
-  getDownloadUrl(@Param('id') _id: string): FileDownloadUrlDto {
-    return FILE_DOWNLOAD_URL_FIXTURE;
+  @Roles(...ANY_ROLE)
+  getFileById(@Param('id') id: string): Promise<FileDownloadUrlDto> {
+    return this.filesService.getDownloadUrl(id);
   }
 }
