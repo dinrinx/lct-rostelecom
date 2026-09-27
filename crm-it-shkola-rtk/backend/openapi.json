@@ -1277,6 +1277,15 @@
               "example": "b0000000-0000-4000-8000-000000000002",
               "type": "string"
             }
+          },
+          {
+            "name": "X-Dev-Role",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "kam"
+            }
           }
         ],
         "responses": {
@@ -1513,53 +1522,12 @@
         "operationId": "ReportsController_getInteractionsReport",
         "parameters": [
           {
-            "name": "from",
+            "name": "X-Dev-Role",
+            "in": "header",
             "required": false,
-            "in": "query",
             "schema": {
-              "example": "2026-09-01",
-              "type": "string"
-            }
-          },
-          {
-            "name": "to",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "example": "2026-09-30",
-              "type": "string"
-            }
-          },
-          {
-            "name": "universityId",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "itDirectionId",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "itProductId",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "responsibleUserId",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
+              "type": "string",
+              "example": "kam"
             }
           },
           {
@@ -1568,6 +1536,46 @@
             "in": "query",
             "schema": {
               "type": "boolean"
+            }
+          },
+          {
+            "name": "responsibleUserId",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "itProductId",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "itDirectionId",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "universityId",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "2026-09-30"
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "2026-09-01"
             }
           }
         ],
@@ -1597,6 +1605,59 @@
         "operationId": "ReportsController_exportInteractionsReport",
         "parameters": [
           {
+            "name": "X-Dev-Role",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "kam"
+            }
+          },
+          {
+            "name": "onlyOverdue",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "responsibleUserId",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "itProductId",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "itDirectionId",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "universityId",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
             "name": "format",
             "required": true,
             "in": "query",
@@ -1622,7 +1683,7 @@
             }
           }
         },
-        "summary": "Экспорт отфильтрованного реестра взаимодействий",
+        "summary": "Экспорт отфильтрованного реестра взаимодействий (файл в MinIO + временная ссылка)",
         "tags": [
           "reports"
         ]
@@ -1633,53 +1694,52 @@
         "operationId": "ReportsController_getCharts",
         "parameters": [
           {
-            "name": "from",
+            "name": "X-Dev-Role",
+            "in": "header",
             "required": false,
-            "in": "query",
             "schema": {
-              "example": "2026-09-01",
-              "type": "string"
-            }
-          },
-          {
-            "name": "to",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "example": "2026-09-30",
-              "type": "string"
-            }
-          },
-          {
-            "name": "universityId",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "itDirectionId",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "itProductId",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
+              "type": "string",
+              "example": "kam"
             }
           },
           {
             "name": "responsibleUserId",
             "required": false,
             "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "itProductId",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "itDirectionId",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "universityId",
+            "required": false,
+            "in": "query",
+            "schema": {}
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
             "schema": {
-              "type": "string"
+              "example": "2026-09-30"
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "2026-09-01"
             }
           }
         ],
@@ -1704,7 +1764,17 @@
     "/reports/jobs": {
       "post": {
         "operationId": "ReportsController_createReportJob",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "X-Dev-Role",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "kam"
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1738,6 +1808,15 @@
         "operationId": "ReportsController_getReportJob",
         "parameters": [
           {
+            "name": "X-Dev-Role",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "kam"
+            }
+          },
+          {
             "name": "id",
             "required": true,
             "in": "path",
@@ -1770,6 +1849,15 @@
         "operationId": "ReportsController_getReportResult",
         "parameters": [
           {
+            "name": "X-Dev-Role",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "kam"
+            }
+          },
+          {
             "name": "id",
             "required": true,
             "in": "path",
@@ -1800,7 +1888,17 @@
     "/dashboard/license-radar": {
       "get": {
         "operationId": "DashboardController_getLicenseRadar",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "X-Dev-Role",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "kam"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
@@ -1822,7 +1920,17 @@
     "/dashboard/sla-radar": {
       "get": {
         "operationId": "DashboardController_getSlaRadar",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "X-Dev-Role",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "kam"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
@@ -1835,7 +1943,7 @@
             }
           }
         },
-        "summary": "Взаимодействия, зависшие на одном статусе дольше SLA-порога",
+        "summary": "Взаимодействия, зависшие на одном статусе дольше SLA-порога этого статуса",
         "tags": [
           "dashboard"
         ]
@@ -2245,14 +2353,6 @@
         "operationId": "AuthController_getCurrentUser",
         "parameters": [
           {
-            "name": "x-dev-role",
-            "required": true,
-            "in": "header",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
             "name": "X-Dev-Role",
             "in": "header",
             "required": false,
@@ -2275,6 +2375,41 @@
           }
         },
         "summary": "Текущий пользователь по заголовку X-Dev-Role",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/users": {
+      "get": {
+        "operationId": "AuthController_getUsers",
+        "parameters": [
+          {
+            "name": "X-Dev-Role",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "kam"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Справочник сотрудников (ФИО, роль, руководитель) — только чтение",
         "tags": [
           "auth"
         ]
@@ -3194,6 +3329,32 @@
           "workflowTemplateVersionId": {
             "type": "string",
             "example": "b0000000-0000-4000-8000-000000000002"
+          },
+          "slaDays": {
+            "type": "number",
+            "nullable": true,
+            "example": 21,
+            "description": "Норматив SLA, дней в статусе; null — без норматива"
+          },
+          "minDays": {
+            "type": "number",
+            "example": 14,
+            "description": "Минимальная длительность этапа, дней (для критического пути)"
+          },
+          "isOptional": {
+            "type": "boolean",
+            "example": false,
+            "description": "Необязательный этап — не удлиняет критический путь"
+          },
+          "dependsOnStatusIds": {
+            "example": [
+              "b1000000-0000-4000-8000-000000000002"
+            ],
+            "description": "id статусов этой же версии, после которых может начаться этап",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -3201,7 +3362,10 @@
           "name",
           "phase",
           "order",
-          "workflowTemplateVersionId"
+          "workflowTemplateVersionId",
+          "minDays",
+          "isOptional",
+          "dependsOnStatusIds"
         ]
       },
       "WorkflowTransitionDto": {
@@ -3277,6 +3441,39 @@
           "transitions"
         ]
       },
+      "WorkflowTemplateVersionSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "b0000000-0000-4000-8000-000000000002"
+          },
+          "versionNumber": {
+            "type": "number",
+            "example": 2
+          },
+          "isActive": {
+            "type": "boolean",
+            "example": true
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-09-20T14:30:00.000Z"
+          },
+          "instanceCount": {
+            "type": "number",
+            "example": 12,
+            "description": "Сколько взаимодействий сейчас привязано к версии"
+          }
+        },
+        "required": [
+          "id",
+          "versionNumber",
+          "isActive",
+          "createdAt",
+          "instanceCount"
+        ]
+      },
       "WorkflowTemplateWithActiveVersionDto": {
         "type": "object",
         "properties": {
@@ -3302,11 +3499,19 @@
                 "$ref": "#/components/schemas/WorkflowTemplateVersionDto"
               }
             ]
+          },
+          "versions": {
+            "description": "Все версии шаблона, по возрастанию номера",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkflowTemplateVersionSummaryDto"
+            }
           }
         },
         "required": [
           "id",
-          "name"
+          "name",
+          "versions"
         ]
       },
       "WorkflowStatusInputDto": {
@@ -3332,6 +3537,37 @@
           "order": {
             "type": "number",
             "example": 2
+          },
+          "slaDays": {
+            "type": "number",
+            "nullable": true,
+            "example": 21,
+            "description": "Норматив SLA, дней в статусе"
+          },
+          "minDays": {
+            "type": "number",
+            "example": 14,
+            "description": "Минимальная длительность этапа, дней (по умолчанию 0)"
+          },
+          "isOptional": {
+            "type": "boolean",
+            "example": false,
+            "description": "Необязательный этап (по умолчанию false)"
+          },
+          "dependsOnOrders": {
+            "example": [
+              1
+            ],
+            "description": "order статусов этого запроса, после которых может начаться этап. Не указано — предыдущий по order статус",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "sourceStatusId": {
+            "type": "string",
+            "example": "b1000000-0000-4000-8000-000000000002",
+            "description": "id статуса предыдущей активной версии, продолжением которого является этот статус. Нужен только для migrateInstances"
           }
         },
         "required": [
@@ -3415,6 +3651,11 @@
             "items": {
               "$ref": "#/components/schemas/WorkflowTransitionInputDto"
             }
+          },
+          "migrateInstances": {
+            "type": "boolean",
+            "example": false,
+            "description": "true — перевести взаимодействия предыдущей активной версии на новую (статус ищется по sourceStatusId). По умолчанию false: существующие процессы остаются на своей версии"
           }
         },
         "required": [
@@ -3534,6 +3775,28 @@
             "type": "string",
             "example": "b1000000-0000-4000-8000-000000000002"
           },
+          "toStatusName": {
+            "type": "string",
+            "example": "Оформление партнёрства"
+          },
+          "toStatusPhase": {
+            "enum": [
+              "INITIATION",
+              "NEGOTIATION",
+              "CONTRACTING",
+              "IMPLEMENTATION",
+              "ACTIVE_USE",
+              "RENEWAL",
+              "TERMINATION"
+            ],
+            "type": "string",
+            "example": "CONTRACTING"
+          },
+          "fromStatusName": {
+            "type": "string",
+            "nullable": true,
+            "example": "Переговоры"
+          },
           "comment": {
             "type": "string",
             "nullable": true,
@@ -3558,6 +3821,8 @@
           "id",
           "interactionInstanceId",
           "toStatusId",
+          "toStatusName",
+          "toStatusPhase",
           "changedById",
           "changedAt"
         ]
@@ -4389,6 +4654,15 @@
             "example": "ok",
             "description": "Соединение с MinIO"
           },
+          "keycloak": {
+            "enum": [
+              "ok",
+              "error"
+            ],
+            "type": "string",
+            "example": "ok",
+            "description": "Доступность Keycloak (realm из .env); влияет на status только при AUTH_MODE=keycloak"
+          },
           "uptime": {
             "type": "number",
             "example": 128.42,
@@ -4400,6 +4674,7 @@
           "db",
           "redis",
           "minio",
+          "keycloak",
           "uptime"
         ]
       }

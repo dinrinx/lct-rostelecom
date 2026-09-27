@@ -33,7 +33,7 @@
         <sc-if value="{{ c.showForbidden }}"><div style="padding:8px 4px;font-size:12px;line-height:16px;color:var(--color-fg-muted)">Переход сюда не разрешён шаблоном</div></sc-if>
         <sc-if value="{{ c.showDropHint }}"><div style="padding:12px;border-radius:12px;background:#fff;box-shadow:inset 0 0 0 1px var(--color-accent);font-size:12px;line-height:16px;color:var(--color-accent-strong);text-align:center">Отпустите, чтобы перевести</div></sc-if>
         <sc-for list="{{ c.cards }}" as="k">
-          <article draggable="true" onDragStart="{{ k.start }}" onDragEnd="{{ k.end }}" onClick="{{ k.open }}" tabindex="0" style="display:flex;flex-direction:column;gap:6px;padding:12px;border-radius:12px;background:#fff;box-shadow:{{ k.ring }};cursor:grab">
+          <article draggable="{{ k.draggable }}" onDragStart="{{ k.start }}" onDragEnd="{{ k.end }}" onClick="{{ k.open }}" tabindex="0" style="display:flex;flex-direction:column;gap:6px;padding:12px;border-radius:12px;background:#fff;box-shadow:{{ k.ring }};cursor:{{ k.cursor }}">
             <span style="font-size:14px;line-height:20px;font-weight:500">{{ k.universityName }}</span>
             <span style="font-size:12px;line-height:16px;color:var(--color-fg-soft)">{{ k.itProductName }}</span>
             <span style="display:flex;justify-content:space-between;gap:8px;align-items:center;margin-top:2px">
@@ -138,14 +138,14 @@ class Component extends DCLogic {
           daysLabel: r.daysInCurrentStatus + ' дн. в статусе', daysColor: r.isOverdue ? 'var(--color-error-strong)' : 'var(--color-fg-muted)', daysWeight: r.isOverdue ? 500 : 400,
           pending: !!(s.moves[r.interactionInstanceId] && s.moves[r.interactionInstanceId].pending),
           ring: drag && drag.iid === r.interactionInstanceId ? 'inset 0 0 0 2px var(--color-accent)' : r.isOverdue ? 'inset 0 0 0 1px var(--color-error-muted)' : 'none',
-          start: (e) => { e.dataTransfer.setData('text/plain', r.interactionInstanceId); e.dataTransfer.effectAllowed = 'move'; this.setState({ drag: { iid: r.interactionInstanceId, from: this.statusOf(r) }, over: st.id }); },
+          draggable: !isRuk, cursor: isRuk ? 'pointer' : 'grab', start: (e) => { if (isRuk) { e.preventDefault(); return; } e.dataTransfer.setData('text/plain', r.interactionInstanceId); e.dataTransfer.effectAllowed = 'move'; this.setState({ drag: { iid: r.interactionInstanceId, from: this.statusOf(r) }, over: st.id }); },
           end: () => { const was = this.state; if (was.drag && was.over && was.over !== was.drag.from && !this.allowed(was.drag.from, was.over) && !was.modal) { const to = sts.find((x) => x.id === was.over); this.props.onToast && this.props.onToast({ kind: 'error', title: 'Переход не разрешён', text: '«' + st.name + '» → «' + (to ? to.name : '') + '». Доступные столбцы подсвечиваются при перетаскивании', code: 'WORKFLOW_TRANSITION_FORBIDDEN' }); } this.setState({ drag: null, over: null }); },
           open: () => this.props.onOpen && this.props.onOpen(r.interactionInstanceId) })),
       };
     });
     const md = s.modal;
     return {
-      hint: m ? 'Нажмите на карточку, чтобы открыть её и сменить статус' : 'Перетащите карточку в другой столбец, чтобы сменить статус. Подсвечиваются только разрешённые шаблоном переходы.',
+      hint: isRuk ? 'Режим просмотра: статусы переводит ответственный КАМ. Нажмите на карточку, чтобы открыть историю' : m ? 'Нажмите на карточку, чтобы открыть её и сменить статус' : 'Перетащите карточку в другой столбец, чтобы сменить статус. Подсвечиваются только разрешённые шаблоном переходы.',
       columns, colW: m ? '260px' : '280px',
       modal: md ? { ...md, subtitle: md.row.universityName + ' · ' + md.row.itProductName, missing: md.touched && !md.comment.trim(), hint: md.touched && !md.comment.trim() ? 'Комментарий обязателен — опишите, что сделано' : 'Обязательное поле' } : null,
       closeModal: () => this.setState({ modal: null }),
