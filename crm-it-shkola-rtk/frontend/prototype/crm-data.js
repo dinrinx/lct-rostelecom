@@ -234,17 +234,55 @@
     }
   }
 
+  // Бэкенд ссылается на статусы внутри ОДНОГО PUT/POST-запроса по их order,
+  // а не по id — при сохранении шаблона id создаваемых статусов ещё не
+  // существуют (версия целиком пересоздаётся). UI же удобнее вести по id
+  // (стабильный ключ для рендера/связей), поэтому переводим id -> order
+  // прямо на границе транспортного слоя, не трогая .dc.html-страницы.
+  function toWireTemplateBody(statuses, transitions) {
+    const orderById = new Map(statuses.map((s) => [s.id, s.order]));
+    return {
+      statuses: statuses.map(({ name, phase, order }) => ({ name, phase, order })),
+      transitions: transitions.map(({ fromStatusId, toStatusId, name }) => ({
+        fromStatusOrder: orderById.get(fromStatusId),
+        toStatusOrder: orderById.get(toStatusId),
+        name,
+      })),
+    };
+  }
+
+  // Тот же граф вставки статуса, что и localAddStatus ниже (вставка после
+  // afterId, обязательный — врезается в цепочку, необязательный — доп. ветка),
+  // но без мутации локального состояния — нужен отдельно, чтобы посчитать
+  // order для реального PUT-запроса ДО того, как localAddStatus применит
+  // изменения к локальному стейту для demo-режима/оптимистичного UI.
+  function buildInsertedGraph(v, { name, phase, afterId, mandatory }) {
+    const statuses = v.statuses.map((s) => ({ ...s }));
+    const idx = statuses.findIndex((x) => x.id === afterId);
+    const newId = 'new-st-' + Math.random().toString(36).slice(2);
+    statuses.splice(idx + 1, 0, { id: newId, name, phase, order: 0 });
+    statuses.forEach((x, i) => (x.order = i + 1));
+
+    const nextIds = v.transitions.filter((t) => t.fromStatusId === afterId && t.name === 'Далее').map((t) => t.toStatusId);
+    let transitions = v.transitions.map((t) => ({ ...t }));
+    if (mandatory) transitions = transitions.filter((t) => !(t.fromStatusId === afterId && nextIds.includes(t.toStatusId)));
+    transitions.push({ fromStatusId: afterId, toStatusId: newId, name: 'Далее' });
+    nextIds.forEach((n) => transitions.push({ fromStatusId: newId, toStatusId: n, name: 'Далее' }));
+
+    return { statuses, transitions };
+  }
+
   const api = {
     me: () => call('GET', '/auth/me', { fallback: () => USERS.find((u) => u.role === ROLES[cfg.role].dto) }),
     interactions: (q) => call('GET', '/reports/interactions', { query: q, fallback: () => fxInteractions(cfg.role, q) }),
     licenseRadar: () => call('GET', '/dashboard/license-radar', { fallback: () => fxLicenseRadar(cfg.role) }),
     slaRadar: () => call('GET', '/dashboard/sla-radar', { fallback: () => fxSlaRadar(cfg.role) }),
-    interaction: (iid) => call('GET', '/workflow/interactions/' + iid, { fallback: () => { const x = INTERACTIONS.find((i) => i.interactionInstanceId === iid); return { id: iid, universityId: x.universityId, itProductId: x.itProductId, workflowTemplateVersionId: VERSION_ID, currentStatusId: x.currentStatusId, responsibleUserId: x.responsibleUserId, createdAt: x.createdAt, updatedAt: x.updatedAt }; } }),
-    history: (iid) => call('GET', '/workflow/interactions/' + iid + '/history', { fallback: () => HISTORY[iid] || [] }),
+    interaction: (iid) => call('GET', '/workflow/instances/' + iid, { fallback: () => { const x = INTERACTIONS.find((i) => i.interactionInstanceId === iid); return { id: iid, universityId: x.universityId, itProductId: x.itProductId, workflowTemplateVersionId: VERSION_ID, currentStatusId: x.currentStatusId, responsibleUserId: x.responsibleUserId, createdAt: x.createdAt, updatedAt: x.updatedAt }; } }),
+    history: (iid) => call('GET', '/workflow/instances/' + iid + '/history', { fallback: () => HISTORY[iid] || [] }),
     templateVersion: (vid) => call('GET', '/workflow/template-versions/' + vid, { fallback: () => (vid === VERSION_ID ? activeVersion() : VERSIONS.find((v) => v.id === vid)) || activeVersion() }),
-    addStatus: async (dto) => { const v = activeVersion(); await call('PUT', '/workflow/templates/' + TEMPLATE.id, { body: { statuses: v.statuses.map(({ id, name, phase, order }) => ({ id, name, phase, order })).concat([{ name: dto.name, phase: dto.phase }]), transitions: v.transitions }, fallback: () => null }); return localAddStatus(dto); },
+    addStatus: async (dto) => { const v = activeVersion(); const { statuses, transitions } = buildInsertedGraph(v, dto); await call('PUT', '/workflow/templates/' + TEMPLATE.id, { body: toWireTemplateBody(statuses, transitions), fallback: () => null }); return localAddStatus(dto); },
     files: (iid) => call('GET', '/files', { query: { interactionInstanceId: iid }, fallback: () => FILES.filter((f) => f.interactionInstanceId === iid) }),
-    updateStatus: (iid, dto) => call('PATCH', '/workflow/interactions/' + iid + '/status', { body: dto, fallback: () => {
+    updateStatus: (iid, dto) => call('POST', '/workflow/instances/' + iid + '/transition', { body: dto, fallback: () => {
       const x = INTERACTIONS.find((i) => i.interactionInstanceId === iid); const st = activeVersion().statuses.find((s) => s.id === dto.toStatusId);
       const from = x.currentStatusId; const at = new Date().toISOString();
       if (!st) throw new ApiError('WORKFLOW_STATUS_NOT_FOUND', 'Статус не найден в шаблоне', null, 404);
@@ -254,8 +292,8 @@
       (HISTORY[iid] = HISTORY[iid] || []).push({ id: 'local-' + Date.now(), interactionInstanceId: iid, fromStatusId: from, toStatusId: st.id, comment: dto.comment, changedById: userIdForRole(), changedAt: at });
       return { id: iid, universityId: x.universityId, itProductId: x.itProductId, workflowTemplateVersionId: VERSION_ID, currentStatusId: st.id, responsibleUserId: x.responsibleUserId, createdAt: x.createdAt, updatedAt: at };
     } }),
-    uploadFile: (file, iid) => { const fd = new FormData(); fd.append('file', file); fd.append('interactionInstanceId', iid); return call('POST', '/files', { form: fd, fallback: () => { const f = { id: 'local-f-' + Date.now(), fileName: file.name, mimeType: file.type || 'application/octet-stream', size: file.size, storageKey: 'attachments/' + file.name, uploadedById: userIdForRole(), interactionInstanceId: iid, licenseId: null, createdAt: new Date().toISOString() }; FILES.push(f); return f; } }); },
-    downloadUrl: (fid) => call('GET', '/files/' + fid + '/download-url', { fallback: () => ({ fileId: fid, url: '#', expiresAt: ahead(0.01) }) }),
+    uploadFile: (file, iid) => { const fd = new FormData(); fd.append('file', file); fd.append('interactionInstanceId', iid); return call('POST', '/files/upload', { form: fd, fallback: () => { const f = { id: 'local-f-' + Date.now(), fileName: file.name, mimeType: file.type || 'application/octet-stream', size: file.size, storageKey: 'attachments/' + file.name, uploadedById: userIdForRole(), interactionInstanceId: iid, licenseId: null, createdAt: new Date().toISOString() }; FILES.push(f); return f; } }); },
+    downloadUrl: (fid) => call('GET', '/files/' + fid, { fallback: () => ({ fileId: fid, url: '#', expiresAt: ahead(0.01) }) }),
     charts: (q) => call('GET', '/reports/charts', { query: q, fallback: () => fxCharts(cfg.role, q) }),
     exportReport: (q, format) => call('GET', '/reports/interactions/export', { query: { ...q, format }, fallback: () => ({ format, fileName: 'reestr-vzaimodeystviy-' + new Date().toISOString().slice(0, 10) + '.' + format, url: '#', generatedAt: new Date().toISOString(), rowCount: fxInteractions(cfg.role, q).length }) }),
     createJob: (type) => call('POST', '/reports/jobs', { body: { type }, fallback: () => ({ id: 'job-' + Date.now(), type, status: 'QUEUED', requestedById: userIdForRole(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), resultUrl: null }) }),
@@ -265,11 +303,11 @@
     vendors: () => call('GET', '/catalogs/vendors', { fallback: VENDORS }),
     licenses: () => call('GET', '/catalogs/licenses', { fallback: LICENSES }),
     reassign: (uid, kamId) => call('PUT', '/catalogs/universities/' + uid + '/responsible', { body: { kamId }, fallback: () => { const u = uniById(uid); u.kamId = kamId; INTERACTIONS.filter((x) => x.universityId === uid).forEach((x) => { x.responsibleUserId = kamId; x.responsibleUserName = userName(kamId); }); return u; } }),
-    unassign: (uid) => call('PUT', '/catalogs/universities/' + uid, { body: { kamId: null }, fallback: () => { const u = uniById(uid); u.kamId = null; return u; } }),
+    unassign: (uid) => call('PUT', '/catalogs/universities/' + uid + '/responsible', { body: { kamId: null }, fallback: () => { const u = uniById(uid); u.kamId = null; return u; } }),
     users: () => call('GET', '/admin/users', { fallback: USERS }),
     updateUser: (uid, dto) => call('PUT', '/admin/users/' + uid, { body: dto, fallback: () => Object.assign(USERS.find((u) => u.id === uid), dto) }),
     templates: () => call('GET', '/workflow/templates', { fallback: [TEMPLATE] }),
-    updateTemplate: (tid, dto) => call('PUT', '/workflow/templates/' + tid, { body: dto, fallback: () => { const n = Math.max(...VERSIONS.map((v) => v.versionNumber)) + 1; const a = activeVersion(); const arch = { ...a, id: 'local-arch-' + a.versionNumber, isActive: false, statuses: [...a.statuses], transitions: [...a.transitions] }; VERSIONS.splice(VERSIONS.indexOf(a), 0, arch); a.statuses.splice(0, a.statuses.length, ...dto.statuses.map((x) => ({ ...x, workflowTemplateVersionId: a.id }))); a.transitions = dto.transitions.map((t, i) => ({ id: 'local-tr-' + n + '-' + i, workflowTemplateVersionId: a.id, ...t })); a.versionNumber = n; return { ...clone(a), versionNumber: n }; } }),
+    updateTemplate: (tid, dto) => call('PUT', '/workflow/templates/' + tid, { body: { ...toWireTemplateBody(dto.statuses, dto.transitions), ...(dto.name !== undefined ? { name: dto.name } : {}), ...(dto.description !== undefined ? { description: dto.description } : {}) }, fallback: () => { const n = Math.max(...VERSIONS.map((v) => v.versionNumber)) + 1; const a = activeVersion(); const arch = { ...a, id: 'local-arch-' + a.versionNumber, isActive: false, statuses: [...a.statuses], transitions: [...a.transitions] }; VERSIONS.splice(VERSIONS.indexOf(a), 0, arch); a.statuses.splice(0, a.statuses.length, ...dto.statuses.map((x) => ({ ...x, workflowTemplateVersionId: a.id }))); a.transitions = dto.transitions.map((t, i) => ({ id: 'local-tr-' + n + '-' + i, workflowTemplateVersionId: a.id, ...t })); a.versionNumber = n; return { ...clone(a), versionNumber: n }; } }),
     importPreview: () => call('POST', '/catalogs/import/preview', { fallback: { previewId: id('h0000000', 1), fileName: 'Реестр лицензий.xlsx', totalRows: 30, duplicateRows: 2, rows: [
       { rowNumber: 2, universityName: 'СПбГУ им. Петра Великого', match: 'DUPLICATE_FUZZY', matchedUniversityId: UNIVERSITIES[0].id },
       { rowNumber: 3, universityName: 'МГТУ им. Н. Э. Баумана', match: 'DUPLICATE_EXACT', matchedUniversityId: UNIVERSITIES[1].id },
