@@ -286,20 +286,70 @@ async function seedWorkflow(
   const now = new Date();
   const daysAgo = (days: number) => new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
 
-  // 3 тестовых инстанса на разных стадиях цикла, привязанных к реальным
-  // вузам/КАМам из демо-каталога — чтобы RBAC-видимость и радар SLA было на
-  // чём проверить сразу после seed, без ручного создания через API.
-  const instanceSeeds = [
-    { universityIndex: 0, statusIndex: 2, kamId: kamIds.kam1 }, // СПбГУ -> Согласование договора
-    { universityIndex: 1, statusIndex: 4, kamId: kamIds.kam2 }, // МГТУ -> Активное использование
-    { universityIndex: 2, statusIndex: 0, kamId: kamIds.kam1 }, // НГУ -> Первый контакт
+  // 7 инстансов — по одному на каждую из 7 макростадий (statusIndex 0..6),
+  // раскиданы по трём реальным демо-вузам (не абстрактным "Вуз N") и обоим
+  // КАМам — чтобы сразу после seed было на чём проверить и построчную
+  // видимость (RBAC), и радар SLA, и полный охват макростадий на фронте.
+  // У 3 из них (statusIndex >= 4, самые длинные цепочки) — не общий шаблонный
+  // комментарий на каждый шаг, а собственная бизнес-история перехода; файлы
+  // (attachmentId) намеренно не прикладываем — для фронта не обязательны.
+  const instanceSeeds: Array<{
+    universityIndex: number;
+    statusIndex: number;
+    kamId: string;
+    comments?: string[];
+  }> = [
+    { universityIndex: 0, statusIndex: 0, kamId: kamIds.kam1 }, // СПбГУ -> Первый контакт
+    { universityIndex: 1, statusIndex: 1, kamId: kamIds.kam2 }, // МГТУ -> Переговоры условий
+    { universityIndex: 2, statusIndex: 2, kamId: kamIds.kam1 }, // НГУ -> Согласование договора
+    { universityIndex: 0, statusIndex: 3, kamId: kamIds.kam1 }, // СПбГУ -> Внедрение
+    {
+      universityIndex: 1,
+      statusIndex: 4,
+      kamId: kamIds.kam2, // МГТУ -> Активное использование
+      comments: [
+        'Связались с проректором по цифровизации МГТУ',
+        'Обсудили условия лицензирования, вуз попросил скидку для факультета ИУ',
+        'Договор согласован юротделом, подписан обеими сторонами',
+        'Продукт развёрнут в тестовом контуре факультета',
+        'Полноценная эксплуатация, около 120 активных пользователей',
+      ],
+    },
+    {
+      universityIndex: 2,
+      statusIndex: 5,
+      kamId: kamIds.kam1, // НГУ -> Продление
+      comments: [
+        'Первичный контакт с деканатом НГУ',
+        'Переговоры по объёму лицензий на следующий учебный год',
+        'Договор подписан обеими сторонами',
+        'Внедрение завершено, продукт доступен всем кафедрам',
+        'Год активной эксплуатации без инцидентов',
+        'Инициировали продление лицензии на второй год',
+      ],
+    },
+    {
+      universityIndex: 0,
+      statusIndex: 6,
+      kamId: kamIds.kam1, // СПбГУ -> Завершение сотрудничества
+      comments: [
+        'Первый контакт по итогам конференции EdCrunch',
+        'Переговоры по пилотному проекту для двух факультетов',
+        'Договор согласован и подписан',
+        'Внедрение продукта в инфраструктуру вуза',
+        'Активная эксплуатация — более 300 пользователей',
+        'Вуз не продлил лицензию по бюджетным причинам',
+        'Сотрудничество завершено, доступ закрыт',
+      ],
+    },
   ];
 
-  for (const seed of instanceSeeds) {
+  for (let i = 0; i < instanceSeeds.length; i++) {
+    const seed = instanceSeeds[i];
     const university = universities[seed.universityIndex];
     if (!university || productIds.length === 0) continue;
 
-    const itProductId = productIds[seed.universityIndex % productIds.length];
+    const itProductId = productIds[i % productIds.length];
 
     const instance = await prisma.interactionInstance.create({
       data: {
@@ -314,12 +364,18 @@ async function seedWorkflow(
     // Append-only история: путь от начала цепочки до текущего статуса,
     // с разнесёнными по времени датами (для наглядности радара "зависших" статусов).
     for (let step = 0; step <= seed.statusIndex; step++) {
+      const comment = seed.comments
+        ? seed.comments[step]
+        : step === 0
+          ? 'Взаимодействие создано'
+          : `Переход в статус «${statuses[step].name}»`;
+
       await prisma.statusHistoryEntry.create({
         data: {
           interactionInstanceId: instance.id,
           fromStatusId: step === 0 ? null : statuses[step - 1].id,
           toStatusId: statuses[step].id,
-          comment: step === 0 ? 'Взаимодействие создано' : `Переход в статус «${statuses[step].name}»`,
+          comment,
           changedById: seed.kamId,
           changedAt: daysAgo((seed.statusIndex - step) * 10 + 1),
         },
@@ -364,7 +420,7 @@ async function main() {
   await seedWorkflow(universities, [...productsByName.values()], { kam1: kam1.id, kam2: kam2.id });
 
   console.log(
-    `Готово: вендоров и продуктов из ${rows.length} строк файла, плюс синтетические вузы/лицензии, плюс 4 демо-пользователя (admin/rukovoditel/kam/kam2), плюс workflow-шаблон с 7 статусами и 3 тестовых взаимодействия.`,
+    `Готово: вендоров и продуктов из ${rows.length} строк файла, плюс синтетические вузы/лицензии, плюс 4 демо-пользователя (admin/rukovoditel/kam/kam2), плюс workflow-шаблон с 7 статусами и 7 тестовых взаимодействий (по одному на каждую макростадию, у 3 — многошаговая история с комментариями).`,
   );
 }
 
