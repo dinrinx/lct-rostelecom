@@ -1,44 +1,58 @@
-import { randomUUID } from 'crypto';
-import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
+import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { randomUUID } from 'crypto';
+import ExcelJS from 'exceljs';
 import { PrismaService } from '../prisma/prisma.service';
 import { MinioService } from '../storage/minio.service';
 import type { CatalogScope } from '../catalogs/catalog-scope.interceptor';
 import { universityWhereForScope } from '../catalogs/catalogs.service';
-import { InteractionReportItemDto, InteractionsReportExportDto } from './dto/interaction-report-item.dto';
-import { ChartSlicePointDto, ChartTimeSeriesPointDto, ChartsResponseDto } from './dto/charts.dto';
 import { WorkflowPhaseDto } from '../workflow/dto/workflow-status.dto';
-import { renderInteractionsPdf, renderInteractionsXlsx } from './report-export';
-import { LicenseRadarBucketDto, LicenseRadarItemDto, LicenseRadarResultDto } from './dto/license-radar.dto';
-import { SlaRadarItemDto, SlaRadarResultDto } from './dto/sla-radar.dto';
+import { InteractionReportItemDto, InteractionsReportExportDto } from './dto/interaction-report-item.dto';
+import { ChartsResponseDto } from './dto/charts.dto';
+import { LicenseRadarBucketDto, LicenseRadarResultDto } from './dto/license-radar.dto';
+import { SlaRadarResultDto } from './dto/sla-radar.dto';
+import { renderInteractionsPdf } from './report-export';
 
-const EXPORT_DOWNLOAD_URL_EXPIRY_SECONDS = 600;
-// Порог из НФТ проекта ("отклик API < 1с") — выше него синхронная генерация
-// в самом запросе уже не годится, нужна очередь (BullMQ, см. план, шаг 3.6).
-// Пока держим синхронно и логируем факт превышения — если это будет
-// происходить регулярно на реальных объёмах, тогда и оборачиваем в очередь,
-// не раньше (незачем городить очередь под данные, которые рендерятся за
-// миллисекунды).
-const EXPORT_SLOW_THRESHOLD_MS = 1000;
-
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
-const DEFAULT_SLA_THRESHOLD_DAYS = 5;
-
-// Простое правило по датам без ML (см. CLAUDE.md, killer-фича радара SLA):
-// единый порог на все статусы/фазы (per-статусного поля под SLA в схеме нет —
-// если понадобится тонкая настройка, это отдельная миграция), но
-// переопределяемый через .env — одно и то же значение для sla-радара и для
-// ?onlyOverdue в /reports/interactions, это одно и то же понятие "просрочено".
-function getSlaThresholdDays(): number {
-  const raw = Number.parseInt(process.env.SLA_THRESHOLD_DAYS ?? '', 10);
-  return Number.isFinite(raw) && raw > 0 ? raw : DEFAULT_SLA_THRESHOLD_DAYS;
-}
-
-// Дальше этого горизонта лицензия ещё не попадает на радар — иначе он
-// превратился бы в полный список лицензий, а не в набор "требует внимания".
+const DAY_MS = 24 * 60 * 60 * 1000;
+const EXPORT_URL_EXPIRY_SECONDS = 600;
 const LICENSE_RADAR_HORIZON_DAYS = 60;
 
-function licenseBucketFor(daysLeft: number): LicenseRadarBucketDto | null {
+export interface InteractionReportFilters {
+  from?: string;
+  to?: string;
+  universityId?: string;
+  itDirectionId?: string;
+  itProductId?: string;
+  responsibleUserId?: string;
+  onlyOverdue?: boolean;
+}
+
+export type ExportFormat = 'xls' | 'xlsx' | 'pdf';
+
+// Колонки выгрузки — те же, что в таблице реестра на фронте.
+const EXPORT_COLUMNS: Array<{ header: string; key: keyof InteractionReportItemDto; width: number }> = [
+  { header: 'Наименование вуза', key: 'universityName', width: 36 },
+  { header: 'ИТ-направление', key: 'itDirectionName', width: 28 },
+  { header: 'ИТ-продукт', key: 'itProductName', width: 24 },
+  { header: 'Статус работы с вузом', key: 'currentStatusName', width: 34 },
+  { header: 'Ответственный', key: 'responsibleUserName', width: 32 },
+  { header: 'Дней в статусе', key: 'daysInCurrentStatus', width: 16 },
+];
+
+// Видимость взаимодействий по роли: Администратор — все; КАМ/Руководитель —
+// где ответственный из их зоны видимости ИЛИ вуз из их зоны (так Руководитель
+// видит и процессы вузов, у которых ответственного сняли).
+function interactionWhereForScope(scope: CatalogScope): Prisma.InteractionInstanceWhereInput {
+  if (scope.visibleKamIds === null) {
+    return {};
+  }
+  return {
+    OR: [{ responsibleUserId: { in: scope.visibleKamIds } }, { university: universityWhereForScope(scope) }],
+  };
+}
+
+function licenseBucket(endDate: Date, now: number): LicenseRadarBucketDto | null {
+  const daysLeft = Math.ceil((endDate.getTime() - now) / DAY_MS);
   if (daysLeft < 0) return LicenseRadarBucketDto.OVERDUE;
   if (daysLeft <= 7) return LicenseRadarBucketDto.DUE_IN_7_DAYS;
   if (daysLeft <= 30) return LicenseRadarBucketDto.DUE_IN_30_DAYS;
@@ -46,208 +60,151 @@ function licenseBucketFor(daysLeft: number): LicenseRadarBucketDto | null {
   return null;
 }
 
-export interface ReportsFilters {
-  from?: string;
-  to?: string;
-  universityId?: string;
-  itDirectionId?: string;
-  itProductId?: string;
-  responsibleUserId?: string;
+// 'xls' отдаём HTML-таблицей с MIME Excel — Excel открывает её штатно, а
+// бинарный BIFF (.xls) exceljs не пишет.
+function toExcelHtml(rows: InteractionReportItemDto[]): string {
+  const escape = (value: unknown) =>
+    String(value ?? '').replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]!);
+  const head = EXPORT_COLUMNS.map((column) => `<th>${escape(column.header)}</th>`).join('');
+  const body = rows
+    .map((row) => `<tr>${EXPORT_COLUMNS.map((column) => `<td>${escape(row[column.key])}</td>`).join('')}</tr>`)
+    .join('');
+  return `<html><head><meta charset="utf-8"></head><body><table border="1"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></body></html>`;
 }
 
 @Injectable()
 export class ReportsService {
-  private readonly logger = new Logger(ReportsService.name);
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly minio: MinioService,
   ) {}
 
-  // Общий where для InteractionInstance — используется и реестром, и
-  // графиками statusDistribution/interactionsOverTime, чтобы фильтры и
-  // видимость по роли были ровно теми же, что и в самом реестре.
-  private buildInteractionWhere(filters: ReportsFilters, scope: CatalogScope): Prisma.InteractionInstanceWhereInput {
-    return {
-      ...(scope.visibleKamIds === null ? {} : { university: universityWhereForScope(scope) }),
-      ...(filters.universityId ? { universityId: filters.universityId } : {}),
-      ...(filters.itProductId ? { itProductId: filters.itProductId } : {}),
-      ...(filters.itDirectionId ? { itProduct: { itDirectionId: filters.itDirectionId } } : {}),
-      ...(filters.responsibleUserId ? { responsibleUserId: filters.responsibleUserId } : {}),
-      ...(filters.from || filters.to
-        ? {
-            createdAt: {
-              ...(filters.from ? { gte: new Date(filters.from) } : {}),
-              ...(filters.to ? { lte: new Date(filters.to) } : {}),
-            },
-          }
-        : {}),
+  // Денормализованный реестр. daysInCurrentStatus считается от последней записи
+  // append-only истории (момент входа в текущий статус), isOverdue — сравнение
+  // с нормативом WorkflowStatus.slaDays. Простые правила по датам, без ML.
+  async listInteractions(scope: CatalogScope, filters: InteractionReportFilters): Promise<InteractionReportItemDto[]> {
+    const where: Prisma.InteractionInstanceWhereInput = {
+      AND: [
+        interactionWhereForScope(scope),
+        filters.universityId ? { universityId: filters.universityId } : {},
+        filters.itProductId ? { itProductId: filters.itProductId } : {},
+        filters.itDirectionId ? { itProduct: { itDirectionId: filters.itDirectionId } } : {},
+        filters.responsibleUserId ? { responsibleUserId: filters.responsibleUserId } : {},
+        filters.from ? { updatedAt: { gte: new Date(filters.from) } } : {},
+        // «по» включительно — до конца указанного дня
+        filters.to ? { updatedAt: { lt: new Date(new Date(filters.to).getTime() + DAY_MS) } } : {},
+      ],
     };
-  }
 
-  async getInteractionsReport(
-    filters: ReportsFilters,
-    onlyOverdue: boolean,
-    scope: CatalogScope,
-  ): Promise<InteractionReportItemDto[]> {
     const instances = await this.prisma.interactionInstance.findMany({
-      where: this.buildInteractionWhere(filters, scope),
+      where,
+      orderBy: { updatedAt: 'desc' },
       include: {
-        university: true,
-        itProduct: { include: { itDirection: true } },
-        currentStatus: true,
-        responsibleUser: true,
+        university: { select: { name: true } },
+        itProduct: { select: { name: true, itDirection: { select: { id: true, name: true } } } },
+        currentStatus: { select: { name: true, phase: true, slaDays: true } },
+        responsibleUser: { select: { fullName: true } },
+        statusHistoryEntries: { orderBy: { changedAt: 'desc' }, take: 1, select: { changedAt: true } },
       },
-      orderBy: { createdAt: 'desc' },
     });
 
-    const statusSinceByInstance = await this.getStatusSinceByInstance(instances.map((i) => i.id));
     const now = Date.now();
-    const slaThresholdDays = getSlaThresholdDays();
-
-    const items: InteractionReportItemDto[] = instances.map((instance) => {
-      const statusSince = statusSinceByInstance.get(instance.id) ?? instance.createdAt;
-      const daysInCurrentStatus = Math.floor((now - statusSince.getTime()) / MS_PER_DAY);
-
+    const rows = instances.map((instance): InteractionReportItemDto => {
+      const since = instance.statusHistoryEntries[0]?.changedAt ?? instance.updatedAt;
+      const daysInCurrentStatus = Math.max(0, Math.floor((now - since.getTime()) / DAY_MS));
+      const slaDays = instance.currentStatus.slaDays;
       return {
         interactionInstanceId: instance.id,
         universityId: instance.universityId,
         universityName: instance.university.name,
-        itDirectionId: instance.itProduct?.itDirectionId ?? null,
+        itDirectionId: instance.itProduct?.itDirection.id ?? null,
         itDirectionName: instance.itProduct?.itDirection.name ?? null,
         itProductId: instance.itProductId,
         itProductName: instance.itProduct?.name ?? null,
         currentStatusId: instance.currentStatusId,
         currentStatusName: instance.currentStatus.name,
-        currentPhase: instance.currentStatus.phase as unknown as WorkflowPhaseDto,
+        currentPhase: instance.currentStatus.phase as WorkflowPhaseDto,
         responsibleUserId: instance.responsibleUserId,
         responsibleUserName: instance.responsibleUser.fullName,
         createdAt: instance.createdAt.toISOString(),
         updatedAt: instance.updatedAt.toISOString(),
         daysInCurrentStatus,
-        isOverdue: daysInCurrentStatus > slaThresholdDays,
+        isOverdue: slaDays !== null && daysInCurrentStatus > slaDays,
       };
     });
 
-    return onlyOverdue ? items.filter((item) => item.isOverdue) : items;
+    return filters.onlyOverdue ? rows.filter((row) => row.isOverdue) : rows;
   }
 
-  // Killer-фича: лицензии, истекающие в ближайшие 60/30/7 дней (+ уже
-  // просроченные, но ещё не закрытые администратором — TERMINATED вручную
-  // помечает, что лицензией уже занялись, и она больше не требует внимания
-  // радара). Видимость — та же построчная модель по University.kamId.
-  async getLicenseRadar(scope: CatalogScope): Promise<LicenseRadarResultDto> {
-    const now = new Date();
-    const horizon = new Date(now.getTime() + LICENSE_RADAR_HORIZON_DAYS * MS_PER_DAY);
+  async getCharts(scope: CatalogScope, filters: InteractionReportFilters): Promise<ChartsResponseDto> {
+    const rows = await this.listInteractions(scope, filters);
+
+    const countBy = <T>(items: T[], key: (item: T) => string) => {
+      const counts = new Map<string, number>();
+      for (const item of items) counts.set(key(item), (counts.get(key(item)) ?? 0) + 1);
+      return counts;
+    };
+
+    const byStatus = countBy(rows, (row) => row.currentStatusName);
+    const byMonth = countBy(rows, (row) => `${row.createdAt.slice(0, 7)}-01`);
 
     const licenses = await this.prisma.license.findMany({
       where: {
         ...(scope.visibleKamIds === null ? {} : { university: universityWhereForScope(scope) }),
-        status: { not: 'TERMINATED' },
-        endDate: { lte: horizon },
+        ...(filters.universityId ? { universityId: filters.universityId } : {}),
+        ...(filters.itProductId ? { itProductId: filters.itProductId } : {}),
+        ...(filters.itDirectionId ? { itProduct: { itDirectionId: filters.itDirectionId } } : {}),
       },
-      include: { university: true, itProduct: true },
-      orderBy: { endDate: 'asc' },
+      select: { itProduct: { select: { name: true } } },
     });
+    const byProduct = countBy(licenses, (license) => license.itProduct.name);
 
-    const items: LicenseRadarItemDto[] = [];
-    for (const license of licenses) {
-      const daysLeft = Math.floor((license.endDate.getTime() - now.getTime()) / MS_PER_DAY);
-      const bucket = licenseBucketFor(daysLeft);
-      if (!bucket) continue; // horizon в where уже отсекает "слишком далеко", это защитная проверка
-
-      items.push({
-        licenseId: license.id,
-        contractNumber: license.contractNumber ?? '',
-        universityId: license.universityId,
-        universityName: license.university.name,
-        itProductId: license.itProductId,
-        itProductName: license.itProduct.name,
-        endDate: license.endDate.toISOString(),
-        bucket,
-      });
-    }
-
-    return { jobId: randomUUID(), generatedAt: new Date().toISOString(), items };
+    return {
+      statusDistribution: [...byStatus].map(([label, value]) => ({ label, value })),
+      interactionsOverTime: [...byMonth].sort(([a], [b]) => a.localeCompare(b)).map(([date, value]) => ({ date, value })),
+      licensesByProduct: [...byProduct].map(([label, value]) => ({ label, value })),
+    };
   }
 
-  // Killer-фича: взаимодействия, зависшие в одном статусе дольше SLA-порога.
-  // Тот же порог и тот же признак "просрочено", что и у ?onlyOverdue в
-  // /reports/interactions — это одно и то же понятие, посчитанное здесь
-  // без фильтров периода/направления/продукта (радар — по всей видимой зоне).
-  async getSlaRadar(scope: CatalogScope): Promise<SlaRadarResultDto> {
-    const slaThresholdDays = getSlaThresholdDays();
-
-    const instances = await this.prisma.interactionInstance.findMany({
-      where: scope.visibleKamIds === null ? {} : { university: universityWhereForScope(scope) },
-      include: { university: true, currentStatus: true, responsibleUser: true },
-    });
-
-    const statusSinceByInstance = await this.getStatusSinceByInstance(instances.map((i) => i.id));
-    const now = Date.now();
-
-    const items: SlaRadarItemDto[] = [];
-    for (const instance of instances) {
-      const statusSince = statusSinceByInstance.get(instance.id) ?? instance.createdAt;
-      const daysInStatus = Math.floor((now - statusSince.getTime()) / MS_PER_DAY);
-      if (daysInStatus <= slaThresholdDays) continue;
-
-      items.push({
-        interactionInstanceId: instance.id,
-        universityId: instance.universityId,
-        universityName: instance.university.name,
-        currentStatusId: instance.currentStatusId,
-        currentStatusName: instance.currentStatus.name,
-        phase: instance.currentStatus.phase as unknown as WorkflowPhaseDto,
-        responsibleUserId: instance.responsibleUserId,
-        responsibleUserName: instance.responsibleUser.fullName,
-        statusSince: statusSince.toISOString(),
-        daysInStatus,
-        slaThresholdDays,
-      });
-    }
-
-    items.sort((a, b) => b.daysInStatus - a.daysInStatus);
-
-    return { generatedAt: new Date().toISOString(), items };
-  }
-
-  // xls отдельного бинарного формата не пишем (ExcelJS его не поддерживает,
-  // как и большинство современных библиотек) — тот же .xlsx-контент, только
-  // имя файла/mimeType под запрошенный format; Excel и подобные открывают
-  // такой файл нормально независимо от расширения.
-  async exportInteractionsReport(
-    filters: ReportsFilters,
-    format: 'xls' | 'xlsx' | 'pdf',
-    onlyOverdue: boolean,
+  // Файл кладём в тот же бакет MinIO (префикс exports/) и отдаём presigned-ссылку —
+  // содержимое через backend не проксируется, как и у вложений. xlsx — ExcelJS
+  // (та же библиотека, что и в импорте каталогов); xls — HTML-таблица с
+  // MIME Excel (бинарный BIFF exceljs не пишет, Excel такой файл открывает
+  // штатно); pdf — простой табличный рендер через pdfkit с шрифтом DejaVu Sans
+  // (встроенные PDF-шрифты кириллицу не поддерживают — текст превращался бы
+  // в мусор при копировании, см. report-export.ts).
+  async exportInteractions(
     scope: CatalogScope,
+    filters: InteractionReportFilters,
+    format: ExportFormat,
   ): Promise<InteractionsReportExportDto> {
-    const items = await this.getInteractionsReport(filters, onlyOverdue, scope);
+    const rows = await this.listInteractions(scope, filters);
+    const generatedAt = new Date();
+    const fileName = `reestr-vzaimodeystviy-${generatedAt.toISOString().slice(0, 10)}.${format}`;
 
-    const startedAt = Date.now();
-    const buffer =
-      format === 'pdf' ? await renderInteractionsPdf(items) : await renderInteractionsXlsx(items);
-    const renderMs = Date.now() - startedAt;
-    if (renderMs > EXPORT_SLOW_THRESHOLD_MS) {
-      this.logger.warn(
-        `Экспорт отчёта занял ${renderMs}мс на ${items.length} строк (format=${format}) — порог ${EXPORT_SLOW_THRESHOLD_MS}мс превышен, стоит вынести в очередь (BullMQ, см. план 3.6)`,
-      );
+    let buffer: Buffer;
+    let mimeType: string;
+    if (format === 'xlsx') {
+      const workbook = new ExcelJS.Workbook();
+      const sheet = workbook.addWorksheet('Реестр');
+      sheet.columns = EXPORT_COLUMNS.map(({ header, key, width }) => ({ header, key, width }));
+      sheet.getRow(1).font = { bold: true };
+      rows.forEach((row) => sheet.addRow(row));
+      buffer = Buffer.from(await workbook.xlsx.writeBuffer());
+      mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    } else if (format === 'pdf') {
+      buffer = await renderInteractionsPdf(rows);
+      mimeType = 'application/pdf';
+    } else {
+      buffer = Buffer.from(toExcelHtml(rows), 'utf-8');
+      mimeType = 'application/vnd.ms-excel';
     }
 
-    const today = new Date().toISOString().slice(0, 10);
-    const fileName = `reestr-vzaimodeystviy-${today}.${format}`;
-    const mimeType =
-      format === 'pdf'
-        ? 'application/pdf'
-        : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-    const storageKey = `exports/${randomUUID()}.${format === 'xls' ? 'xlsx' : format}`;
-
-    // Как и в files.service.ts — сетевая недоступность хранилища не должна
-    // всплывать сырой 500-кой, единая схема ошибок соблюдается и здесь.
+    const storageKey = `exports/${randomUUID()}.${format}`;
     let url: string;
     try {
       await this.minio.putObject(storageKey, buffer, mimeType);
-      url = await this.minio.presignedDownloadUrl(storageKey, EXPORT_DOWNLOAD_URL_EXPIRY_SECONDS);
+      url = await this.minio.presignedDownloadUrl(storageKey, EXPORT_URL_EXPIRY_SECONDS, fileName);
     } catch (error) {
       const err = error as { message?: string; code?: string };
       throw new ServiceUnavailableException({
@@ -256,94 +213,62 @@ export class ReportsService {
       });
     }
 
-    return {
-      format,
-      fileName,
-      url,
-      generatedAt: new Date().toISOString(),
-      rowCount: items.length,
-    };
+    return { format, fileName, url, generatedAt: generatedAt.toISOString(), rowCount: rows.length };
   }
 
-  async getCharts(filters: ReportsFilters, scope: CatalogScope): Promise<ChartsResponseDto> {
-    const where = this.buildInteractionWhere(filters, scope);
-
-    const instances = await this.prisma.interactionInstance.findMany({
-      where,
-      select: { createdAt: true, currentStatus: { select: { name: true } } },
-    });
-
-    const statusDistribution = this.toSliceChart(instances.map((i) => i.currentStatus.name));
-    const interactionsOverTime = this.toMonthlyTimeSeries(instances.map((i) => i.createdAt));
-
-    // Лицензии — тот же набор фильтров, где это осмысленно для License:
-    // universityId/itProductId — напрямую, itDirectionId — через ItProduct,
-    // period — по License.createdAt, responsibleUserId — через University.kamId
-    // (у License нет собственного "ответственного", это всегда КАМ вуза).
-    const licenseWhere: Prisma.LicenseWhereInput = {
-      ...(scope.visibleKamIds === null ? {} : { university: universityWhereForScope(scope) }),
-      ...(filters.universityId ? { universityId: filters.universityId } : {}),
-      ...(filters.itProductId ? { itProductId: filters.itProductId } : {}),
-      ...(filters.itDirectionId ? { itProduct: { itDirectionId: filters.itDirectionId } } : {}),
-      ...(filters.responsibleUserId ? { university: { kamId: filters.responsibleUserId } } : {}),
-      ...(filters.from || filters.to
-        ? {
-            createdAt: {
-              ...(filters.from ? { gte: new Date(filters.from) } : {}),
-              ...(filters.to ? { lte: new Date(filters.to) } : {}),
-            },
-          }
-        : {}),
-    };
-
+  async getLicenseRadar(scope: CatalogScope): Promise<LicenseRadarResultDto> {
+    const now = Date.now();
     const licenses = await this.prisma.license.findMany({
-      where: licenseWhere,
-      select: { itProduct: { select: { name: true } } },
+      where: {
+        ...(scope.visibleKamIds === null ? {} : { university: universityWhereForScope(scope) }),
+        endDate: { lte: new Date(now + LICENSE_RADAR_HORIZON_DAYS * DAY_MS) },
+      },
+      orderBy: { endDate: 'asc' },
+      include: { university: { select: { name: true } }, itProduct: { select: { name: true } } },
     });
 
-    const licensesByProduct = this.toSliceChart(licenses.map((l) => l.itProduct.name));
-
-    return { statusDistribution, interactionsOverTime, licensesByProduct };
+    return {
+      jobId: randomUUID(),
+      generatedAt: new Date(now).toISOString(),
+      items: licenses.map((license) => ({
+        licenseId: license.id,
+        contractNumber: license.contractNumber ?? '—',
+        universityId: license.universityId,
+        universityName: license.university.name,
+        itProductId: license.itProductId,
+        itProductName: license.itProduct.name,
+        endDate: license.endDate.toISOString(),
+        bucket: licenseBucket(license.endDate, now)!,
+      })),
+    };
   }
 
-  // Последняя (по времени) запись истории на инстанс — момент входа в
-  // текущий статус. StatusHistoryEntry append-only и всегда создаётся вместе
-  // с обновлением currentStatusId (см. WorkflowService.transition/createInstance),
-  // поэтому просто самая свежая запись = "с какого момента текущий статус".
-  private async getStatusSinceByInstance(instanceIds: string[]): Promise<Map<string, Date>> {
-    if (instanceIds.length === 0) return new Map();
-
-    const entries = await this.prisma.statusHistoryEntry.findMany({
-      where: { interactionInstanceId: { in: instanceIds } },
-      orderBy: { changedAt: 'desc' },
-      select: { interactionInstanceId: true, changedAt: true },
+  async getSlaRadar(scope: CatalogScope): Promise<SlaRadarResultDto> {
+    const overdue = await this.listInteractions(scope, { onlyOverdue: true });
+    const thresholds = await this.prisma.workflowStatus.findMany({
+      where: { id: { in: [...new Set(overdue.map((row) => row.currentStatusId))] } },
+      select: { id: true, slaDays: true },
     });
+    const slaByStatus = new Map(thresholds.map((status) => [status.id, status.slaDays ?? 0]));
+    const now = Date.now();
 
-    const result = new Map<string, Date>();
-    for (const entry of entries) {
-      if (!result.has(entry.interactionInstanceId)) {
-        result.set(entry.interactionInstanceId, entry.changedAt);
-      }
-    }
-    return result;
-  }
-
-  private toSliceChart(labels: string[]): ChartSlicePointDto[] {
-    const counts = new Map<string, number>();
-    for (const label of labels) {
-      counts.set(label, (counts.get(label) ?? 0) + 1);
-    }
-    return [...counts.entries()].map(([label, value]) => ({ label, value }));
-  }
-
-  // Бакет по месяцу создания (YYYY-MM-01) — грубее дня, но читаемо на line-графике
-  // и достаточно для демо-объёмов данных (не тысячи точек).
-  private toMonthlyTimeSeries(dates: Date[]): ChartTimeSeriesPointDto[] {
-    const counts = new Map<string, number>();
-    for (const date of dates) {
-      const key = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-01`;
-      counts.set(key, (counts.get(key) ?? 0) + 1);
-    }
-    return [...counts.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([date, value]) => ({ date, value }));
+    return {
+      generatedAt: new Date(now).toISOString(),
+      items: overdue
+        .sort((a, b) => b.daysInCurrentStatus - a.daysInCurrentStatus)
+        .map((row) => ({
+          interactionInstanceId: row.interactionInstanceId,
+          universityId: row.universityId,
+          universityName: row.universityName,
+          currentStatusId: row.currentStatusId,
+          currentStatusName: row.currentStatusName,
+          phase: row.currentPhase,
+          responsibleUserId: row.responsibleUserId,
+          responsibleUserName: row.responsibleUserName,
+          statusSince: new Date(now - row.daysInCurrentStatus * DAY_MS).toISOString(),
+          daysInStatus: row.daysInCurrentStatus,
+          slaThresholdDays: slaByStatus.get(row.currentStatusId) ?? 0,
+        })),
+    };
   }
 }

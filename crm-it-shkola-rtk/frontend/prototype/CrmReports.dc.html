@@ -113,24 +113,71 @@
     </sc-if>
   </section>
 
+
+  <section data-screen-label="05b Риски" style="display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
+      <h2 style="margin:0;font-weight:700;font-size:22px;line-height:1.2">Риски</h2>
+      <span style="font-size:14px;line-height:20px;color:var(--color-fg-muted)">На сегодня · учитываются фильтры по вузу, направлению, продукту и ответственному, период — нет</span>
+    </div>
+    <sc-if value="{{ rkLoading }}" hint-placeholder-val="{{ true }}">
+      <div style="height:120px;border-radius:16px;background:var(--color-bg-surface3);animation:crmPulse 1.2s ease-in-out infinite"></div>
+    </sc-if>
+    <sc-if value="{{ rkReady }}">
+      <div style="display:grid;grid-template-columns:{{ kpiCols }};gap:12px">
+        <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4">
+          <div style="display:flex;flex-direction:column;gap:4px;padding:16px 20px;border-radius:16px;background:var(--color-bg-surface2)">
+            <span style="font-size:14px;line-height:20px;color:var(--color-fg-soft)">{{ k.label }}</span>
+            <span style="font-weight:700;font-size:32px;line-height:1.1;color:{{ k.color }}">{{ k.value }}</span>
+            <span style="font-size:12px;line-height:16px;color:var(--color-fg-muted)">{{ k.note }}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display:grid;grid-template-columns:{{ riskCols }};gap:16px">
+        <div style="display:flex;flex-direction:column;gap:12px;padding:20px;border-radius:16px;box-shadow:inset 0 0 0 1px var(--color-border-muted)">
+          <div><h3 style="margin:0;font-weight:700;font-size:16px;line-height:1.2">Лицензии без продления</h3><div style="font-size:12px;line-height:16px;color:var(--color-fg-muted);margin-top:4px">Места по сроку окончания лицензии: есть ли по паре «вуз + продукт» процесс на стадии «Сопровождение»</div></div>
+          <sc-for list="{{ expiry }}" as="b"><div style="display:grid;grid-template-columns:96px 1fr auto;gap:10px;align-items:center;font-size:14px;line-height:20px"><span>{{ b.label }}</span><span style="display:flex;height:10px;border-radius:999px;overflow:hidden;gap:2px;background:var(--color-bg-surface3)"><sc-for list="{{ b.segs }}" as="g"><span title="{{ g.title }}" style="flex:{{ g.n }};background:{{ g.color }}"></span></sc-for></span><span style="white-space:nowrap;color:{{ b.fg }}">{{ b.text }}</span></div></sc-for>
+          <div style="display:flex;flex-wrap:wrap;gap:6px 14px"><sc-for list="{{ expiryLegend }}" as="p"><span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;line-height:16px;color:var(--color-fg-muted)"><span style="width:8px;height:8px;border-radius:999px;background:{{ p.color }}"></span>{{ p.label }}</span></sc-for></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px;padding:20px;border-radius:16px;box-shadow:inset 0 0 0 1px var(--color-border-muted)">
+          <div><h3 style="margin:0;font-weight:700;font-size:16px;line-height:1.2">Запас по SLA</h3><div style="font-size:12px;line-height:16px;color:var(--color-fg-muted);margin-top:4px">Сколько нормы статуса уже израсходовано, по стадиям. Оранжевые — просрочатся первыми</div></div>
+          <sc-if value="{{ slaEmpty }}"><span style="font-size:14px;line-height:20px;color:var(--color-fg-muted)">Нет процессов со сроком по SLA</span></sc-if>
+          <sc-for list="{{ slaBands }}" as="b"><div style="display:grid;grid-template-columns:110px 1fr 24px;gap:10px;align-items:center;font-size:14px;line-height:20px"><span>{{ b.label }}</span><span style="display:flex;height:10px;border-radius:999px;overflow:hidden;gap:2px;background:var(--color-bg-surface3)"><sc-for list="{{ b.segs }}" as="g"><span title="{{ g.title }}" style="flex:{{ g.n }};background:{{ g.color }}"></span></sc-for></span><span style="font-weight:500;text-align:right">{{ b.total }}</span></div></sc-for>
+          <div style="display:flex;flex-wrap:wrap;gap:6px 14px"><sc-for list="{{ slaLegend }}" as="p"><span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;line-height:16px;color:var(--color-fg-muted)"><span style="width:8px;height:8px;border-radius:999px;background:{{ p.color }}"></span>{{ p.label }}</span></sc-for></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px;padding:20px;border-radius:16px;box-shadow:inset 0 0 0 1px var(--color-border-muted)">
+          <div><h3 style="margin:0;font-weight:700;font-size:16px;line-height:1.2">Не успеем до конца лицензии</h3><div style="font-size:12px;line-height:16px;color:var(--color-fg-muted);margin-top:4px">Прогноз завершения по критическому пути позже окончания лицензии вуза на продукт</div></div>
+          <sc-if value="{{ gapEmpty }}"><span style="font-size:14px;line-height:20px;color:var(--color-success-strong)">Все процессы с лицензией успевают до её окончания</span></sc-if>
+          <sc-for list="{{ gaps }}" as="g"><button onClick="{{ g.open }}" style="display:flex;flex-direction:column;gap:6px;padding:0;border:none;background:transparent;text-align:left;cursor:pointer;font-family:var(--font-sans);color:var(--color-fg-default)"><span style="display:flex;justify-content:space-between;gap:8px;width:100%;font-size:14px;line-height:20px"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ g.title }}</span><span style="flex-shrink:0;font-weight:500;color:var(--color-error-strong)">{{ g.text }}</span></span><span style="width:100%;height:6px;border-radius:999px;background:var(--color-bg-surface3)"><span style="display:block;height:100%;width:{{ g.pct }};border-radius:999px;background:var(--color-error)"></span></span><span style="font-size:12px;line-height:16px;color:var(--color-fg-muted)">{{ g.note }}</span></button></sc-for>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px;padding:20px;border-radius:16px;box-shadow:inset 0 0 0 1px var(--color-border-muted)">
+          <div><h3 style="margin:0;font-weight:700;font-size:16px;line-height:1.2">Зависимость от вендора</h3><div style="font-size:12px;line-height:16px;color:var(--color-fg-muted);margin-top:4px">Доля мест вендора, лицензии на которые истекают в ближайшие 60 дней</div></div>
+          <sc-for list="{{ vendorRisk }}" as="b"><div style="display:flex;flex-direction:column;gap:4px"><div style="display:flex;justify-content:space-between;gap:8px;font-size:14px;line-height:20px"><span>{{ b.label }}</span><span style="white-space:nowrap;color:{{ b.fg }}">{{ b.text }}</span></div><span style="height:8px;border-radius:999px;background:var(--color-bg-surface3)"><span style="display:block;height:100%;width:{{ b.pct }};border-radius:999px;background:{{ b.color }}"></span></span></div></sc-for>
+        </div>
+      </div>
+    </sc-if>
+  </section>
+
   <sc-if value="{{ showCompare }}">
     <section style="display:flex;flex-direction:column;gap:16px">
       <h2 style="margin:0;font-weight:700;font-size:22px;line-height:1.2">Сравнение КАМ</h2>
       <div style="overflow-x:auto;border-radius:16px;box-shadow:inset 0 0 0 1px var(--color-border-muted)">
         <table style="width:100%;min-width:640px;border-collapse:collapse;font-size:14px;line-height:20px">
-          <thead><tr style="background:var(--color-bg-surface2);color:var(--color-fg-soft);text-align:left"><th style="padding:12px 20px;font-weight:400">КАМ</th><th style="padding:12px;font-weight:400">Всего</th><th style="padding:12px;font-weight:400">Просрочено</th><th style="padding:12px 20px;font-weight:400;width:45%">Распределение по стадиям</th></tr></thead>
+          <thead><tr style="background:var(--color-bg-surface2);color:var(--color-fg-soft);text-align:left"><th style="padding:12px 20px;font-weight:400">КАМ</th><th style="padding:12px;font-weight:400">Всего</th><th style="padding:12px;font-weight:400">Просрочено</th><th style="padding:12px;font-weight:400" title="Израсходовано 80–100% нормы SLA">Близко к сроку</th><th style="padding:12px;font-weight:400" title="Лицензии вузов КАМа, истекающие в ближайшие 30 дней">Лицензии ≤ 30 дн.</th><th style="padding:12px 20px;font-weight:400;width:45%">Распределение по стадиям</th></tr></thead>
           <tbody>
             <sc-for list="{{ compare }}" as="k">
               <tr style="border-top:1px solid var(--color-border-muted)">
                 <td style="padding:12px 20px;font-size:16px;line-height:24px">{{ k.name }}</td>
                 <td style="padding:12px;font-weight:500">{{ k.total }}</td>
                 <td style="padding:12px;font-weight:500;color:{{ k.overColor }}">{{ k.over }}</td>
+                <td style="padding:12px;font-weight:500;color:{{ k.nearColor }}">{{ k.near }}</td>
+                <td style="padding:12px;font-weight:500;color:{{ k.licColor }}">{{ k.lic30 }}</td>
                 <td style="padding:12px 20px"><div style="display:flex;height:12px;border-radius:999px;overflow:hidden;gap:2px;background:var(--color-bg-surface3)"><sc-for list="{{ k.segs }}" as="g"><span title="{{ g.label }}: {{ g.n }}" style="flex:{{ g.n }};background:{{ g.color }}"></span></sc-for></div></td>
               </tr>
             </sc-for>
           </tbody>
         </table>
       </div>
+      <sc-if value="{{ orphanText }}"><div role="note" style="padding:12px 16px;border-radius:12px;box-shadow:inset 0 0 0 1px var(--color-warning);font-size:14px;line-height:20px">{{ orphanText }}</div></sc-if>
       <div style="display:flex;flex-wrap:wrap;gap:8px 16px"><sc-for list="{{ legend }}" as="p"><span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;line-height:16px;color:var(--color-fg-soft)"><span style="width:8px;height:8px;border-radius:999px;background:{{ p.color }}"></span>{{ p.label }}</span></sc-for></div>
     </section>
   </sc-if>
@@ -142,7 +189,7 @@ const COLS = [['university', 'Наименование вуза'], ['direction',
 const JKEY = 'crm.reports.jobs';
 const d0 = new Date(Date.now() - 180 * 864e5).toISOString().slice(0, 10), d1 = new Date().toISOString().slice(0, 10);
 class Component extends DCLogic {
-  state = { jf: { open: false, status: 'all', format: 'all' }, f: { from: d0, to: d1, universityId: 'all', itDirectionId: 'all', itProductId: 'all', responsibleUserId: 'all' }, cols: { university: true, direction: true, product: true, status: true, responsible: true }, format: 'xlsx', jobs: [], cat: { unis: [], dirs: [], prods: [] }, ch: { status: 'loading', data: null, err: null }, rows: [] };
+  state = { jf: { open: false, status: 'all', format: 'all' }, f: { from: d0, to: d1, universityId: 'all', itDirectionId: 'all', itProductId: 'all', responsibleUserId: 'all' }, cols: { university: true, direction: true, product: true, status: true, responsible: true }, format: 'xlsx', jobs: [], cat: { unis: [], dirs: [], prods: [] }, ch: { status: 'loading', data: null, err: null }, rows: [], rk: { status: 'loading', rows: [], lics: [], vendors: [] } };
   componentDidMount() {
     try { const j = JSON.parse(localStorage.getItem(JKEY) || '[]'); this.setState({ jobs: j.filter((x) => x.status === 'SUCCESS' || x.status === 'FAILED') }); } catch (e) {}
     waitCRM().then((CRM) => { Promise.all([CRM.api.universities(), CRM.api.directions(), CRM.api.products()]).then(([unis, dirs, prods]) => this.setState({ cat: { unis, dirs, prods } })).catch(() => {}); this.loadCharts(); });
@@ -161,6 +208,88 @@ class Component extends DCLogic {
       const empty = ds === 'empty' || !data.statusDistribution.reduce((a, b) => a + b.value, 0);
       this.setState({ ch: { status: empty ? 'empty' : 'ready', data }, rows: ds === 'empty' ? [] : rows });
     } catch (e) { this.setState({ ch: { status: 'error', err: { code: e.code } } }); }
+    this.loadRisks();
+  }
+  // Риски считаются на клиенте по данным, которые API уже отдаёт (реестр, лицензии, вендоры,
+  // шаблон со SLA/сроками этапов). Видимость по роли обеспечивают сами эндпоинты.
+  async loadRisks() {
+    const CRM = await waitCRM();
+    const { from, to, ...rq } = this.q(); // риск — «на сегодня», период не применяем
+    try {
+      const [rows, lics, vendors] = await Promise.all([CRM.api.interactions(rq), CRM.api.licenses(), CRM.api.vendors()]);
+      this.setState({ rk: { status: 'ready', rows: this.props.demoState === 'empty' ? [] : rows, lics, vendors } });
+    } catch (e) { this.setState({ rk: { status: 'error', rows: [], lics: [], vendors: [] } }); }
+  }
+  risks() {
+    const CRM = window.CRM, s = this.state, f = s.f, now = Date.now(), DAY = 864e5;
+    const rows = s.rk.rows, prods = s.cat.prods, unis = s.cat.unis;
+    const prodById = Object.fromEntries(prods.map((p) => [p.id, p])), uniById = Object.fromEntries(unis.map((u) => [u.id, u]));
+    // Лицензии — под те же фильтры, что и реестр (вуз / продукт / направление / ответственный за вуз).
+    const lics = s.rk.lics.filter((l) => uniById[l.universityId]
+      && (f.universityId === 'all' || l.universityId === f.universityId)
+      && (f.itProductId === 'all' || l.itProductId === f.itProductId)
+      && (f.itDirectionId === 'all' || (prodById[l.itProductId] || {}).itDirectionId === f.itDirectionId)
+      && (f.responsibleUserId === 'all' || uniById[l.universityId].kamId === f.responsibleUserId));
+    const daysLeft = (l) => Math.ceil((new Date(l.endDate) - now) / DAY);
+    const key = (u, p) => u + '|' + p;
+    const renewing = new Set(rows.filter((r) => r.currentPhase === 'RENEWAL').map((r) => key(r.universityId, r.itProductId)));
+
+    // 1. Лицензии без продления: корзины по сроку, места с процессом продления и без.
+    const buckets = [['Просрочены', (d) => d < 0 && d >= -30], ['0–30 дней', (d) => d >= 0 && d <= 30], ['31–60 дней', (d) => d > 30 && d <= 60], ['61–90 дней', (d) => d > 60 && d <= 90]];
+    const expiry = buckets.map(([label, test]) => {
+      const list = lics.filter((l) => test(daysLeft(l)));
+      const seats = (a) => a.reduce((n, l) => n + (l.seats || 0), 0);
+      const open = list.filter((l) => !renewing.has(key(l.universityId, l.itProductId))), covered = list.filter((l) => renewing.has(key(l.universityId, l.itProductId)));
+      return { label, openSeats: seats(open), openCount: open.length, segs: [
+        { n: seats(open), color: 'var(--color-error)', title: 'Без продления: ' + seats(open) + ' мест' },
+        { n: seats(covered), color: 'var(--color-neutral-muted)', title: 'Продление идёт: ' + seats(covered) + ' мест' },
+      ].filter((g) => g.n), text: list.length ? seats(open) + ' из ' + seats(list) + ' мест' : 'нет', fg: seats(open) ? 'var(--color-error-strong)' : 'var(--color-fg-muted)' };
+    });
+    const at90 = expiry.slice(1);
+    const openSeats90 = at90.reduce((n, b) => n + b.openSeats, 0), openLics90 = at90.reduce((n, b) => n + b.openCount, 0);
+
+    // 2. Запас по SLA: доля израсходованной нормы, по стадиям.
+    const BANDS = [['< 50%', 'var(--color-success-muted)', (x) => x < 0.5], ['50–80%', 'var(--color-warning)', (x) => x >= 0.5 && x < 0.8], ['80–100%', 'var(--color-accent)', (x) => x >= 0.8 && x <= 1], ['просрочено', 'var(--color-error)', (x) => x > 1]];
+    const withSla = rows.map((r) => ({ r, sla: CRM.SLA[r.currentStatusId] })).filter((x) => x.sla).map((x) => ({ ...x, ratio: x.r.daysInCurrentStatus / x.sla }));
+    const slaBands = CRM.PHASES.map((p) => {
+      const list = withSla.filter((x) => x.r.currentPhase === p.key);
+      return { label: p.label, total: list.length, segs: BANDS.map(([name, color, test]) => ({ n: list.filter((x) => test(x.ratio)).length, color, title: name + ': ' + list.filter((x) => test(x.ratio)).length })).filter((g) => g.n) };
+    }).filter((b) => b.total);
+    const near = withSla.filter((x) => x.ratio >= 0.8 && x.ratio <= 1);
+
+    // 3. Не успеем до конца лицензии: критический путь по оставшимся этапам против даты окончания лицензии.
+    const statuses = CRM.activeVersion().statuses;
+    const gapsAll = rows.filter((r) => r.currentPhase !== 'TERMINATION' && r.itProductId).map((r) => {
+      const lic = s.rk.lics.filter((l) => l.universityId === r.universityId && l.itProductId === r.itProductId).sort((a, b) => new Date(b.endDate) - new Date(a.endDate))[0];
+      const st = statuses.find((x) => x.id === r.currentStatusId) || statuses.find((x) => x.name === r.currentStatusName);
+      if (!lic || !st) return null;
+      const cp = CRM.criticalPath(statuses, st.id, r.daysInCurrentStatus);
+      if (!cp.total) return null;
+      const gap = Math.ceil((now + cp.total * DAY - new Date(lic.endDate)) / DAY);
+      return gap > 0 ? { r, lic, gap, expired: daysLeft(lic) < 0 } : null;
+    }).filter(Boolean).sort((a, b) => b.gap - a.gap);
+    const gapMax = Math.max(1, ...gapsAll.map((g) => g.gap));
+    const gaps = gapsAll.slice(0, 6).map((g) => ({ title: g.r.universityName + ' · ' + g.r.itProductName, text: '+' + g.gap + ' дн.', pct: Math.max(4, Math.round((g.gap / gapMax) * 100)) + '%',
+      note: (g.expired ? 'Лицензия ' + g.lic.contractNumber + ' уже истекла' : 'Лицензия ' + g.lic.contractNumber + ' до ' + CRM.fmtDate(g.lic.endDate)) + ' · сейчас «' + g.r.currentStatusName + '»',
+      open: () => this.props.onOpen && this.props.onOpen(g.r.interactionInstanceId) }));
+
+    // 6. Зависимость от вендора: доля мест, истекающих в 60 дней.
+    const vendorRisk = s.rk.vendors.map((v) => {
+      const list = lics.filter((l) => (prodById[l.itProductId] || {}).vendorId === v.id && daysLeft(l) >= 0);
+      const total = list.reduce((n, l) => n + (l.seats || 0), 0), soon = list.filter((l) => daysLeft(l) <= 60).reduce((n, l) => n + (l.seats || 0), 0);
+      const share = total ? soon / total : 0;
+      return { label: v.name, share, total, text: total ? soon + ' из ' + total + ' мест · ' + Math.round(share * 100) + '%' : 'нет действующих лицензий', pct: Math.round(share * 100) + '%',
+        color: share >= 0.5 ? 'var(--color-error)' : share > 0 ? 'var(--color-accent)' : 'var(--color-neutral-muted)', fg: share >= 0.5 ? 'var(--color-error-strong)' : 'var(--color-fg-soft)' };
+    }).filter((v) => v.total).sort((a, b) => b.share - a.share);
+
+    // 4. Вузы без ответственного (или ответственный деактивирован) — видно руководителю.
+    const users = CRM.local.USERS;
+    const orphans = unis.filter((u) => !u.kamId || !(users.find((x) => x.id === u.kamId) || {}).isActive);
+    const lic30ByKam = {}; lics.filter((l) => daysLeft(l) >= 0 && daysLeft(l) <= 30).forEach((l) => { const k = uniById[l.universityId].kamId; if (k) lic30ByKam[k] = (lic30ByKam[k] || 0) + 1; });
+    const nearByKam = {}; near.forEach((x) => { nearByKam[x.r.responsibleUserId] = (nearByKam[x.r.responsibleUserId] || 0) + 1; });
+
+    return { expiry, openSeats90, openLics90, slaBands, near, gapsAll, gaps, vendorRisk, orphans, lic30ByKam, nearByKam, overdue: rows.filter((r) => r.isOverdue).length,
+      legends: { expiry: [{ label: 'Без процесса продления', color: 'var(--color-error)' }, { label: 'Продление идёт', color: 'var(--color-neutral-muted)' }], sla: BANDS.map(([label, color]) => ({ label, color })) } };
   }
   saveJobs(jobs) { this.setState({ jobs }); try { localStorage.setItem(JKEY, JSON.stringify(jobs.filter((j) => j.status === 'SUCCESS' || j.status === 'FAILED').slice(0, 10))); } catch (e) {} }
   patchJob(id, p) { this.saveJobs(this.state.jobs.map((j) => (j.id === id ? { ...j, ...p } : j))); }
@@ -220,7 +349,8 @@ class Component extends DCLogic {
     const licRaw = d ? [...d.licensesByProduct].sort((a, b) => b.value - a.value) : [];
     const liMax = maxOf(licRaw);
     const byK = {}; s.rows.forEach((r) => { (byK[r.responsibleUserName] = byK[r.responsibleUserName] || []).push(r); });
-    const compare = !CRM ? [] : Object.entries(byK).map(([name, list]) => { const over = list.filter((r) => r.isOverdue).length; return { name, total: list.length, over, overColor: over ? 'var(--color-error-strong)' : 'var(--color-fg-muted)', segs: CRM.PHASES.map((p) => ({ label: p.label, color: p.color, n: list.filter((r) => r.currentPhase === p.key).length })).filter((g) => g.n) }; }).sort((a, b) => b.over - a.over || b.total - a.total);
+    const rk = CRM && s.rk.status === 'ready' && s.cat.unis.length ? this.risks() : null;
+    const compare = !CRM ? [] : Object.entries(byK).map(([name, list]) => { const over = list.filter((r) => r.isOverdue).length; const kid = list[0].responsibleUserId; const near = rk ? rk.nearByKam[kid] || 0 : 0, lic30 = rk ? rk.lic30ByKam[kid] || 0 : 0; return { name, total: list.length, over, overColor: over ? 'var(--color-error-strong)' : 'var(--color-fg-muted)', near, nearColor: near ? 'var(--color-accent-strong)' : 'var(--color-fg-muted)', lic30, licColor: lic30 ? 'var(--color-warning-strong)' : 'var(--color-fg-muted)', segs: CRM.PHASES.map((p) => ({ label: p.label, color: p.color, n: list.filter((r) => r.currentPhase === p.key).length })).filter((g) => g.n) }; }).sort((a, b) => b.over - a.over || b.total - a.total);
     return {
       f, set, isRuk, pad: m ? '16px' : '24px', topCols: m ? '1fr' : 'repeat(auto-fit,minmax(min(100%,400px),1fr))', twoCols: m ? '1fr' : 'repeat(auto-fill,minmax(200px,1fr))', chartCols: m ? '1fr' : 'repeat(auto-fit,minmax(min(100%,300px),1fr))',
       setFrom: (e) => this.setF({ from: e.target.value }), setTo: (e) => this.setF({ to: e.target.value }), periodError,
@@ -243,6 +373,20 @@ class Component extends DCLogic {
       months: monthsRaw.map((b) => ({ value: b.value, pct: Math.max(4, Math.round((b.value / moMax) * 100)) + '%', label: new Date(b.date).toLocaleDateString('ru-RU', { month: 'short' }).replace('.', '') })),
       licBars: licRaw.map((b) => ({ ...b, pct: Math.round((b.value / liMax) * 100) + '%' })),
       showCompare: isRuk && s.ch.status === 'ready' && compare.length > 0, compare, legend: CRM ? CRM.PHASES : [],
+      orphanText: rk && isRuk && rk.orphans.length ? 'Без ответственного КАМа: ' + rk.orphans.map((u) => u.name).join(', ') + ' — процессы и лицензии этих вузов никто не ведёт' : '',
+      rkLoading: !rk && s.rk.status !== 'error', rkReady: !!rk, kpiCols: m ? '1fr 1fr' : 'repeat(4,minmax(0,1fr))', riskCols: m ? '1fr' : 'repeat(auto-fit,minmax(min(100%,420px),1fr))',
+      kpis: !rk ? [] : [
+        { label: 'Мест без продления', value: rk.openSeats90, color: rk.openSeats90 ? 'var(--color-error-strong)' : 'var(--color-fg-default)', note: rk.openLics90 + ' ' + CRM.plural(rk.openLics90, 'лицензия истекает', 'лицензии истекают', 'лицензий истекают') + ' за 90 дней' },
+        { label: 'Близко к сроку SLA', value: rk.near.length, color: rk.near.length ? 'var(--color-accent-strong)' : 'var(--color-fg-default)', note: 'израсходовано 80–100% нормы' },
+        { label: 'Не успеем до конца лицензии', value: rk.gapsAll.length, color: rk.gapsAll.length ? 'var(--color-error-strong)' : 'var(--color-fg-default)', note: rk.gapsAll.length ? 'макс. разрыв ' + rk.gapsAll[0].gap + ' дн.' : 'по критическому пути' },
+        isRuk
+          ? { label: 'Вузы без ответственного', value: rk.orphans.length, color: rk.orphans.length ? 'var(--color-warning-strong)' : 'var(--color-fg-default)', note: 'или КАМ деактивирован' }
+          : { label: 'Просрочено по SLA', value: rk.overdue, color: rk.overdue ? 'var(--color-error-strong)' : 'var(--color-fg-default)', note: 'из ' + s.rk.rows.length + ' процессов' },
+      ],
+      expiry: rk ? rk.expiry : [], expiryLegend: rk ? rk.legends.expiry : [],
+      slaBands: rk ? rk.slaBands : [], slaEmpty: !!rk && !rk.slaBands.length, slaLegend: rk ? rk.legends.sla : [],
+      gaps: rk ? rk.gaps : [], gapEmpty: !!rk && !rk.gaps.length,
+      vendorRisk: rk ? rk.vendorRisk : [],
     };
   }
 }

@@ -38,31 +38,38 @@ export class CatalogScopeInterceptor implements NestInterceptor {
     return next.handle();
   }
 
-  private async buildScope(request: RequestWithDevRole): Promise<CatalogScope> {
-    const { userRole, currentUserId } = request;
+  private buildScope(request: RequestWithDevRole): Promise<CatalogScope> {
+    return buildCatalogScope(this.prisma, request);
+  }
+}
 
-    if (userRole === UserRoleDto.ADMINISTRATOR) {
-      return { role: userRole, currentUserId, visibleKamIds: null, includeUnassigned: false };
-    }
+// Вынесено из interceptor'а, чтобы отчёты и радар (модуль reports) считали
+// видимость ровно так же, как каталоги: КАМ — свои вузы, Руководитель — вузы
+// команды, Администратор — всё.
+export async function buildCatalogScope(prisma: PrismaService, request: RequestWithDevRole): Promise<CatalogScope> {
+  const { userRole, currentUserId } = request;
 
-    if (userRole === UserRoleDto.KAM) {
-      return {
-        role: userRole,
-        currentUserId,
-        visibleKamIds: currentUserId ? [currentUserId] : [],
-        includeUnassigned: false,
-      };
-    }
-
-    if (userRole === UserRoleDto.RUKOVODITEL) {
-      const team = currentUserId
-        ? await this.prisma.user.findMany({ where: { managerId: currentUserId }, select: { id: true } })
-        : [];
-      // Плюс сам currentUserId — на случай, если руководителю тоже назначен вуз напрямую.
-      const visibleKamIds = currentUserId ? [...team.map((u) => u.id), currentUserId] : [];
-      return { role: userRole, currentUserId, visibleKamIds, includeUnassigned: true };
-    }
-
+  if (userRole === UserRoleDto.ADMINISTRATOR) {
     return { role: userRole, currentUserId, visibleKamIds: null, includeUnassigned: false };
   }
+
+  if (userRole === UserRoleDto.KAM) {
+    return {
+      role: userRole,
+      currentUserId,
+      visibleKamIds: currentUserId ? [currentUserId] : [],
+      includeUnassigned: false,
+    };
+  }
+
+  if (userRole === UserRoleDto.RUKOVODITEL) {
+    const team = currentUserId
+      ? await prisma.user.findMany({ where: { managerId: currentUserId }, select: { id: true } })
+      : [];
+    // Плюс сам currentUserId — на случай, если руководителю тоже назначен вуз напрямую.
+    const visibleKamIds = currentUserId ? [...team.map((u) => u.id), currentUserId] : [];
+    return { role: userRole, currentUserId, visibleKamIds, includeUnassigned: true };
+  }
+
+  return { role: userRole, currentUserId, visibleKamIds: null, includeUnassigned: false };
 }

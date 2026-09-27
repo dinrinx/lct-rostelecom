@@ -33,6 +33,23 @@ export class WorkflowTemplateVersionDto {
   transitions!: WorkflowTransitionDto[];
 }
 
+export class WorkflowTemplateVersionSummaryDto {
+  @ApiProperty({ example: 'b0000000-0000-4000-8000-000000000002' })
+  id!: string;
+
+  @ApiProperty({ example: 2 })
+  versionNumber!: number;
+
+  @ApiProperty({ example: true })
+  isActive!: boolean;
+
+  @ApiProperty({ example: '2026-09-20T14:30:00.000Z' })
+  createdAt!: string;
+
+  @ApiProperty({ example: 12, description: 'Сколько взаимодействий сейчас привязано к версии' })
+  instanceCount!: number;
+}
+
 // Форма ответа GET /workflow/templates: шаблон + его текущая активная версия
 // (статусы+переходы) — раньше GET отдавал только id/name/description без версии,
 // это расширение контракта, а не совместимое дополнение.
@@ -43,4 +60,7 @@ export class WorkflowTemplateWithActiveVersionDto extends WorkflowTemplateDto {
     description: 'Активная версия шаблона; null — если у шаблона ещё нет ни одной версии',
   })
   activeVersion?: WorkflowTemplateVersionDto | null;
+
+  @ApiProperty({ type: WorkflowTemplateVersionSummaryDto, isArray: true, description: 'Все версии шаблона, по возрастанию номера' })
+  versions!: WorkflowTemplateVersionSummaryDto[];
 }

@@ -1,6 +1,9 @@
 /* CRM ИТ Школа РТК — клиент API + демо-фикстуры.
    Формы данных повторяют DTO из backend/src/(модуль)/dto (Swagger — источник истины).
-   Режимы: auto — живой API, при сетевой ошибке фолбэк на фикстуры; api — только API; demo — только фикстуры. */
+   Режимы: auto — живой API, при сетевой ошибке фолбэк на фикстуры; api — только API; demo — только фикстуры.
+   Справочники (сотрудники, шаблон workflow с SLA/сроками этапов) при старте подтягиваются из API —
+   window.CRM появляется после этого, страницы ждут его через waitCRM(). Фикстуры используют те же id,
+   что и backend/prisma/seed.ts, поэтому демо-режим и живой API показывают одну картину. */
 (function () {
   if (window.CRM) return;
   const DAY = 864e5;
@@ -77,7 +80,8 @@
   ].map((u, i) => ({ id: id('a5000000', i + 1), name: u[0], inn: null, region: u[1], website: null, kamId: u[2] == null ? null : K[u[2]] }));
 
   // Статусы workflow. minDays — минимальная длительность этапа (для критического пути),
-  // deps — от каких этапов зависит начало (по умолчанию — предыдущий). В WorkflowStatusDto этих полей пока нет.
+  // deps — от каких этапов зависит начало (по умолчанию — предыдущий). В API это
+  // WorkflowStatusDto.minDays / dependsOnStatusIds / isOptional, норматив SLA — slaDays.
   const VERSION_ID = id('b0000000', 2);
   const STATUS_DEFS = [
     ['Инициация', 'INITIATION', 10, 3],
@@ -115,11 +119,11 @@
   const HISTORY = {};
   const FILES = [];
   const plan = [
-    [0, 0, 2, 26], [0, 3, 4, 12], [1, 2, 1, 18], [1, 1, 5, 9], [4, 0, 0, 14], [4, 7, 3, 4], [1, 6, 2, 9], [0, 8, 7, 40],
+    [0, 0, 2, 26], [0, 3, 4, 12], [1, 2, 1, 18], [1, 1, 5, 18], [4, 0, 0, 14], [4, 7, 3, 4], [1, 6, 2, 9], [0, 1, 7, 40],
     [2, 1, 1, 5], [2, 3, 4, 35], [3, 4, 5, 30], [3, 5, 0, 11], [2, 2, 7, 12],
     [5, 6, 3, 14], [5, 7, 1, 2], [6, 8, 6, 36], [6, 6, 0, 4],
-    [7, 4, 3, 19], [7, 5, 1, 8], [8, 3, 2, 1], [8, 2, 6, 14], [7, 0, 8, 6],
-    [9, 7, 2, 25], [9, 8, 3, 7], [10, 6, 0, 3], [10, 1, 4, 13], [9, 0, 6, 60], [11, 3, 1, 6],
+    [7, 4, 3, 19], [7, 5, 1, 12], [8, 3, 2, 1], [8, 2, 6, 14], [7, 0, 8, 6],
+    [9, 7, 2, 25], [9, 8, 3, 9], [10, 6, 0, 3], [10, 1, 4, 13], [9, 0, 6, 60], [11, 3, 1, 6],
   ];
   plan.forEach(([u, p, s, days], i) => {
     const uni = UNIVERSITIES[u], prod = PRODUCTS[p], st = STATUSES[s];
@@ -138,7 +142,8 @@
     for (let k = 0; k <= s; k++) {
       const d = k === s ? days : days + (s - k) * 11;
       const at = ago(d, 11 + (k % 5));
-      HISTORY[iid].push({ id: id('b4000000', i * 20 + k + 1), interactionInstanceId: iid, fromStatusId: k ? STATUSES[k - 1].id : null, toStatusId: STATUSES[k].id, comment: k === 0 ? 'Взаимодействие создано' : COMMENTS[k], changedById: resp, changedAt: at });
+      HISTORY[iid].push({ id: id('b4000000', i * 20 + k + 1), interactionInstanceId: iid, fromStatusId: k ? STATUSES[k - 1].id : null, toStatusId: STATUSES[k].id,
+        toStatusName: STATUSES[k].name, toStatusPhase: STATUSES[k].phase, fromStatusName: k ? STATUSES[k - 1].name : null, attachmentId: null, comment: k === 0 ? 'Взаимодействие создано' : COMMENTS[k], changedById: resp, changedAt: at });
       if (k === 2 || k === 3 || k === 6) {
         const name = k === 3 ? 'paket-dokumentov.zip' : k === 2 ? 'dogovor-' + (i + 1) + '-podpisan.pdf' : 'foto-obucheniya.jpeg';
         FILES.push({ id: id('f0000000', FILES.length + 1), fileName: name, mimeType: k === 3 ? 'application/zip' : k === 2 ? 'application/pdf' : 'image/jpeg', size: k === 3 ? 1843200 : k === 2 ? 245760 : 612000, storageKey: 'attachments/' + name, uploadedById: resp, interactionInstanceId: iid, licenseId: null, createdAt: at });
@@ -146,7 +151,7 @@
     }
   });
 
-  const LIC_OFFSETS = [[-12, 0, 0], [-5, 1, 1], [-2, 3, 4], [3, 0, 1], [6, 2, 3], [12, 5, 6], [19, 1, 2], [27, 7, 5], [35, 4, 7], [44, 9, 8], [52, 6, 0], [58, 10, 6], [120, 3, 2], [210, 8, 3], [400, 2, 4]];
+  const LIC_OFFSETS = [[-12, 0, 0], [-5, 1, 1], [-2, 3, 4], [3, 0, 1], [6, 2, 2], [12, 5, 6], [19, 1, 2], [27, 7, 5], [35, 4, 7], [44, 9, 8], [52, 6, 0], [58, 10, 6], [120, 3, 2], [210, 8, 3], [400, 2, 4]];
   const LICENSES = LIC_OFFSETS.map(([off, u, p], i) => ({
     id: id('a6000000', i + 1), contractNumber: 'ИТШ-' + (2025 + (i % 2)) + '/' + String(117 + i * 7).padStart(4, '0'), status: off < 0 ? 'TERMINATED' : 'ACTIVE', seats: 25 + (i % 4) * 25,
     startDate: ago(365 - off), endDate: ahead(off), universityId: UNIVERSITIES[u].id, itProductId: PRODUCTS[p].id, createdAt: ago(365), updatedAt: ago(20),
@@ -234,44 +239,6 @@
     }
   }
 
-  // Бэкенд ссылается на статусы внутри ОДНОГО PUT/POST-запроса по их order,
-  // а не по id — при сохранении шаблона id создаваемых статусов ещё не
-  // существуют (версия целиком пересоздаётся). UI же удобнее вести по id
-  // (стабильный ключ для рендера/связей), поэтому переводим id -> order
-  // прямо на границе транспортного слоя, не трогая .dc.html-страницы.
-  function toWireTemplateBody(statuses, transitions) {
-    const orderById = new Map(statuses.map((s) => [s.id, s.order]));
-    return {
-      statuses: statuses.map(({ name, phase, order }) => ({ name, phase, order })),
-      transitions: transitions.map(({ fromStatusId, toStatusId, name }) => ({
-        fromStatusOrder: orderById.get(fromStatusId),
-        toStatusOrder: orderById.get(toStatusId),
-        name,
-      })),
-    };
-  }
-
-  // Тот же граф вставки статуса, что и localAddStatus ниже (вставка после
-  // afterId, обязательный — врезается в цепочку, необязательный — доп. ветка),
-  // но без мутации локального состояния — нужен отдельно, чтобы посчитать
-  // order для реального PUT-запроса ДО того, как localAddStatus применит
-  // изменения к локальному стейту для demo-режима/оптимистичного UI.
-  function buildInsertedGraph(v, { name, phase, afterId, mandatory }) {
-    const statuses = v.statuses.map((s) => ({ ...s }));
-    const idx = statuses.findIndex((x) => x.id === afterId);
-    const newId = 'new-st-' + Math.random().toString(36).slice(2);
-    statuses.splice(idx + 1, 0, { id: newId, name, phase, order: 0 });
-    statuses.forEach((x, i) => (x.order = i + 1));
-
-    const nextIds = v.transitions.filter((t) => t.fromStatusId === afterId && t.name === 'Далее').map((t) => t.toStatusId);
-    let transitions = v.transitions.map((t) => ({ ...t }));
-    if (mandatory) transitions = transitions.filter((t) => !(t.fromStatusId === afterId && nextIds.includes(t.toStatusId)));
-    transitions.push({ fromStatusId: afterId, toStatusId: newId, name: 'Далее' });
-    nextIds.forEach((n) => transitions.push({ fromStatusId: newId, toStatusId: n, name: 'Далее' }));
-
-    return { statuses, transitions };
-  }
-
   const api = {
     me: () => call('GET', '/auth/me', { fallback: () => USERS.find((u) => u.role === ROLES[cfg.role].dto) }),
     interactions: (q) => call('GET', '/reports/interactions', { query: q, fallback: () => fxInteractions(cfg.role, q) }),
@@ -279,17 +246,20 @@
     slaRadar: () => call('GET', '/dashboard/sla-radar', { fallback: () => fxSlaRadar(cfg.role) }),
     interaction: (iid) => call('GET', '/workflow/instances/' + iid, { fallback: () => { const x = INTERACTIONS.find((i) => i.interactionInstanceId === iid); return { id: iid, universityId: x.universityId, itProductId: x.itProductId, workflowTemplateVersionId: VERSION_ID, currentStatusId: x.currentStatusId, responsibleUserId: x.responsibleUserId, createdAt: x.createdAt, updatedAt: x.updatedAt }; } }),
     history: (iid) => call('GET', '/workflow/instances/' + iid + '/history', { fallback: () => HISTORY[iid] || [] }),
-    templateVersion: (vid) => call('GET', '/workflow/template-versions/' + vid, { fallback: () => (vid === VERSION_ID ? activeVersion() : VERSIONS.find((v) => v.id === vid)) || activeVersion() }),
-    addStatus: async (dto) => { const v = activeVersion(); const { statuses, transitions } = buildInsertedGraph(v, dto); await call('PUT', '/workflow/templates/' + TEMPLATE.id, { body: toWireTemplateBody(statuses, transitions), fallback: () => null }); return localAddStatus(dto); },
+    templateVersion: async (vid) => {
+      const v = await call('GET', '/workflow/template-versions/' + vid, { fallback: () => (vid === VERSION_ID ? activeVersion() : VERSIONS.find((x) => x.id === vid)) || activeVersion() });
+      if (lastSource === 'api' && v) registerStatuses(v.statuses);
+      return v;
+    },
     files: (iid) => call('GET', '/files', { query: { interactionInstanceId: iid }, fallback: () => FILES.filter((f) => f.interactionInstanceId === iid) }),
     updateStatus: (iid, dto) => call('POST', '/workflow/instances/' + iid + '/transition', { body: dto, fallback: () => {
       const x = INTERACTIONS.find((i) => i.interactionInstanceId === iid); const st = activeVersion().statuses.find((s) => s.id === dto.toStatusId);
-      const from = x.currentStatusId; const at = new Date().toISOString();
+      const from = x.currentStatusId, fromName = x.currentStatusName; const at = new Date().toISOString();
       if (!st) throw new ApiError('WORKFLOW_STATUS_NOT_FOUND', 'Статус не найден в шаблоне', null, 404);
       const allowed = activeVersion().transitions.some((t) => t.fromStatusId === x.currentStatusId && t.toStatusId === st.id);
       if (!allowed) throw new ApiError('WORKFLOW_TRANSITION_FORBIDDEN', 'Переход «' + x.currentStatusName + '» → «' + st.name + '» не разрешён шаблоном', null, 409);
       Object.assign(x, { currentStatusId: st.id, currentStatusName: st.name, currentPhase: st.phase, updatedAt: at, daysInCurrentStatus: 0, isOverdue: false });
-      (HISTORY[iid] = HISTORY[iid] || []).push({ id: 'local-' + Date.now(), interactionInstanceId: iid, fromStatusId: from, toStatusId: st.id, comment: dto.comment, changedById: userIdForRole(), changedAt: at });
+      (HISTORY[iid] = HISTORY[iid] || []).push({ id: 'local-' + Date.now(), interactionInstanceId: iid, fromStatusId: from, toStatusId: st.id, toStatusName: st.name, toStatusPhase: st.phase, fromStatusName: fromName, attachmentId: null, comment: dto.comment, changedById: userIdForRole(), changedAt: at });
       return { id: iid, universityId: x.universityId, itProductId: x.itProductId, workflowTemplateVersionId: VERSION_ID, currentStatusId: st.id, responsibleUserId: x.responsibleUserId, createdAt: x.createdAt, updatedAt: at };
     } }),
     uploadFile: (file, iid) => { const fd = new FormData(); fd.append('file', file); fd.append('interactionInstanceId', iid); return call('POST', '/files/upload', { form: fd, fallback: () => { const f = { id: 'local-f-' + Date.now(), fileName: file.name, mimeType: file.type || 'application/octet-stream', size: file.size, storageKey: 'attachments/' + file.name, uploadedById: userIdForRole(), interactionInstanceId: iid, licenseId: null, createdAt: new Date().toISOString() }; FILES.push(f); return f; } }); },
@@ -297,17 +267,32 @@
     charts: (q) => call('GET', '/reports/charts', { query: q, fallback: () => fxCharts(cfg.role, q) }),
     exportReport: (q, format) => call('GET', '/reports/interactions/export', { query: { ...q, format }, fallback: () => ({ format, fileName: 'reestr-vzaimodeystviy-' + new Date().toISOString().slice(0, 10) + '.' + format, url: '#', generatedAt: new Date().toISOString(), rowCount: fxInteractions(cfg.role, q).length }) }),
     createJob: (type) => call('POST', '/reports/jobs', { body: { type }, fallback: () => ({ id: 'job-' + Date.now(), type, status: 'QUEUED', requestedById: userIdForRole(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), resultUrl: null }) }),
-    universities: () => call('GET', '/catalogs/universities', { fallback: () => UNIVERSITIES.filter(uniScope(cfg.role)) }),
-    directions: () => call('GET', '/catalogs/it-directions', { fallback: DIRECTIONS }),
-    products: () => call('GET', '/catalogs/it-products', { fallback: PRODUCTS }),
-    vendors: () => call('GET', '/catalogs/vendors', { fallback: VENDORS }),
-    licenses: () => call('GET', '/catalogs/licenses', { fallback: LICENSES }),
+    universities: () => call('GET', '/catalogs/universities', { query: PAGE_ALL, fallback: () => UNIVERSITIES.filter(uniScope(cfg.role)) }),
+    directions: () => call('GET', '/catalogs/it-directions', { query: PAGE_ALL, fallback: DIRECTIONS }),
+    products: () => call('GET', '/catalogs/it-products', { query: PAGE_ALL, fallback: PRODUCTS }),
+    vendors: () => call('GET', '/catalogs/vendors', { query: PAGE_ALL, fallback: VENDORS }),
+    licenses: () => call('GET', '/catalogs/licenses', { query: PAGE_ALL, fallback: LICENSES }),
     reassign: (uid, kamId) => call('PUT', '/catalogs/universities/' + uid + '/responsible', { body: { kamId }, fallback: () => { const u = uniById(uid); u.kamId = kamId; INTERACTIONS.filter((x) => x.universityId === uid).forEach((x) => { x.responsibleUserId = kamId; x.responsibleUserName = userName(kamId); }); return u; } }),
     unassign: (uid) => call('PUT', '/catalogs/universities/' + uid + '/responsible', { body: { kamId: null }, fallback: () => { const u = uniById(uid); u.kamId = null; return u; } }),
     users: () => call('GET', '/admin/users', { fallback: USERS }),
-    updateUser: (uid, dto) => call('PUT', '/admin/users/' + uid, { body: dto, fallback: () => Object.assign(USERS.find((u) => u.id === uid), dto) }),
-    templates: () => call('GET', '/workflow/templates', { fallback: [TEMPLATE] }),
-    updateTemplate: (tid, dto) => call('PUT', '/workflow/templates/' + tid, { body: { ...toWireTemplateBody(dto.statuses, dto.transitions), ...(dto.name !== undefined ? { name: dto.name } : {}), ...(dto.description !== undefined ? { description: dto.description } : {}) }, fallback: () => { const n = Math.max(...VERSIONS.map((v) => v.versionNumber)) + 1; const a = activeVersion(); const arch = { ...a, id: 'local-arch-' + a.versionNumber, isActive: false, statuses: [...a.statuses], transitions: [...a.transitions] }; VERSIONS.splice(VERSIONS.indexOf(a), 0, arch); a.statuses.splice(0, a.statuses.length, ...dto.statuses.map((x) => ({ ...x, workflowTemplateVersionId: a.id }))); a.transitions = dto.transitions.map((t, i) => ({ id: 'local-tr-' + n + '-' + i, workflowTemplateVersionId: a.id, ...t })); a.versionNumber = n; return { ...clone(a), versionNumber: n }; } }),
+    updateUser: async (uid, dto) => {
+      const u = await call('PUT', '/admin/users/' + uid, { body: dto, fallback: () => Object.assign(USERS.find((x) => x.id === uid), dto) });
+      if (lastSource === 'api' && u) { Object.assign(USERS.find((x) => x.id === u.id) || {}, u); syncKams(); }
+      return u;
+    },
+    templates: () => call('GET', '/workflow/templates', { fallback: () => [{ ...TEMPLATE, activeVersion: clone(activeVersion()), versions: VERSIONS.map(({ id, versionNumber, isActive }) => ({ id, versionNumber, isActive })) }] }),
+    // Редактор шаблона (Администратор): новая версия, текущие процессы остаются на прежней.
+    // Страница отдаёт статусы с id и переходы по id статусов — в API уходит форма с order.
+    updateTemplate: async (tid, dto) => {
+      if (cfg.mode !== 'demo') {
+        try {
+          const saved = await call('PUT', '/workflow/templates/' + tid, { body: templateDto(dto.statuses, dto.transitions, false) });
+          adoptVersion(saved);
+          return saved;
+        } catch (e) { if (cfg.mode === 'api' || e.code !== 'NETWORK_UNAVAILABLE') throw e; }
+      }
+      return call('PUT', '/workflow/templates/' + tid, { fallback: () => { const n = Math.max(...VERSIONS.map((v) => v.versionNumber)) + 1; const a = activeVersion(); const arch = { ...a, id: 'local-arch-' + a.versionNumber, isActive: false, statuses: [...a.statuses], transitions: [...a.transitions] }; VERSIONS.splice(VERSIONS.indexOf(a), 0, arch); a.statuses.splice(0, a.statuses.length, ...dto.statuses.map((x) => ({ ...x, workflowTemplateVersionId: a.id }))); a.transitions = dto.transitions.map((t, i) => ({ id: 'local-tr-' + n + '-' + i, workflowTemplateVersionId: a.id, ...t })); a.versionNumber = n; return { ...clone(a), versionNumber: n }; } });
+    },
     importPreview: () => call('POST', '/catalogs/import/preview', { fallback: { previewId: id('h0000000', 1), fileName: 'Реестр лицензий.xlsx', totalRows: 30, duplicateRows: 2, rows: [
       { rowNumber: 2, universityName: 'СПбГУ им. Петра Великого', match: 'DUPLICATE_FUZZY', matchedUniversityId: UNIVERSITIES[0].id },
       { rowNumber: 3, universityName: 'МГТУ им. Н. Э. Баумана', match: 'DUPLICATE_EXACT', matchedUniversityId: UNIVERSITIES[1].id },
@@ -317,24 +302,66 @@
       { rowNumber: 7, universityName: 'ВолгГТУ', match: 'NEW', matchedUniversityId: null },
     ] } }),
     importCommit: (previewId) => call('POST', '/catalogs/import/commit', { body: { previewId }, fallback: { id: id('h1000000', 1), fileName: 'Реестр лицензий.xlsx', status: 'SUCCESS', resultSummary: { created: 27, matchedExisting: 2, failed: 1 }, initiatedById: USERS[2].id, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } }),
-    health: () => call('GET', '/health', { fallback: () => ({ status: 'ok', db: 'ok', redis: 'ok', uptime: Math.round((Date.now() - NOW) / 1000) + 5421 }) }),
+    health: () => call('GET', '/health', { fallback: () => ({ status: 'ok', db: 'ok', redis: 'ok', minio: 'ok', keycloak: 'ok', uptime: Math.round((Date.now() - NOW) / 1000) + 5421 }) }),
   };
   function activeVersion() { return VERSIONS.find((v) => v.isActive) || VERSIONS[VERSIONS.length - 1]; }
-  // Свой статус: вставляется после выбранного. Обязательный — встраивается в цепочку (прямой переход убирается),
-  // необязательный — дополнительная ветка, которая не удлиняет критический путь.
-  function localAddStatus({ name, phase, afterId, minDays, slaDays, mandatory }) {
-    const v = activeVersion();
-    const idx = v.statuses.findIndex((x) => x.id === afterId);
-    const st = { id: 'custom-' + Date.now(), name, phase, order: 0, workflowTemplateVersionId: v.id, custom: true };
-    v.statuses.splice(idx + 1, 0, st); v.statuses.forEach((x, i) => (x.order = i + 1));
-    if (slaDays) SLA[st.id] = slaDays;
-    const nextIds = v.transitions.filter((t) => t.fromStatusId === afterId && t.name === 'Далее').map((t) => t.toStatusId);
-    const mk = (f, t) => ({ id: 'custom-tr-' + Math.random().toString(36).slice(2), name: 'Далее', workflowTemplateVersionId: v.id, fromStatusId: f, toStatusId: t });
-    if (mandatory) { v.transitions = v.transitions.filter((t) => !(t.fromStatusId === afterId && nextIds.includes(t.toStatusId))); Object.values(META).forEach((m) => { m.deps = m.deps.map((d) => (d === afterId ? st.id : d)); }); }
-    v.transitions.push(mk(afterId, st.id), ...nextIds.map((n) => mk(st.id, n)));
-    META[st.id] = { minDays: Number(minDays) || 0, deps: [afterId], optional: !mandatory, after: afterId };
-    v.versionNumber += 1;
-    return clone(st);
+  const PAGE_ALL = { pageSize: 100 };
+  const syncKams = () => KAMS.splice(0, KAMS.length, ...USERS.filter((u) => u.role === 'KAM' && u.isActive));
+  // SLA и параметры критического пути приходят вместе со статусами версии (WorkflowStatusDto).
+  function registerStatuses(statuses) {
+    (statuses || []).forEach((st) => {
+      if (st.slaDays) SLA[st.id] = st.slaDays; else delete SLA[st.id];
+      const deps = st.dependsOnStatusIds || [];
+      META[st.id] = { minDays: st.minDays || 0, deps, optional: !!st.isOptional, after: st.isOptional ? deps[0] : undefined };
+    });
+  }
+  // Версия из ответа API становится активной в локальном справочнике.
+  function adoptVersion(v) {
+    registerStatuses(v.statuses);
+    if (v.isActive) VERSIONS.forEach((x) => { x.isActive = false; });
+    const i = VERSIONS.findIndex((x) => x.id === v.id);
+    if (i >= 0) VERSIONS[i] = clone(v); else VERSIONS.push(clone(v));
+    VERSIONS.sort((a, b) => a.versionNumber - b.versionNumber);
+  }
+  // Статусы/переходы в форме UpdateWorkflowTemplateDto: ссылки между статусами — через order,
+  // sourceStatusId — id статуса текущей версии (для переноса процессов при migrateInstances).
+  function templateDto(statuses, transitions, migrateInstances) {
+    const sorted = [...statuses].sort((a, b) => a.order - b.order);
+    const orderOf = Object.fromEntries(sorted.map((st, i) => [st.id, i + 1]));
+    const isServerId = (sid) => typeof sid === 'string' && !/^(custom|local|new)-/.test(sid);
+    return {
+      migrateInstances,
+      statuses: sorted.map((st, i) => {
+        const m = META[st.id] || { minDays: 0, deps: [] };
+        // Пустые зависимости у не-первого статуса (новый или его предшественник удалён) —
+        // не отправляем: бэкенд поставит зависимость от предыдущего по order.
+        const deps = (m.deps || []).map((d) => orderOf[d]).filter(Boolean);
+        return { name: st.name, phase: st.phase, order: i + 1, slaDays: SLA[st.id] || null, minDays: Number(m.minDays) || 0, isOptional: !!m.optional,
+          dependsOnOrders: deps.length || i === 0 ? deps : undefined, ...(isServerId(st.id) ? { sourceStatusId: st.id } : {}) };
+      }),
+      transitions: transitions.filter((t) => orderOf[t.fromStatusId] && orderOf[t.toStatusId])
+        .map((t) => ({ name: t.name || undefined, fromStatusOrder: orderOf[t.fromStatusId], toStatusOrder: orderOf[t.toStatusId] })),
+    };
+  }
+  // Справочники из API: сотрудники (ФИО ответственных, список КАМов) и шаблон workflow
+  // (активная версия со SLA/сроками этапов + список версий). Без API остаются фикстуры.
+  async function hydrate() {
+    if (cfg.mode === 'demo') return;
+    const get = async (path) => {
+      const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 2500);
+      try { const r = await fetch(cfg.base.replace(/\/$/, '') + path, { headers: { 'X-Dev-Role': cfg.role }, signal: ctl.signal }); return r.ok ? r.json() : null; } finally { clearTimeout(to); }
+    };
+    try {
+      const [users, templates] = await Promise.all([get('/auth/users'), get('/workflow/templates')]);
+      if (users && users.length) { USERS.splice(0, USERS.length, ...users); syncKams(); }
+      const t = templates && templates[0];
+      if (t && t.activeVersion) {
+        TEMPLATE.id = t.id; TEMPLATE.name = t.name; TEMPLATE.description = t.description;
+        VERSIONS = (t.versions || []).map((v) => (v.id === t.activeVersion.id ? clone(t.activeVersion) : { ...v, workflowTemplateId: t.id, statuses: [], transitions: [] }));
+        if (!VERSIONS.some((v) => v.id === t.activeVersion.id)) VERSIONS.push(clone(t.activeVersion));
+        registerStatuses(t.activeVersion.statuses);
+      }
+    } catch (e) { /* API недоступен — работаем на фикстурах */ }
   }
   // Метод критического пути по оставшимся этапам: прямой проход (ES/EF), обратный (LS/LF), резерв = LS − ES.
   function criticalPath(statuses, currentId, daysIn) {
@@ -358,12 +385,13 @@
   }
   function userIdForRole() { return (USERS.find((u) => u.role === ROLES[cfg.role].dto) || USERS[0]).id; }
 
-  window.CRM = {
+  const CRM = {
     cfg, api, stats, ApiError, PHASES, PHASE, BUCKETS, ROLES, FILE_FORMATS, SLA, KAM_ME: K[0],
     local: { USERS, KAMS, get STATUSES() { return activeVersion().statuses; }, UNIVERSITIES, DIRECTIONS, PRODUCTS, get VERSIONS() { return VERSIONS; }, TEMPLATE, LICENSES },
     userName, bucketOf, criticalPath, activeVersion: () => clone(activeVersion()), activeVersionId: () => activeVersion().id, statusMeta: (sid) => META[sid] || null,
     setMinDays: (sid, n) => { META[sid] = { ...(META[sid] || { deps: [] }), minDays: Number(n) || 0 }; },
-    configure(o) { Object.assign(cfg, o); },
+    configure(o) { const prev = cfg.base + '|' + cfg.mode; Object.assign(cfg, o); if (prev !== cfg.base + '|' + cfg.mode) return hydrate(); },
+    refresh: () => hydrate(),
     onStatus(f) { listeners.add(f); return () => listeners.delete(f); },
     get source() { return lastSource; },
     failNext(code, message, httpStatus) { failNext = { code, message, httpStatus }; },
@@ -373,4 +401,6 @@
     fmtSize: (b) => b > 1048576 ? (b / 1048576).toFixed(1).replace('.', ',') + ' МБ' : Math.max(1, Math.round(b / 1024)) + ' КБ',
     plural: (n, one, few, many) => { const a = Math.abs(n) % 100, b = a % 10; return a > 10 && a < 20 ? many : b > 1 && b < 5 ? few : b === 1 ? one : many; },
   };
+  // Страницы ждут window.CRM (waitCRM) — публикуем клиент после загрузки справочников.
+  hydrate().finally(() => { if (!window.CRM) window.CRM = CRM; });
 })();

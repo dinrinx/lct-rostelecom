@@ -6,12 +6,15 @@ import { AppModule } from './app.module';
 // Дефолт — те же dev-порты, что уже прописаны как redirectUris в
 // infra/keycloak/realm-export.json (5173 vite, 4200 angular, 3000, 8081) —
 // фронт открывает браузер именно с одного из них, не с origin бэкенда.
+// 8123 — статический прототип frontend/prototype (python3 serve.py).
 // CORS_ORIGINS в .env переопределяет список, если порт фронта другой.
 const DEFAULT_CORS_ORIGINS = [
   'http://localhost:5173',
   'http://localhost:4200',
   'http://localhost:3000',
   'http://localhost:8081',
+  'http://localhost:8123',
+  'http://127.0.0.1:8123',
 ];
 
 function resolveCorsOrigins(): string[] {

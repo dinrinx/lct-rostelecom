@@ -33,7 +33,7 @@
         <sc-if value="{{ c.showForbidden }}"><div style="padding:8px 4px;font-size:12px;line-height:16px;color:var(--color-fg-muted)">Переход сюда не разрешён шаблоном</div></sc-if>
         <sc-if value="{{ c.showDropHint }}"><div style="padding:12px;border-radius:12px;background:#fff;box-shadow:inset 0 0 0 1px var(--color-accent);font-size:12px;line-height:16px;color:var(--color-accent-strong);text-align:center">Отпустите, чтобы перевести</div></sc-if>
         <sc-for list="{{ c.cards }}" as="k">
-          <article draggable="true" onDragStart="{{ k.start }}" onDragEnd="{{ k.end }}" onClick="{{ k.open }}" tabindex="0" style="display:flex;flex-direction:column;gap:6px;padding:12px;border-radius:12px;background:#fff;box-shadow:{{ k.ring }};cursor:grab">
+          <article draggable="{{ k.draggable }}" onDragStart="{{ k.start }}" onDragEnd="{{ k.end }}" onClick="{{ k.open }}" tabindex="0" style="display:flex;flex-direction:column;gap:6px;padding:12px;border-radius:12px;background:#fff;box-shadow:{{ k.ring }};cursor:{{ k.cursor }}">
             <span style="font-size:14px;line-height:20px;font-weight:500">{{ k.universityName }}</span>
             <span style="font-size:12px;line-height:16px;color:var(--color-fg-soft)">{{ k.itProductName }}</span>
             <span style="display:flex;justify-content:space-between;gap:8px;align-items:center;margin-top:2px">
@@ -46,9 +46,6 @@
         <sc-if value="{{ c.empty }}"><div style="padding:16px 4px;font-size:12px;line-height:16px;color:var(--color-fg-muted);text-align:center">Нет взаимодействий</div></sc-if>
       </section>
     </sc-for>
-    <button onClick="{{ openAdd }}" style="width:{{ addW }};flex-shrink:0;min-height:420px;border:none;border-radius:16px;background:var(--color-bg-surface2);box-shadow:inset 0 0 0 1px var(--color-border-muted);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:8px;padding:24px 12px;cursor:pointer;color:var(--color-fg-soft);font-size:14px;line-height:20px" style-hover="background:var(--color-bg-surface3);color:var(--color-fg-default)">
-      <span style="font-size:28px;line-height:1;font-weight:300">+</span><span>Свой статус</span>
-    </button>
   </div>
 
   <sc-if value="{{ modal }}">
@@ -61,7 +58,12 @@
       <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Textarea" label="Комментарий" placeholder="Что сделано и что дальше" hint="{{ modal.hint }}" error="{{ modal.missing }}" max-length="{{ 1000 }}" value="{{ modal.comment }}" on-change="{{ setComment }}" hint-size="100%,172px"></x-import>
       <sc-if value="{{ modal.error }}"><div role="alert" style="display:flex;flex-direction:column;gap:4px;padding:12px 16px;border-radius:12px;box-shadow:inset 0 0 0 1px var(--color-error)"><span style="font-size:14px;line-height:20px;font-weight:500;color:var(--color-error-strong)">Переход не сохранён</span><span style="font-size:14px;line-height:20px">{{ modal.error.message }}. Карточка вернулась на место, комментарий сохранён.</span><span style="font-size:12px;line-height:16px;color:var(--color-fg-soft)">Код: {{ modal.error.code }}</span></div></sc-if>
       <div style="display:flex;gap:8px;justify-content:space-between;align-items:center;flex-wrap:wrap">
-        <button onClick="{{ modal.openCard }}" aria-label="Приложить файл" title="Приложить файл — откроется карточка" style="width:48px;height:48px;border:none;border-radius:12px;background:var(--color-bg-surface3);color:var(--color-fg-soft);cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:var(--color-bg-surface4);color:var(--color-fg-default)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg></button>
+        <input type="file" ref="{{ fileRef }}" onChange="{{ onFileInput }}" accept=".png,.jpeg,.jpg,.pdf,.zip,.gz,.gzip,.rar,.doc,.docx,.xls,.xlsx" style="display:none">
+        <div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1">
+          <button onClick="{{ pickFile }}" aria-label="Приложить файл" title="Приложить файл (png, jpeg, pdf, zip, rar, doc, xls — до 25 МБ)" style="width:48px;height:48px;flex-shrink:0;border:none;border-radius:12px;background:var(--color-bg-surface3);color:var(--color-fg-soft);cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:var(--color-bg-surface4);color:var(--color-fg-default)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg></button>
+          <sc-if value="{{ modal.file }}"><div style="display:flex;align-items:center;gap:8px;min-width:0;height:40px;padding:0 8px 0 12px;border-radius:12px;background:var(--color-bg-surface2)"><span style="flex-shrink:0;font-size:12px;line-height:16px;font-weight:500;color:var(--color-fg-soft)">{{ modal.file.ext }}</span><span style="font-size:14px;line-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px" title="{{ modal.file.name }}">{{ modal.file.name }}</span><span style="flex-shrink:0;white-space:nowrap;font-size:12px;line-height:16px;color:var(--color-fg-muted)">{{ modal.file.sizeText }}</span><button onClick="{{ removeFile }}" aria-label="Убрать файл" style="border:none;background:transparent;color:var(--color-fg-muted);cursor:pointer;font-size:18px;line-height:1;padding:4px">×</button></div></sc-if>
+          <sc-if value="{{ modal.fileError }}"><span role="alert" style="font-size:12px;line-height:16px;color:var(--color-error-strong)">{{ modal.fileError }}</span></sc-if>
+        </div>
         <div style="display:flex;gap:8px">
           <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" variant="secondary" size="m" on-click="{{ closeModal }}" hint-size="100px,48px">Отмена</x-import>
           <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" size="m" on-click="{{ confirmMove }}" hint-size="140px,48px">Перевести</x-import>
@@ -70,50 +72,36 @@
     </div>
   </sc-if>
 
-  <sc-if value="{{ add }}">
-    <div onClick="{{ closeAdd }}" style="position:fixed;inset:0;background:rgba(15,26,40,.4);z-index:70"></div>
-    <div role="dialog" aria-modal="true" style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(560px,calc(100% - 32px));max-height:calc(100vh - 32px);overflow-y:auto;background:#fff;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:16px;z-index:71">
-      <div style="display:flex;flex-direction:column;gap:4px">
-        <div style="font-weight:700;font-size:22px;line-height:1.2">Свой статус</div>
-        <div style="font-size:14px;line-height:20px;color:var(--color-fg-soft)">Добавится в шаблон «{{ templateName }}» как версия {{ nextVersion }} и станет доступен всей команде.</div>
-      </div>
-      <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Input" label="Название" placeholder="Например, согласование с ректоратом" hint="{{ add.nameHint }}" error="{{ add.nameError }}" value="{{ add.name }}" on-change="{{ addSet.name }}" hint-size="100%,112px"></x-import>
-      <div style="display:grid;grid-template-columns:{{ addCols }};gap:12px">
-        <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Select" label="Встанет после" hint="{{ null }}" options="{{ afterOpts }}" value="{{ add.afterId }}" on-change="{{ addSet.afterId }}" hint-size="100%,72px"></x-import>
-        <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Select" label="Стадия CLM" hint="{{ null }}" options="{{ phaseOpts }}" value="{{ add.phase }}" on-change="{{ addSet.phase }}" hint-size="100%,72px"></x-import>
-        <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Input" label="Мин. срок, дн." type="number" hint="{{ null }}" placeholder="7" value="{{ add.minDays }}" on-change="{{ addSet.minDays }}" hint-size="100%,80px"></x-import>
-        <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Input" label="Норма SLA, дн." type="number" hint="{{ null }}" placeholder="14" value="{{ add.slaDays }}" on-change="{{ addSet.slaDays }}" hint-size="100%,80px"></x-import>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:8px;padding:16px;border-radius:12px;background:var(--color-bg-surface3)">
-        <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Switch" label="Обязательный этап" checked="{{ add.mandatory }}" on-change="{{ addSet.mandatory }}" hint-size="220px,24px"></x-import>
-        <span style="font-size:14px;line-height:20px;color:var(--color-fg-soft);text-wrap:pretty">{{ addExplain }}</span>
-      </div>
-      <sc-if value="{{ add.error }}"><div role="alert" style="padding:12px 16px;border-radius:12px;box-shadow:inset 0 0 0 1px var(--color-error);font-size:14px;line-height:20px">Статус не добавлен: {{ add.error.message }} · <span style="color:var(--color-error-strong)">код {{ add.error.code }}</span></div></sc-if>
-      <div style="display:flex;gap:8px;justify-content:flex-end">
-        <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" variant="secondary" size="m" on-click="{{ closeAdd }}" hint-size="100px,48px">Отмена</x-import>
-        <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" size="m" disabled="{{ add.busy }}" on-click="{{ saveAdd }}" hint-size="180px,48px">{{ addLabel }}</x-import>
-      </div>
-    </div>
-  </sc-if>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;rows&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;InteractionReportItemDto[]&quot;},&quot;role&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;kam&quot;,&quot;rukovoditel&quot;],&quot;default&quot;:&quot;kam&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;isMobile&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;onOpen&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(id:string)=&gt;void&quot;},&quot;onToast&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(t:object)=&gt;void&quot;},&quot;onChanged&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;()=&gt;void&quot;}}">
 const waitCRM = () => new Promise((r) => { const t = () => (window.CRM ? r(window.CRM) : setTimeout(t, 30)); t(); });
 const initials = (n) => (n || '').split(' ').slice(0, 2).map((w) => w[0]).join('');
 class Component extends DCLogic {
-  state = { version: null, drag: null, over: null, moves: {}, modal: null, add: null };
+  fileRef = React.createRef();
+  state = { version: null, drag: null, over: null, moves: {}, modal: null };
   componentDidMount() { this.loadVersion(); }
   componentDidUpdate(pp) { if (pp.rows !== this.props.rows && Object.keys(this.state.moves).length) { const moves = { ...this.state.moves }; (this.props.rows || []).forEach((r) => { if (moves[r.interactionInstanceId] && moves[r.interactionInstanceId].to === r.currentStatusId) delete moves[r.interactionInstanceId]; }); this.setState({ moves }); } }
   async loadVersion() { const CRM = await waitCRM(); try { const version = await CRM.api.templateVersion(CRM.activeVersionId()); this.setState({ version }); } catch (e) { this.props.onToast && this.props.onToast({ kind: 'error', title: 'Шаблон workflow не загрузился', code: e.code }); } }
   statusOf(row) { const m = this.state.moves[row.interactionInstanceId]; return m ? m.to : row.currentStatusId; }
   allowed(fromId, toId) { return !!this.state.version && this.state.version.transitions.some((t) => t.fromStatusId === fromId && t.toStatusId === toId); }
+  acceptFile(file) {
+    const CRM = window.CRM, md = this.state.modal;
+    const ext = (file.name.split('.').pop() || '').toLowerCase();
+    if (!CRM.FILE_FORMATS.includes(ext)) return this.setState({ modal: { ...md, file: null, fileError: 'Формат .' + ext + ' не поддерживается' } });
+    if (file.size > 25 * 1048576) return this.setState({ modal: { ...md, file: null, fileError: 'Файл больше 25 МБ' } });
+    this.setState({ modal: { ...md, file: { raw: file, name: file.name, ext: ext.toUpperCase(), sizeText: CRM.fmtSize(file.size) }, fileError: null } });
+  }
   async confirmMove() {
     const CRM = window.CRM, md = this.state.modal;
     if (!md.comment.trim()) return this.setState({ modal: { ...md, touched: true } });
     const iid = md.row.interactionInstanceId;
     this.setState({ modal: null, moves: { ...this.state.moves, [iid]: { to: md.toId, pending: true } } });
     try {
-      await CRM.api.updateStatus(iid, { toStatusId: md.toId, comment: md.comment.trim() });
+      // Файл грузим до перехода и привязываем к записи истории (attachmentId) — как в карточке.
+      let attachmentId;
+      if (md.file) { const up = await CRM.api.uploadFile(md.file.raw, iid); attachmentId = up && up.id; }
+      await CRM.api.updateStatus(iid, { toStatusId: md.toId, comment: md.comment.trim(), ...(attachmentId ? { attachmentId } : {}) });
       this.setState({ moves: { ...this.state.moves, [iid]: { to: md.toId, pending: false } } });
       this.props.onToast && this.props.onToast({ kind: 'success', title: 'Статус обновлён', text: md.row.universityName + ' → «' + md.toName + '»' });
       this.props.onChanged && this.props.onChanged();
@@ -122,26 +110,18 @@ class Component extends DCLogic {
       this.setState({ moves, modal: { ...md, error: { code: e.code, message: e.message } } });
     }
   }
-  async saveAdd() {
-    const CRM = window.CRM, a = this.state.add, v = this.state.version;
-    const name = a.name.trim();
-    if (!name || v.statuses.some((x) => x.name.toLowerCase() === name.toLowerCase())) return this.setState({ add: { ...a, touched: true } });
-    this.setState({ add: { ...a, busy: true, error: null } });
-    try {
-      await CRM.api.addStatus({ name, phase: a.phase, afterId: a.afterId, minDays: a.minDays, slaDays: Number(a.slaDays) || null, mandatory: a.mandatory });
-      this.setState({ add: null });
-      await this.loadVersion();
-      this.props.onToast && this.props.onToast({ kind: 'success', title: 'Статус добавлен', text: '«' + name + '» · версия шаблона ' + (this.state.version ? this.state.version.versionNumber : '') });
-    } catch (e) { this.setState({ add: { ...a, busy: false, error: { code: e.code, message: e.message } } }); }
-  }
+
   renderVals() {
     const s = this.state, CRM = window.CRM, v = s.version, m = !!this.props.isMobile, isRuk = this.props.role === 'rukovoditel';
-    if (!CRM || !v) return { columns: [], hint: 'Загрузка шаблона…', colW: '280px', addW: '160px', modal: null, add: null };
+    if (!CRM || !v) return { columns: [], hint: 'Загрузка шаблона…', colW: '280px', modal: null };
     const rows = this.props.rows || [];
     const sts = [...v.statuses].sort((a, b) => a.order - b.order);
     const drag = s.drag;
+    // Процесс на прежней версии шаблона (его статус не из активной версии) показываем в
+    // колонке с тем же названием; двигать его можно только из карточки — переходы у него свои.
+    const activeIds = new Set(sts.map((x) => x.id));
     const columns = sts.map((st) => {
-      const cards = rows.filter((r) => this.statusOf(r) === st.id);
+      const cards = rows.filter((r) => { const sid = this.statusOf(r); return sid === st.id || (!activeIds.has(sid) && r.currentStatusName === st.name); });
       const isFrom = drag && drag.from === st.id, ok = drag && !isFrom && this.allowed(drag.from, st.id), over = drag && s.over === st.id;
       const sla = CRM.SLA[st.id], meta = CRM.statusMeta(st.id);
       return {
@@ -158,30 +138,21 @@ class Component extends DCLogic {
           daysLabel: r.daysInCurrentStatus + ' дн. в статусе', daysColor: r.isOverdue ? 'var(--color-error-strong)' : 'var(--color-fg-muted)', daysWeight: r.isOverdue ? 500 : 400,
           pending: !!(s.moves[r.interactionInstanceId] && s.moves[r.interactionInstanceId].pending),
           ring: drag && drag.iid === r.interactionInstanceId ? 'inset 0 0 0 2px var(--color-accent)' : r.isOverdue ? 'inset 0 0 0 1px var(--color-error-muted)' : 'none',
-          start: (e) => { e.dataTransfer.setData('text/plain', r.interactionInstanceId); e.dataTransfer.effectAllowed = 'move'; this.setState({ drag: { iid: r.interactionInstanceId, from: st.id }, over: st.id }); },
+          draggable: !isRuk, cursor: isRuk ? 'pointer' : 'grab', start: (e) => { if (isRuk) { e.preventDefault(); return; } e.dataTransfer.setData('text/plain', r.interactionInstanceId); e.dataTransfer.effectAllowed = 'move'; this.setState({ drag: { iid: r.interactionInstanceId, from: this.statusOf(r) }, over: st.id }); },
           end: () => { const was = this.state; if (was.drag && was.over && was.over !== was.drag.from && !this.allowed(was.drag.from, was.over) && !was.modal) { const to = sts.find((x) => x.id === was.over); this.props.onToast && this.props.onToast({ kind: 'error', title: 'Переход не разрешён', text: '«' + st.name + '» → «' + (to ? to.name : '') + '». Доступные столбцы подсвечиваются при перетаскивании', code: 'WORKFLOW_TRANSITION_FORBIDDEN' }); } this.setState({ drag: null, over: null }); },
           open: () => this.props.onOpen && this.props.onOpen(r.interactionInstanceId) })),
       };
     });
     const md = s.modal;
-    const a = s.add;
-    const set = (k) => (val) => this.setState((st) => { const next = { ...st.add, [k]: val }; if (k === 'afterId') { const af = sts.find((x) => x.id === val); if (af) next.phase = af.phase; } return { add: next }; });
-    const after = a && sts.find((x) => x.id === a.afterId);
-    const nextNames = a && v.transitions.filter((t) => t.fromStatusId === a.afterId && t.name === 'Далее').map((t) => (sts.find((x) => x.id === t.toStatusId) || {}).name).filter(Boolean);
-    const dup = a && a.name.trim() && sts.some((x) => x.name.toLowerCase() === a.name.trim().toLowerCase());
     return {
-      hint: m ? 'Нажмите на карточку, чтобы открыть её и сменить статус' : 'Перетащите карточку в другой столбец, чтобы сменить статус. Подсвечиваются только разрешённые шаблоном переходы.',
-      columns, colW: m ? '260px' : '280px', addW: m ? '140px' : '160px',
-      modal: md ? { ...md, subtitle: md.row.universityName + ' · ' + md.row.itProductName, missing: md.touched && !md.comment.trim(), hint: md.touched && !md.comment.trim() ? 'Комментарий обязателен — опишите, что сделано' : 'Обязательное поле', openCard: () => { this.setState({ modal: null }); this.props.onOpen && this.props.onOpen(md.row.interactionInstanceId); } } : null,
-      closeModal: () => this.setState({ modal: null }), setComment: (val) => this.setState({ modal: { ...this.state.modal, comment: val } }), confirmMove: () => this.confirmMove(),
-      openAdd: () => { const def = sts[Math.max(0, sts.length - 2)]; this.setState({ add: { name: '', afterId: def.id, phase: def.phase, minDays: '7', slaDays: '14', mandatory: true, touched: false, busy: false, error: null } }); },
-      closeAdd: () => this.setState({ add: null }), saveAdd: () => this.saveAdd(),
-      add: a ? { ...a, nameError: !!(a.touched && (!a.name.trim() || dup)) || !!dup, nameHint: dup ? 'Такой статус уже есть в шаблоне' : a.touched && !a.name.trim() ? 'Введите название' : 'Одно-три слова, с заглавной буквы' } : null,
-      addSet: { name: set('name'), afterId: set('afterId'), phase: set('phase'), minDays: set('minDays'), slaDays: set('slaDays'), mandatory: set('mandatory') },
-      afterOpts: sts.filter((x) => x.order < sts.length).map((x) => ({ value: x.id, label: x.order + '. ' + x.name })),
-      phaseOpts: CRM.PHASES.map((p) => ({ value: p.key, label: p.label })), addCols: m ? '1fr' : '1fr 1fr',
-      addExplain: !a ? '' : a.mandatory ? 'Встанет в цепочку: «' + (after ? after.name : '') + '» → «' + (a.name.trim() || 'новый статус') + '»' + (nextNames && nextNames.length ? ' → «' + nextNames.join('», «') + '»' : '') + '. Прямой переход уберётся, критический путь станет длиннее на ' + (Number(a.minDays) || 0) + ' дн.' : 'Появится как дополнительный шаг после «' + (after ? after.name : '') + '». Прямой переход останется, критический путь не изменится.',
-      addLabel: a && a.busy ? 'Сохраняем…' : 'Добавить статус', templateName: CRM.local.TEMPLATE.name, nextVersion: v.versionNumber + 1,
+      hint: isRuk ? 'Режим просмотра: статусы переводит ответственный КАМ. Нажмите на карточку, чтобы открыть историю' : m ? 'Нажмите на карточку, чтобы открыть её и сменить статус' : 'Перетащите карточку в другой столбец, чтобы сменить статус. Подсвечиваются только разрешённые шаблоном переходы.',
+      columns, colW: m ? '260px' : '280px',
+      modal: md ? { ...md, subtitle: md.row.universityName + ' · ' + md.row.itProductName, missing: md.touched && !md.comment.trim(), hint: md.touched && !md.comment.trim() ? 'Комментарий обязателен — опишите, что сделано' : 'Обязательное поле' } : null,
+      closeModal: () => this.setState({ modal: null }),
+      fileRef: this.fileRef,
+      pickFile: () => this.fileRef.current && this.fileRef.current.click(),
+      onFileInput: (e) => { const x = e.target.files && e.target.files[0]; if (x) this.acceptFile(x); e.target.value = ''; },
+      removeFile: () => this.setState({ modal: { ...this.state.modal, file: null, fileError: null } }), setComment: (val) => this.setState({ modal: { ...this.state.modal, comment: val } }), confirmMove: () => this.confirmMove(),
     };
   }
 }

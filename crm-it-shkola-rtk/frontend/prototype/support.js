@@ -156,7 +156,7 @@
     runtime.setRootName(rootName);
     runtime.adoptParsed(rootName, parsed);
     if (!window.__resources) {
-      fetch(location.href).then((res) => res.ok ? res.text() : "").then((t) => {
+      fetch(location.href, { cache: "no-cache" }).then((res) => res.ok ? res.text() : "").then((t) => {
         const raw = t ? parseDcText(t) : null;
         if (raw?.template) runtime.updateHtml(rootName, raw.template);
       }).catch(() => {
@@ -1203,7 +1203,7 @@
       const p = ready.then(() => {
         const pre = bundledBlob(url);
         if (pre) return pre.text();
-        return fetch(url).then((r) => {
+        return fetch(url, { cache: "no-cache" }).then((r) => {
           if (!r.ok) throw new Error("HTTP " + r.status);
           return r.text();
         });
@@ -1648,7 +1648,7 @@
       const pre = res ? res[url] : void 0;
       const target = typeof pre === "string" && pre ? pre : url;
       const blob = bundledBlob(target);
-      (blob ? blob.text() : fetch(target).then((res2) => {
+      (blob ? blob.text() : fetch(target, { cache: "no-cache" }).then((res2) => {
         if (!res2.ok) {
           console.error(
             '[dc-runtime] sibling fetch for "' + name + '" failed:',

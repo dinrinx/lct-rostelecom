@@ -61,6 +61,7 @@
       <sc-if value="{{ canStart }}">
         <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" size="m" on-click="{{ openForm }}" style="align-self:flex-start" hint-size="280px,48px">Перейти к следующему статусу</x-import>
       </sc-if>
+      <sc-if value="{{ readOnly }}"><div style="font-size:14px;line-height:20px;color:var(--color-fg-soft)">Режим просмотра: статус переводит ответственный КАМ.</div></sc-if>
       <sc-if value="{{ isFinal }}"><div style="font-size:14px;line-height:20px;color:var(--color-fg-soft)">Это финальный статус шаблона — переходов дальше нет.</div></sc-if>
     </section>
 
@@ -206,19 +207,22 @@ class Component extends DCLogic {
     const commentMissing = form.touched && !form.comment.trim();
     const sorted = [...history].sort((a, b) => b.changedAt.localeCompare(a.changedAt));
     const timeline = sorted.map((h, i) => {
-      const hs = version.statuses.find((x) => x.id === h.toStatusId) || { name: 'Статус', phase: 'INITIATION' };
-      const fs = h.fromStatusId && version.statuses.find((x) => x.id === h.fromStatusId);
+      // Переход мог быть сделан в прежней версии шаблона — тогда берём имя/фазу из самой записи истории.
+      const hs = version.statuses.find((x) => x.id === h.toStatusId) || { name: h.toStatusName || 'Статус', phase: h.toStatusPhase || 'INITIATION' };
+      const fs = h.fromStatusId && (version.statuses.find((x) => x.id === h.fromStatusId) || (h.fromStatusName ? { name: h.fromStatusName } : null));
       const hf = files.filter((f) => Math.abs(new Date(f.createdAt) - new Date(h.changedAt)) < 120000);
       return { ...h, statusName: hs.name, color: CRM.PHASE[hs.phase].color, date: CRM.fmtDateTime(h.changedAt), author: CRM.userName(h.changedById), fromText: fs ? ' · из «' + fs.name + '»' : '', line: i === sorted.length - 1 ? 'none' : 'block',
         files: hf.map((f) => ({ ...f, ext: (f.fileName.split('.').pop() || '').toUpperCase().slice(0, 4), sizeText: CRM.fmtSize(f.size), download: () => CRM.api.downloadUrl(f.id).then((d) => { if (d.url && d.url !== '#') window.open(d.url, '_blank'); else this.props.onToast && this.props.onToast({ kind: 'info', title: 'Ссылка на скачивание готова', text: f.fileName + ' · демо-режим, файл не хранится' }); }).catch((e) => this.props.onToast && this.props.onToast({ kind: 'error', title: 'Не удалось получить файл', code: e.code })) })) };
     });
     const f = s.file;
+    // Руководитель только просматривает процессы команды — переводят КАМ и Администратор (RBAC на бэке).
+    const readOnly = this.props.role === 'rukovoditel';
     return { ...base,
       v: { universityName: uni.name || '—', productName: prod.name || '—', directionName: dir.name || '—', statusName: st.name, phaseColor: CRM.PHASE[st.phase].color, phaseLabel: 'Стадия: ' + CRM.PHASE[st.phase].label,
         daysText: 'В статусе ' + days + ' ' + CRM.plural(days, 'день', 'дня', 'дней') + (sla ? ' · норма ' + sla + ' дн.' + (over ? ' — просрочено на ' + (days - sla) + ' дн.' : '') : ''),
         daysColor: over ? 'var(--color-error-strong)' : 'var(--color-fg-soft)', daysWeight: over ? 500 : 400,
         responsible: CRM.userName(inst.responsibleUserId), created: CRM.fmtDate(inst.createdAt), versionNumber: version.versionNumber },
-      canStart: !form.open && next.length > 0, isFinal: next.length === 0, formOpen: form.open,
+      canStart: !readOnly && !form.open && next.length > 0, readOnly, isFinal: next.length === 0, formOpen: form.open,
       openForm: () => this.setState({ form: { ...form, open: true, toStatusId: next.length === 1 ? next[0].st.id : form.toStatusId } }),
       cancelForm: () => this.setState({ form: { ...EMPTY_FORM }, file: null, fileError: null, submitError: null }),
       nextOpts: next.map((x) => ({ value: x.st.id, label: x.st.name + (x.t.name && x.t.name !== 'Далее' ? ' — ' + x.t.name.toLowerCase() : '') })),
