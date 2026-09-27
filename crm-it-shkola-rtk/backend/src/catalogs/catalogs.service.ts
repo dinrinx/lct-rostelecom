@@ -52,7 +52,7 @@ function normalizePagination(page?: string, pageSize?: string) {
 // КАМ видит только свои (visibleKamIds = [свой id]), Руководитель — команду
 // (visibleKamIds = [id всех его КАМов] + свой), Администратор — всё (null = без
 // ограничений). Считается один раз за запрос в CatalogScopeInterceptor.
-function universityWhereForScope(scope: CatalogScope) {
+export function universityWhereForScope(scope: CatalogScope) {
   if (scope.visibleKamIds === null) {
     return {};
   }
@@ -62,7 +62,7 @@ function universityWhereForScope(scope: CatalogScope) {
   return { kamId: { in: scope.visibleKamIds } };
 }
 
-function assertUniversityVisible(university: { kamId: string | null }, scope: CatalogScope): void {
+export function assertUniversityVisible(university: { kamId: string | null }, scope: CatalogScope): void {
   if (scope.visibleKamIds === null) {
     return;
   }
