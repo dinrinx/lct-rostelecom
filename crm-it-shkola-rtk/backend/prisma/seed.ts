@@ -222,6 +222,46 @@ async function seedDemoUniversitiesAndLicenses(
   return { universities };
 }
 
+// Отдельные лицензии специально под радар (GET /dashboard/license-radar) —
+// по одной ровно в каждом из окон 7/30/60 дней и одна уже просроченная, но
+// НЕ помеченная TERMINATED (радар намеренно игнорирует TERMINATED — считается,
+// что администратор её уже закрыл вручную, поэтому она не должна попадать
+// в demo-набор для этого теста, иначе OVERDUE-бакет всегда был бы пуст).
+async function seedLicenseRadarDemoData(
+  universities: Array<{ id: string }>,
+  productIds: string[],
+) {
+  if (universities.length === 0 || productIds.length === 0) return;
+
+  const now = new Date();
+  const daysFromNow = (days: number) => new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+
+  const radarSeeds: Array<{ offsetDays: number; universityIndex: number }> = [
+    { offsetDays: -3, universityIndex: 0 }, // OVERDUE
+    { offsetDays: 5, universityIndex: 1 }, // DUE_IN_7_DAYS
+    { offsetDays: 20, universityIndex: 2 }, // DUE_IN_30_DAYS
+    { offsetDays: 45, universityIndex: 0 }, // DUE_IN_60_DAYS
+  ];
+
+  for (let i = 0; i < radarSeeds.length; i++) {
+    const seed = radarSeeds[i];
+    const university = universities[seed.universityIndex];
+    const itProductId = productIds[i % productIds.length];
+
+    await prisma.license.create({
+      data: {
+        universityId: university.id,
+        itProductId,
+        contractNumber: `RADAR-DEMO-${i + 1}`,
+        startDate: daysFromNow(-365),
+        endDate: daysFromNow(seed.offsetDays),
+        seats: 30,
+        status: 'ACTIVE',
+      },
+    });
+  }
+}
+
 // 7 CLM-макростадий (WorkflowPhase) — по одному представительному статусу на
 // стадию, в порядке прохождения. Название шаблона и первого статуса совпадают
 // со stub-фикстурами workflow.controller.ts (WORKFLOW_TEMPLATE_FIXTURES) —
@@ -383,6 +423,53 @@ async function seedWorkflow(
     }
   }
 
+  // Отдельно — пара инстансов специально под радар SLA (GET /dashboard/sla-radar
+  // и ?onlyOverdue=true в /reports/interactions): у всех 7 инстансов выше
+  // последний переход датирован «1 день назад» (см. daysAgo((statusIndex-step)*10+1)
+  // при step===statusIndex) — ни один не превышает дефолтный SLA_THRESHOLD_DAYS=5,
+  // радару буквально нечего было бы показать. Эти два — с последним переходом
+  // намеренно дальше порога (10 и 20 дней), без attachmentId (не обязательны).
+  const slaOverdueSeeds: Array<{ universityIndex: number; statusIndex: number; kamId: string; daysStuck: number }> = [
+    { universityIndex: 1, statusIndex: 2, kamId: kamIds.kam2, daysStuck: 10 }, // МГТУ, Согласование договора
+    { universityIndex: 2, statusIndex: 1, kamId: kamIds.kam1, daysStuck: 20 }, // НГУ, Переговоры условий
+  ];
+
+  for (let i = 0; i < slaOverdueSeeds.length; i++) {
+    const seed = slaOverdueSeeds[i];
+    const university = universities[seed.universityIndex];
+    if (!university || productIds.length === 0) continue;
+
+    const itProductId = productIds[(instanceSeeds.length + i) % productIds.length];
+
+    const instance = await prisma.interactionInstance.create({
+      data: {
+        universityId: university.id,
+        itProductId,
+        workflowTemplateVersionId: version.id,
+        currentStatusId: statuses[seed.statusIndex].id,
+        responsibleUserId: seed.kamId,
+      },
+    });
+
+    for (let step = 0; step <= seed.statusIndex; step++) {
+      const isLastStep = step === seed.statusIndex;
+      await prisma.statusHistoryEntry.create({
+        data: {
+          interactionInstanceId: instance.id,
+          fromStatusId: step === 0 ? null : statuses[step - 1].id,
+          toStatusId: statuses[step].id,
+          comment: isLastStep
+            ? `Завис в статусе «${statuses[step].name}» — ждём ответа от вуза`
+            : step === 0
+              ? 'Взаимодействие создано'
+              : `Переход в статус «${statuses[step].name}»`,
+          changedById: seed.kamId,
+          changedAt: isLastStep ? daysAgo(seed.daysStuck) : daysAgo(seed.daysStuck + (seed.statusIndex - step) * 5),
+        },
+      });
+    }
+  }
+
   return { template, version, statuses };
 }
 
@@ -417,10 +504,11 @@ async function main() {
     kam1: kam1.id,
     kam2: kam2.id,
   });
+  await seedLicenseRadarDemoData(universities, [...productsByName.values()]);
   await seedWorkflow(universities, [...productsByName.values()], { kam1: kam1.id, kam2: kam2.id });
 
   console.log(
-    `Готово: вендоров и продуктов из ${rows.length} строк файла, плюс синтетические вузы/лицензии, плюс 4 демо-пользователя (admin/rukovoditel/kam/kam2), плюс workflow-шаблон с 7 статусами и 7 тестовых взаимодействий (по одному на каждую макростадию, у 3 — многошаговая история с комментариями).`,
+    `Готово: вендоров и продуктов из ${rows.length} строк файла, плюс синтетические вузы/лицензии, плюс 4 демо-пользователя (admin/rukovoditel/kam/kam2), плюс workflow-шаблон с 7 статусами и 9 тестовых взаимодействий (7 — по одному на макростадию, 2 — специально зависшие для радара SLA), плюс 4 лицензии под радар (по одной в каждом окне 7/30/60 дней + просроченная).`,
   );
 }
 

@@ -4,8 +4,6 @@ import { ItProductDto } from '../dto/it-product.dto';
 import { UniversityDto } from '../dto/university.dto';
 import { ResponsiblePersonDto } from '../dto/responsible-person.dto';
 import { LicenseDto, LicenseStatusDto } from '../dto/license.dto';
-import { ImportJobStatusDto, ImportJobDto, ImportPreviewResultDto, ImportRowMatchDto } from '../dto/import-job.dto';
-
 // Фикстуры повторяют записи, попадающие в БД из backend/prisma/seed-data/vendors.xlsx
 // (см. backend/prisma/seed.ts). Контактные поля вендора берутся из первой строки
 // реестра для этой компании — в самом файле контакт указан на уровне продукта.
@@ -323,25 +321,3 @@ export const LICENSE_FIXTURES: LicenseDto[] = [
     updatedAt: daysFromNow(-180),
   },
 ];
-
-export const IMPORT_PREVIEW_FIXTURE: ImportPreviewResultDto = {
-  previewId: 'h0000000-0000-4000-8000-000000000001',
-  fileName: 'Загрузка пользователей.xlsx',
-  totalRows: 30,
-  duplicateRows: 1,
-  rows: [
-    { rowNumber: 2, universityName: 'СПбГУ', match: ImportRowMatchDto.DUPLICATE_FUZZY, matchedUniversityId: UNIVERSITY_FIXTURES[0].id },
-    { rowNumber: 3, universityName: 'МГТУ им. Баумана', match: ImportRowMatchDto.DUPLICATE_EXACT, matchedUniversityId: UNIVERSITY_FIXTURES[1].id },
-    { rowNumber: 4, universityName: 'Уральский федеральный университет', match: ImportRowMatchDto.NEW, matchedUniversityId: null },
-  ],
-};
-
-export const IMPORT_JOB_FIXTURE: ImportJobDto = {
-  id: 'h1000000-0000-4000-8000-000000000001',
-  fileName: 'Загрузка пользователей.xlsx',
-  status: ImportJobStatusDto.SUCCESS,
-  resultSummary: { created: 27, matchedExisting: 3, failed: 0 },
-  initiatedById: 'c0000000-0000-4000-8000-000000000002',
-  createdAt: '2026-09-27T10:00:00.000Z',
-  updatedAt: '2026-09-27T10:00:05.000Z',
-};

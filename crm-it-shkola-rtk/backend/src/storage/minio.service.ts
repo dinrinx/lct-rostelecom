@@ -18,6 +18,10 @@ export class MinioService implements OnModuleInit {
       useSSL: process.env.MINIO_USE_SSL === 'true',
       accessKey: process.env.MINIO_ACCESS_KEY ?? 'crm-minio',
       secretKey: process.env.MINIO_SECRET_KEY ?? 'crm-minio-secret',
+      // minio-клиент по умолчанию подставляет us-east-1 в подпись запроса —
+      // Garage (в отличие от MinIO/scality) реально проверяет регион против
+      // своего s3_region из конфига и отклоняет запрос при несовпадении.
+      region: process.env.MINIO_REGION || undefined,
     });
   }
 

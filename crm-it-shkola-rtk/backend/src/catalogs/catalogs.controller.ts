@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -11,12 +12,15 @@ import {
   Query,
   Req,
   Res,
+  UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiBody, ApiOkResponse, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiBody, ApiConsumes, ApiHeader, ApiOkResponse, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { CatalogsService } from './catalogs.service';
 import { CatalogScopeInterceptor, RequestWithCatalogScope } from './catalog-scope.interceptor';
+import { UniversityImportService } from './import/university-import.service';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRoleDto } from '../auth/dto/user.dto';
 import { CreateVendorDto, UpdateVendorDto, VendorDto } from './dto/vendor.dto';
@@ -34,8 +38,7 @@ import {
   UpdateResponsiblePersonDto,
 } from './dto/responsible-person.dto';
 import { CreateLicenseDto, LicenseDto, UpdateLicenseDto } from './dto/license.dto';
-import { CommitImportDto, ImportJobDto, ImportPreviewResultDto } from './dto/import-job.dto';
-import { IMPORT_JOB_FIXTURE, IMPORT_PREVIEW_FIXTURE } from './fixtures/catalogs.fixtures';
+import { CommitImportDto, ImportColumnMappingDto, ImportJobDto, ImportPreviewResultDto } from './dto/import-job.dto';
 
 // Пагинация одинакова для всех списков: query-параметры page/pageSize,
 // тело ответа остаётся тем же массивом DTO (форма зафиксирована в Swagger
@@ -55,7 +58,10 @@ const ANY_ROLE = [UserRoleDto.KAM, UserRoleDto.RUKOVODITEL, UserRoleDto.ADMINIST
 @Controller('catalogs')
 @UseInterceptors(CatalogScopeInterceptor)
 export class CatalogsController {
-  constructor(private readonly catalogsService: CatalogsService) {}
+  constructor(
+    private readonly catalogsService: CatalogsService,
+    private readonly universityImportService: UniversityImportService,
+  ) {}
 
   // --- Вендоры (глобальный справочник, без построчных ограничений) --------
 
@@ -430,23 +436,74 @@ export class CatalogsController {
     return this.catalogsService.deleteLicense(id);
   }
 
-  // --- Импорт xlsx с маппингом и дедупом (пока стаб — отдельный шаг плана) ---
+  // --- Импорт xlsx вузов с маппингом колонок и дедупом по названию ---
 
   @Post('import/preview')
-  @Roles(UserRoleDto.ADMINISTRATOR)
-  @ApiOperation({ summary: 'Превью xlsx-импорта: маппинг полей, дедуп/фаззи-матчинг по вузу' })
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({
+    summary:
+      'Превью xlsx-импорта вузов: маппинг колонок файла на поля University, дедуп/фаззи-матчинг по названию. ' +
+      'Без "mapping" в теле — вернёт заголовки колонок файла и предложенный маппинг (rows пустой, ' +
+      'isMappingSuggestion=true); с "mapping" — реальный построчный результат: NEW (создастся), ' +
+      'DUPLICATE_EXACT (смэтчится), DUPLICATE_FUZZY (похоже, но требует проверки — commit её не применяет).',
+  })
+  @ApiHeader({ name: 'X-Dev-Role', required: false, example: 'administrator' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary' },
+        mapping: {
+          type: 'string',
+          nullable: true,
+          description:
+            'JSON-массив ImportColumnMappingDto[], например ' +
+            '[{"column":"Название вуза","field":"universityName"},{"column":"Регион","field":"region"}]',
+        },
+      },
+    },
+  })
   @ApiOkResponse({ type: ImportPreviewResultDto })
-  previewImport(): ImportPreviewResultDto {
-    return IMPORT_PREVIEW_FIXTURE;
+  @Roles(UserRoleDto.ADMINISTRATOR)
+  previewImport(
+    @UploadedFile() file: Express.Multer.File,
+    @Body('mapping') mappingRaw?: string,
+  ): Promise<ImportPreviewResultDto> {
+    return this.universityImportService.preview(file, this.parseMapping(mappingRaw));
   }
 
   @Post('import/commit')
-  @Roles(UserRoleDto.ADMINISTRATOR)
-  @HttpCode(HttpStatus.ACCEPTED)
-  @ApiOperation({ summary: 'Подтвердить и записать результат импорта, полученный в превью' })
+  @ApiOperation({
+    summary:
+      'Подтвердить и записать результат импорта из preview: NEW создаёт University, DUPLICATE_EXACT ' +
+      'обновляет смэтченный, DUPLICATE_FUZZY ("требует проверки") пропускается — не применяется автоматически.',
+  })
+  @ApiHeader({ name: 'X-Dev-Role', required: false, example: 'administrator' })
   @ApiBody({ type: CommitImportDto })
   @ApiOkResponse({ type: ImportJobDto })
-  commitImport(@Body() _dto: CommitImportDto): ImportJobDto {
-    return IMPORT_JOB_FIXTURE;
+  @Roles(UserRoleDto.ADMINISTRATOR)
+  commitImport(@Body() dto: CommitImportDto, @Req() request: RequestWithCatalogScope): Promise<ImportJobDto> {
+    if (!request.currentUserId) {
+      throw new BadRequestException({
+        code: 'IMPORT_ACTOR_UNKNOWN',
+        message: 'Не удалось определить пользователя, инициировавшего импорт (нет currentUserId)',
+      });
+    }
+    return this.universityImportService.commit(dto.previewId, request.currentUserId);
+  }
+
+  private parseMapping(raw?: string): ImportColumnMappingDto[] | undefined {
+    if (!raw) return undefined;
+    try {
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) throw new Error('not an array');
+      return parsed as ImportColumnMappingDto[];
+    } catch {
+      throw new BadRequestException({
+        code: 'IMPORT_MAPPING_INVALID',
+        message: 'Поле "mapping" должно быть JSON-строкой с массивом {column, field}',
+      });
+    }
   }
 }

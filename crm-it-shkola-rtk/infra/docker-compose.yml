@@ -29,22 +29,44 @@ services:
       timeout: 5s
       retries: 10
 
-  # minio/minio закрыт на Docker Hub без логина (pull access denied) — замена
-  # на scality/s3server: тот же S3 API (мы говорим с ним через npm-пакет
-  # `minio`, который просто S3-клиент — от S3-сервера ему нужен только
-  # совместимый REST+SigV4, реализация неважна). Порт 8000 — дефолтный для
-  # этого образа; backend/.env(.example) MINIO_PORT указывает на него же.
+  # minio/minio закрыт на Docker Hub без логина (pull access denied). Первая
+  # замена была на scality/s3server — та тоже завелась, но образ только
+  # linux/amd64: на Apple Silicon (M-чипы) Docker гонял её через эмуляцию,
+  # и фронтендеры на таких машинах об это спотыкались. Garage (dxflrs/garage)
+  # собирается нативно и под arm64, и под amd64 — тот же S3 API, мы говорим
+  # с ним через npm-пакет `minio` (обычный S3-клиент, ему всё равно, что за
+  # сервер отвечает). Порт 3900 — S3 API Garage; backend/.env(.example)
+  # MINIO_PORT/MINIO_REGION указывают на него же.
+  #
+  # В отличие от MinIO/scality, Garage не создаёт бакет сам по первому
+  # запросу — узлу нужен назначенный "layout" кластера, а бакет/ключ доступа
+  # заводятся отдельно через его собственный CLI. Это делает соседний
+  # сервис storage-init (см. infra/garage/init/init.sh) — безопасно
+  # перезапускаемый, ничего не ломает при повторных `docker compose up`.
   storage:
-    image: scality/s3server:latest
+    image: dxflrs/garage:v1.0.1
     restart: unless-stopped
-    environment:
-      SCALITY_ACCESS_KEY_ID: crm-minio
-      SCALITY_SECRET_ACCESS_KEY: crm-minio-secret
-    ports:
-      - "8000:8000" # S3 API
     volumes:
-      - storage-data:/usr/src/app/localData
-      - storage-metadata:/usr/src/app/localMetadata
+      - ./garage/garage.toml:/etc/garage.toml:ro
+      - storage-meta:/var/lib/garage/meta
+      - storage-data:/var/lib/garage/data
+    ports:
+      - "3900:3900" # S3 API
+
+  storage-init:
+    build: ./garage/init
+    restart: "no"
+    network_mode: "service:storage"
+    depends_on:
+      - storage
+    environment:
+      GARAGE_KEY_ID: GK8533518c26b556bb9a9dde7d
+      GARAGE_SECRET_KEY: 3918d67710daeb39d6d1b2cd780ae56b7eaa61d884dd0050163a0660dc4d3b88
+      GARAGE_BUCKET: crm-attachments
+    volumes:
+      - ./garage/garage.toml:/etc/garage.toml:ro
+      - storage-meta:/var/lib/garage/meta
+      - storage-data:/var/lib/garage/data
 
   # Realm it-school-crm импортируется из infra/keycloak/realm-export.json при каждом
   # старте контейнера (--import-realm). Образ quay.io/keycloak/keycloak — Quarkus-дистрибутив
@@ -69,5 +91,5 @@ volumes:
   postgres-data:
   redis-data:
   storage-data:
-  storage-metadata:
+  storage-meta:
   keycloak-data:

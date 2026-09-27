@@ -1,0 +1,27 @@
+# Конфиг Garage (S3-совместимое хранилище) для локального dev-стенда.
+# rpc_secret/admin_token — dev-only значения, как и креды Keycloak/Postgres
+# в этом же docker-compose, не секреты для реального окружения.
+metadata_dir = "/var/lib/garage/meta"
+data_dir = "/var/lib/garage/data"
+db_engine = "sqlite"
+
+replication_factor = 1
+
+rpc_bind_addr = "[::]:3901"
+# Имя сервиса в docker-compose, а не localhost — init-контейнер общается
+# с этим же узлом через сеть compose, а не через docker exec/shared netns.
+rpc_public_addr = "storage:3901"
+rpc_secret = "62f2b5aaf323ebc6197e7db2aa912270fa747c438c3d343b7d0e593264b9a111"
+
+[s3_api]
+# Важно: наш backend (storage/minio.service.ts) должен передавать этот же
+# регион (MINIO_REGION=garage в .env) — иначе Garage отклоняет подпись
+# запроса как "unexpected scope" (в отличие от MinIO/scality, Garage реально
+# сверяет регион).
+s3_region = "garage"
+api_bind_addr = "[::]:3900"
+root_domain = ".s3.garage.localhost"
+
+[admin]
+api_bind_addr = "[::]:3903"
+admin_token = "4c60dc609d9760749137879e9b5e61f5"
