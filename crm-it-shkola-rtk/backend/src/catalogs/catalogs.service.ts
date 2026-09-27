@@ -78,6 +78,26 @@ export function assertUniversityVisible(university: { kamId: string | null }, sc
   });
 }
 
+// Для InteractionInstance без вуза вообще (needsReview=true, из интеграции —
+// см. integrations/sync): та же политика видимости, что и для University без
+// kamId — КАМ не видит (нечего делать без своего вуза), Руководитель/Админ видят
+// и разбирают вручную.
+export function assertUniversityOrUnassignedVisible(
+  university: { kamId: string | null } | null,
+  scope: CatalogScope,
+): void {
+  if (!university) {
+    if (scope.visibleKamIds === null || scope.includeUnassigned) {
+      return;
+    }
+    throw new ForbiddenException({
+      code: 'CATALOG_SCOPE_FORBIDDEN',
+      message: 'Это взаимодействие без назначенного вуза не входит в зону видимости вашей роли',
+    });
+  }
+  assertUniversityVisible(university, scope);
+}
+
 function toVendorDto(vendor: Vendor): VendorDto {
   return {
     id: vendor.id,

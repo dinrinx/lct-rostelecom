@@ -88,7 +88,8 @@ model ItDirection {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  itProducts ItProduct[]
+  itProducts     ItProduct[]
+  courseMappings CourseMapping[]
 }
 
 model Vendor {
@@ -120,6 +121,7 @@ model ItProduct {
   licenses             License[]
   interactionInstances InteractionInstance[]
   responsiblePersons   ResponsiblePerson[]
+  courseMappings       CourseMapping[]
 
   @@index([itDirectionId])
   @@index([vendorId])
@@ -249,8 +251,12 @@ model InteractionInstance {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  universityId String
-  university   University @relation(fields: [universityId], references: [id])
+  // Nullable: заявка из внешней интеграции (integrations/sync) не содержит вуза
+  // явно — только курс и номер потока (см. course-mapping). Пока направление/вуз
+  // не определены, инстанс существует с universityId=null и needsReview=true;
+  // руководитель/админ назначают вуз и ответственного вручную.
+  universityId String?
+  university   University? @relation(fields: [universityId], references: [id])
 
   itProductId String?
   itProduct   ItProduct? @relation(fields: [itProductId], references: [id])
@@ -261,8 +267,21 @@ model InteractionInstance {
   currentStatusId String
   currentStatus   WorkflowStatus @relation(fields: [currentStatusId], references: [id])
 
-  responsibleUserId String
-  responsibleUser   User   @relation("InteractionResponsible", fields: [responsibleUserId], references: [id])
+  // Nullable по той же причине: ответственный не назначается автоматически
+  // из интеграции, только вручную (см. requiresReview выше).
+  responsibleUserId String?
+  responsibleUser   User?   @relation("InteractionResponsible", fields: [responsibleUserId], references: [id])
+
+  // «Номер заявки» из внешней системы — ключ дедупа при повторных запусках
+  // /integrations/sync. Null для инстансов, созданных не через интеграцию
+  // (обычный ручной flow через POST /workflow/instances).
+  externalId String? @unique
+
+  // true — инстанс требует ручной проверки: вуз/направление не удалось
+  // определить автоматически (курс не найден в course-mapping, либо вуз
+  // в принципе не выводится из заявки). Простое булево поле, не отдельный
+  // статус-машина — тот же принцип "простые правила по датам/флагам, без ML".
+  needsReview Boolean @default(false)
 
   statusHistoryEntries StatusHistoryEntry[]
   fileAttachments      FileAttachment[]
@@ -272,6 +291,45 @@ model InteractionInstance {
   @@index([workflowTemplateVersionId])
   @@index([currentStatusId])
   @@index([responsibleUserId])
+}
+
+// Соответствие "Курс" (свободный текст из внешней заявки) -> ИТ-направление/
+// ИТ-продукт. Курсы без записи здесь помечаются needsReview=true при sync.
+model CourseMapping {
+  id String @id @default(uuid())
+
+  course String @unique
+
+  itDirectionId String?
+  itDirection   ItDirection? @relation(fields: [itDirectionId], references: [id])
+
+  itProductId String?
+  itProduct   ItProduct? @relation(fields: [itProductId], references: [id])
+
+  updatedAt DateTime @updatedAt
+
+  @@index([itDirectionId])
+  @@index([itProductId])
+}
+
+enum SyncRunStatus {
+  SUCCESS
+  PARTIAL
+  FAILED
+}
+
+// История запусков POST /integrations/sync. errors — JSON-массив {externalId,
+// message} по неуспешным заявкам конкретного запуска.
+model IntegrationSyncRun {
+  id         String        @id @default(uuid())
+  status     SyncRunStatus
+  startedAt  DateTime      @default(now())
+  finishedAt DateTime
+
+  createdCount          Int   @default(0)
+  updatedCount          Int   @default(0)
+  skippedDuplicateCount Int   @default(0)
+  errors                Json?
 }
 
 // Append-only журнал переходов по статусам

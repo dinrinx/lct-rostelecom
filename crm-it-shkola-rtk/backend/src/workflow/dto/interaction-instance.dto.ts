@@ -5,8 +5,11 @@ export class InteractionInstanceDto {
   @ApiProperty({ example: 'b3000000-0000-4000-8000-000000000001' })
   id!: string;
 
-  @ApiProperty({ example: 'a5000000-0000-4000-8000-000000000001' })
-  universityId!: string;
+  // Nullable: инстансы из внешней интеграции (POST /integrations/sync) не
+  // содержат вуза явно, только курс — пока курс/вуз не сопоставлены вручную,
+  // universityId=null и needsReview=true (см. ниже).
+  @ApiPropertyOptional({ example: 'a5000000-0000-4000-8000-000000000001', nullable: true })
+  universityId?: string | null;
 
   @ApiPropertyOptional({ example: 'a3000000-0000-4000-8000-000000000001', nullable: true })
   itProductId?: string | null;
@@ -17,8 +20,23 @@ export class InteractionInstanceDto {
   @ApiProperty({ example: 'b1000000-0000-4000-8000-000000000002' })
   currentStatusId!: string;
 
-  @ApiProperty({ example: 'c0000000-0000-4000-8000-000000000001' })
-  responsibleUserId!: string;
+  // Nullable по той же причине — интеграция не назначает ответственного
+  // автоматически, только руководитель/админ вручную.
+  @ApiPropertyOptional({ example: 'c0000000-0000-4000-8000-000000000001', nullable: true })
+  responsibleUserId?: string | null;
+
+  @ApiPropertyOptional({
+    example: 'ORD-20260313051569-OYJRVN',
+    nullable: true,
+    description: '«Номер заявки» из внешней интеграции — ключ дедупа. null для инстансов, созданных вручную.',
+  })
+  externalId?: string | null;
+
+  @ApiProperty({
+    example: false,
+    description: 'true — требует ручной проверки (вуз/направление не удалось определить автоматически из интеграции)',
+  })
+  needsReview!: boolean;
 
   @ApiProperty({ example: '2026-09-01T09:00:00.000Z' })
   createdAt!: string;

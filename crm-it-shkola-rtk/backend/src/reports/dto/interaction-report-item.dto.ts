@@ -8,11 +8,13 @@ export class InteractionReportItemDto {
   @ApiProperty({ example: 'b3000000-0000-4000-8000-000000000001' })
   interactionInstanceId!: string;
 
-  @ApiProperty({ example: 'a5000000-0000-4000-8000-000000000001' })
-  universityId!: string;
+  // Nullable: заявки из интеграции (POST /integrations/sync) с needsReview=true
+  // могут не иметь определённого вуза вовсе — см. InteractionInstance.universityId.
+  @ApiPropertyOptional({ example: 'a5000000-0000-4000-8000-000000000001', nullable: true })
+  universityId?: string | null;
 
-  @ApiProperty({ example: 'СПбГУ (демо)' })
-  universityName!: string;
+  @ApiPropertyOptional({ example: 'СПбГУ (демо)', nullable: true })
+  universityName?: string | null;
 
   @ApiPropertyOptional({ example: 'a1000000-0000-4000-8000-000000000001', nullable: true })
   itDirectionId?: string | null;
@@ -35,11 +37,11 @@ export class InteractionReportItemDto {
   @ApiProperty({ enum: WorkflowPhaseDto, example: WorkflowPhaseDto.CONTRACTING })
   currentPhase!: WorkflowPhaseDto;
 
-  @ApiProperty({ example: 'c0000000-0000-4000-8000-000000000001' })
-  responsibleUserId!: string;
+  @ApiPropertyOptional({ example: 'c0000000-0000-4000-8000-000000000001', nullable: true })
+  responsibleUserId?: string | null;
 
-  @ApiProperty({ example: 'Иванова Мария Сергеевна' })
-  responsibleUserName!: string;
+  @ApiPropertyOptional({ example: 'Иванова Мария Сергеевна', nullable: true })
+  responsibleUserName?: string | null;
 
   @ApiProperty({ example: '2026-09-01T09:00:00.000Z' })
   createdAt!: string;
@@ -52,6 +54,12 @@ export class InteractionReportItemDto {
 
   @ApiProperty({ example: false, description: 'Превышен ли SLA-порог для текущего статуса' })
   isOverdue!: boolean;
+
+  @ApiProperty({
+    example: false,
+    description: 'true — требует ручной проверки (вуз/направление не определены автоматически из интеграции)',
+  })
+  needsReview!: boolean;
 }
 
 export class InteractionsReportExportDto {

@@ -13,15 +13,21 @@ import { CreateInteractionInstanceDto } from './dto/create-interaction-instance.
 import { TransitionInteractionInstanceDto } from './dto/transition-interaction-instance.dto';
 import { InteractionInstanceDto, StatusHistoryEntryDto } from './dto/interaction-instance.dto';
 import type { CatalogScope } from '../catalogs/catalog-scope.interceptor';
-import { assertUniversityVisible, universityWhereForScope } from '../catalogs/catalogs.service';
+import {
+  assertUniversityOrUnassignedVisible,
+  assertUniversityVisible,
+  universityWhereForScope,
+} from '../catalogs/catalogs.service';
 
 function toInstanceDto(instance: {
   id: string;
-  universityId: string;
+  universityId: string | null;
   itProductId: string | null;
   workflowTemplateVersionId: string;
   currentStatusId: string;
-  responsibleUserId: string;
+  responsibleUserId: string | null;
+  externalId: string | null;
+  needsReview: boolean;
   createdAt: Date;
   updatedAt: Date;
 }): InteractionInstanceDto {
@@ -32,6 +38,8 @@ function toInstanceDto(instance: {
     workflowTemplateVersionId: instance.workflowTemplateVersionId,
     currentStatusId: instance.currentStatusId,
     responsibleUserId: instance.responsibleUserId,
+    externalId: instance.externalId,
+    needsReview: instance.needsReview,
     createdAt: instance.createdAt.toISOString(),
     updatedAt: instance.updatedAt.toISOString(),
   };
@@ -279,7 +287,7 @@ export class WorkflowService {
         message: `Взаимодействие с id "${id}" не найдено`,
       });
     }
-    assertUniversityVisible(instance.university, scope);
+    assertUniversityOrUnassignedVisible(instance.university, scope);
     return toInstanceDto(instance);
   }
 
@@ -377,7 +385,7 @@ export class WorkflowService {
     }
     // Тот же вопрос видимости, что и на чтении: КАМ не может протолкнуть
     // переход по чужому вузу, даже зная id инстанса напрямую.
-    assertUniversityVisible(instance.university, scope);
+    assertUniversityOrUnassignedVisible(instance.university, scope);
 
     // Единственный источник истины "можно ли перейти" — WorkflowTransition
     // этой конкретной версии. Проверяем ДО записи в историю, а не полагаемся
@@ -444,7 +452,7 @@ export class WorkflowService {
         message: `Взаимодействие с id "${instanceId}" не найдено`,
       });
     }
-    assertUniversityVisible(instance.university, scope);
+    assertUniversityOrUnassignedVisible(instance.university, scope);
 
     // StatusHistoryEntry не хранит отдельного createdAt — changedAt и есть
     // момент записи (append-only, никаких update/delete), сортируем по нему.
