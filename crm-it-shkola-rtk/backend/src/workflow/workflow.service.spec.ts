@@ -1,5 +1,6 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { WorkflowService } from './workflow.service';
+import type { CatalogScope } from '../catalogs/catalog-scope.interceptor';
 
 // Мок только тех методов PrismaService, которые реально трогает transition() —
 // не поднимаем ни Nest-модуль, ни реальную БД, чтобы граф переходов проверялся
@@ -25,6 +26,10 @@ const INSTANCE_ID = 'instance-1';
 const VERSION_ID = 'version-1';
 const CURRENT_STATUS_ID = 'status-negotiation';
 const ACTOR_USER_ID = 'user-1';
+// Этот тест — про граф переходов, а не про RBAC-видимость (см. отдельный
+// тест на видимость), поэтому берём scope без ограничений (как ADMINISTRATOR),
+// чтобы assertUniversityVisible не мешала проверять именно transition-логику.
+const UNRESTRICTED_SCOPE: CatalogScope = { visibleKamIds: null, includeUnassigned: false };
 
 describe('WorkflowService.transition', () => {
   it('отклоняет переход, которого нет в графе WorkflowTransition этой версии шаблона', async () => {
@@ -33,6 +38,7 @@ describe('WorkflowService.transition', () => {
       id: INSTANCE_ID,
       workflowTemplateVersionId: VERSION_ID,
       currentStatusId: CURRENT_STATUS_ID,
+      university: { kamId: 'kam-1' },
     });
     // Нет строки WorkflowTransition для (versionId, fromStatusId, toStatusId) —
     // значит переход не входит в граф этой версии.
@@ -42,7 +48,12 @@ describe('WorkflowService.transition', () => {
 
     let caught: unknown;
     try {
-      await service.transition(INSTANCE_ID, { toStatusId: 'status-not-in-graph' }, ACTOR_USER_ID);
+      await service.transition(
+        INSTANCE_ID,
+        { toStatusId: 'status-not-in-graph' },
+        ACTOR_USER_ID,
+        UNRESTRICTED_SCOPE,
+      );
     } catch (error) {
       caught = error;
     }
@@ -77,6 +88,7 @@ describe('WorkflowService.transition', () => {
       id: INSTANCE_ID,
       workflowTemplateVersionId: VERSION_ID,
       currentStatusId: CURRENT_STATUS_ID,
+      university: { kamId: 'kam-1' },
     });
     prisma.workflowTransition.findFirst.mockResolvedValue({
       id: 'transition-1',
@@ -104,7 +116,12 @@ describe('WorkflowService.transition', () => {
     });
 
     const service = new WorkflowService(prisma as any);
-    const result = await service.transition(INSTANCE_ID, { toStatusId: targetStatusId }, ACTOR_USER_ID);
+    const result = await service.transition(
+      INSTANCE_ID,
+      { toStatusId: targetStatusId },
+      ACTOR_USER_ID,
+      UNRESTRICTED_SCOPE,
+    );
 
     expect(result.currentStatusId).toBe(targetStatusId);
     expect(prisma.statusHistoryEntry.create).toHaveBeenCalledWith({
@@ -115,5 +132,41 @@ describe('WorkflowService.transition', () => {
         changedById: ACTOR_USER_ID,
       }),
     });
+  });
+
+  // Проверка видимости — на уровне сервиса, не только в контроллере: даже если
+  // переход разрешён графом WorkflowTransition, КАМ не может выполнить его над
+  // чужим вузом (не своим по University.kamId).
+  it('отклоняет переход по чужому вузу, даже если переход разрешён графом', async () => {
+    const prisma = createPrismaMock();
+    const targetStatusId = 'status-contracting';
+    const kamScope: CatalogScope = { visibleKamIds: ['kam-own'], includeUnassigned: false };
+
+    prisma.interactionInstance.findUnique.mockResolvedValue({
+      id: INSTANCE_ID,
+      workflowTemplateVersionId: VERSION_ID,
+      currentStatusId: CURRENT_STATUS_ID,
+      university: { kamId: 'kam-someone-else' },
+    });
+    prisma.workflowTransition.findFirst.mockResolvedValue({
+      id: 'transition-1',
+      workflowTemplateVersionId: VERSION_ID,
+      fromStatusId: CURRENT_STATUS_ID,
+      toStatusId: targetStatusId,
+    });
+
+    const service = new WorkflowService(prisma as any);
+
+    let caught: unknown;
+    try {
+      await service.transition(INSTANCE_ID, { toStatusId: targetStatusId }, ACTOR_USER_ID, kamScope);
+    } catch (error) {
+      caught = error;
+    }
+
+    expect(caught).toBeInstanceOf(ForbiddenException);
+    // Проверка видимости идёт раньше проверки графа переходов — не должно
+    // даже дойти до попытки что-либо записать.
+    expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 });

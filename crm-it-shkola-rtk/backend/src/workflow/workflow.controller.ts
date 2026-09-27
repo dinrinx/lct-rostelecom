@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put, Req } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Req, UseInterceptors } from '@nestjs/common';
 import { ApiBody, ApiHeader, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { BadRequestException } from '@nestjs/common';
 import { WorkflowService } from './workflow.service';
@@ -9,9 +9,13 @@ import { CreateInteractionInstanceDto } from './dto/create-interaction-instance.
 import { TransitionInteractionInstanceDto } from './dto/transition-interaction-instance.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRoleDto } from '../auth/dto/user.dto';
-import type { RequestWithDevRole } from '../auth/guards/dev-role.guard';
+import { CatalogScopeInterceptor, RequestWithCatalogScope } from '../catalogs/catalog-scope.interceptor';
 
 const ANY_ROLE = [UserRoleDto.KAM, UserRoleDto.RUKOVODITEL, UserRoleDto.ADMINISTRATOR] as const;
+// Создание инстанса и переход по статусам — действия, а не просмотр: Руководитель
+// в этой задаче явно описан только как "видит все инстансы команды", без права
+// создавать/переводить за своих КАМов, поэтому в это множество не входит.
+const ACTOR_ROLES = [UserRoleDto.KAM, UserRoleDto.ADMINISTRATOR] as const;
 
 // Определяет пользователя, выполняющего действие (changedById/responsibleUserId
 // по умолчанию) — DevRoleGuard уже резолвит currentUserId по email канонического
@@ -19,7 +23,7 @@ const ANY_ROLE = [UserRoleDto.KAM, UserRoleDto.RUKOVODITEL, UserRoleDto.ADMINIST
 // включая ADMINISTRATOR, так что в норме это поле всегда заполнено; explicit-
 // проверка здесь — на случай если guard когда-нибудь начнёт пропускать
 // ADMINISTRATOR без identity.
-function requireActorId(request: RequestWithDevRole): string {
+function requireActorId(request: RequestWithCatalogScope): string {
   if (!request.currentUserId) {
     throw new BadRequestException({
       code: 'WORKFLOW_ACTOR_UNKNOWN',
@@ -29,8 +33,13 @@ function requireActorId(request: RequestWithDevRole): string {
   return request.currentUserId;
 }
 
+// CatalogScopeInterceptor вычисляет request.catalogScope один раз за запрос —
+// та же построчная видимость по University.kamId, что и в catalogs (см.
+// workflow.module.ts). Действует на все методы контроллера, включая
+// /templates — там req.catalogScope просто не используется.
 @ApiTags('workflow')
 @Controller('workflow')
+@UseInterceptors(CatalogScopeInterceptor)
 export class WorkflowController {
   constructor(private readonly workflowService: WorkflowService) {}
 
@@ -90,12 +99,12 @@ export class WorkflowController {
   // тоже переведены на Prisma в рамках этого же изменения — иначе только что
   // созданные инстансы не были бы видны нигде, кроме нового /transition-эндпоинта.
   @Get('instances')
-  @ApiOperation({ summary: 'Список взаимодействий с вузами' })
+  @ApiOperation({ summary: 'Список взаимодействий с вузами (видимость по роли — как в catalogs)' })
   @ApiHeader({ name: 'X-Dev-Role', required: false, example: 'kam' })
   @ApiOkResponse({ type: InteractionInstanceDto, isArray: true })
   @Roles(...ANY_ROLE)
-  getInstances(): Promise<InteractionInstanceDto[]> {
-    return this.workflowService.listInstances();
+  getInstances(@Req() request: RequestWithCatalogScope): Promise<InteractionInstanceDto[]> {
+    return this.workflowService.listInstances(request.catalogScope!);
   }
 
   @Get('instances/:id')
@@ -104,37 +113,45 @@ export class WorkflowController {
   @ApiParam({ name: 'id', example: 'b3000000-0000-4000-8000-000000000001' })
   @ApiOkResponse({ type: InteractionInstanceDto })
   @Roles(...ANY_ROLE)
-  getInstanceById(@Param('id') id: string): Promise<InteractionInstanceDto> {
-    return this.workflowService.getInstanceById(id);
+  getInstanceById(
+    @Param('id') id: string,
+    @Req() request: RequestWithCatalogScope,
+  ): Promise<InteractionInstanceDto> {
+    return this.workflowService.getInstanceById(id, request.catalogScope!);
   }
 
+  // Создание/переход — только КАМ (для своего вуза) и Администратор (без
+  // ограничений); Руководитель по этой задаче только просматривает команду.
   @Post('instances')
   @ApiOperation({ summary: 'Создать взаимодействие на активной версии активного шаблона для вуза' })
   @ApiHeader({ name: 'X-Dev-Role', required: false, example: 'kam' })
   @ApiBody({ type: CreateInteractionInstanceDto })
   @ApiOkResponse({ type: InteractionInstanceDto })
-  @Roles(...ANY_ROLE)
-  createInstance(@Body() dto: CreateInteractionInstanceDto): Promise<InteractionInstanceDto> {
-    return this.workflowService.createInstance(dto);
+  @Roles(...ACTOR_ROLES)
+  createInstance(
+    @Body() dto: CreateInteractionInstanceDto,
+    @Req() request: RequestWithCatalogScope,
+  ): Promise<InteractionInstanceDto> {
+    return this.workflowService.createInstance(dto, request.catalogScope!);
   }
 
   @Post('instances/:id/transition')
   @ApiOperation({
     summary:
       'Переход в новый статус — проверяется по WorkflowTransition версии этого инстанса (400, если переход ' +
-      'не разрешён), пишет append-only StatusHistoryEntry и обновляет currentStatusId.',
+      'не разрешён), пишет append-only StatusHistoryEntry и обновляет currentStatusId. КАМ — только для своих вузов.',
   })
   @ApiHeader({ name: 'X-Dev-Role', required: false, example: 'kam' })
   @ApiParam({ name: 'id', example: 'b3000000-0000-4000-8000-000000000001' })
   @ApiBody({ type: TransitionInteractionInstanceDto })
   @ApiOkResponse({ type: InteractionInstanceDto })
-  @Roles(...ANY_ROLE)
+  @Roles(...ACTOR_ROLES)
   transition(
     @Param('id') id: string,
     @Body() dto: TransitionInteractionInstanceDto,
-    @Req() request: RequestWithDevRole,
+    @Req() request: RequestWithCatalogScope,
   ): Promise<InteractionInstanceDto> {
-    return this.workflowService.transition(id, dto, requireActorId(request));
+    return this.workflowService.transition(id, dto, requireActorId(request), request.catalogScope!);
   }
 
   @Get('instances/:id/history')
@@ -143,7 +160,10 @@ export class WorkflowController {
   @ApiParam({ name: 'id', example: 'b3000000-0000-4000-8000-000000000001' })
   @ApiOkResponse({ type: StatusHistoryEntryDto, isArray: true })
   @Roles(...ANY_ROLE)
-  getInstanceHistory(@Param('id') id: string): Promise<StatusHistoryEntryDto[]> {
-    return this.workflowService.getHistory(id);
+  getInstanceHistory(
+    @Param('id') id: string,
+    @Req() request: RequestWithCatalogScope,
+  ): Promise<StatusHistoryEntryDto[]> {
+    return this.workflowService.getHistory(id, request.catalogScope!);
   }
 }

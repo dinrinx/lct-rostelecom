@@ -62,7 +62,7 @@ export function universityWhereForScope(scope: CatalogScope) {
   return { kamId: { in: scope.visibleKamIds } };
 }
 
-function assertUniversityVisible(university: { kamId: string | null }, scope: CatalogScope): void {
+export function assertUniversityVisible(university: { kamId: string | null }, scope: CatalogScope): void {
   if (scope.visibleKamIds === null) {
     return;
   }

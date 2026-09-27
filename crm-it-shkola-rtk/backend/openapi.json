@@ -1,0 +1,4408 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/catalogs/vendors": {
+      "get": {
+        "operationId": "CatalogsController_getVendors",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 1,
+              "type": "string"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 20,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "headers": {
+              "X-Total-Count": {
+                "description": "Общее количество записей без учёта пагинации",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VendorDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Список вендоров каталога (с пагинацией)",
+        "tags": [
+          "catalogs"
+        ]
+      },
+      "post": {
+        "operationId": "CatalogsController_createVendor",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateVendorDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Создать вендора",
+        "tags": [
+          "catalogs"
+        ]
+      }
+    },
+    "/catalogs/vendors/{id}": {
+      "get": {
+        "operationId": "CatalogsController_getVendorById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Вендор по идентификатору",
+        "tags": [
+          "catalogs"
+        ]
+      },
+      "put": {
+        "operationId": "CatalogsController_updateVendor",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateVendorDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Обновить вендора",
+        "tags": [
+          "catalogs"
+        ]
+      },
+      "delete": {
+        "operationId": "CatalogsController_deleteVendor",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "summary": "Удалить вендора",
+        "tags": [
+          "catalogs"
+        ]
+      }
+    },
+    "/catalogs/it-directions": {
+      "get": {
+        "operationId": "CatalogsController_getItDirections",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 1,
+              "type": "string"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 20,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "headers": {
+              "X-Total-Count": {
+                "description": "Общее количество записей без учёта пагинации",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ItDirectionDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Список ИТ-направлений (с пагинацией)",
+        "tags": [
+          "catalogs"
+        ]
+      },
+      "post": {
+        "operationId": "CatalogsController_createItDirection",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateItDirectionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItDirectionDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Создать ИТ-направление",
+        "tags": [
+          "catalogs"
+        ]
+      }
+    },
+    "/catalogs/it-directions/{id}": {
+      "put": {
+        "operationId": "CatalogsController_updateItDirection",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateItDirectionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItDirectionDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Обновить ИТ-направление",
+        "tags": [
+          "catalogs"
+        ]
+      },
+      "delete": {
+        "operationId": "CatalogsController_deleteItDirection",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "summary": "Удалить ИТ-направление",
+        "tags": [
+          "catalogs"
+        ]
+      }
+    },
+    "/catalogs/it-products": {
+      "get": {
+        "operationId": "CatalogsController_getItProducts",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 1,
+              "type": "string"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 20,
+              "type": "string"
+            }
+          },
+          {
+            "name": "itDirectionId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "vendorId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "headers": {
+              "X-Total-Count": {
+                "description": "Общее количество записей без учёта пагинации",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ItProductDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Список ИТ-продуктов каталога (с пагинацией и фильтрами)",
+        "tags": [
+          "catalogs"
+        ]
+      },
+      "post": {
+        "operationId": "CatalogsController_createItProduct",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateItProductDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItProductDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Создать ИТ-продукт",
+        "tags": [
+          "catalogs"
+        ]
+      }
+    },
+    "/catalogs/it-products/{id}": {
+      "put": {
+        "operationId": "CatalogsController_updateItProduct",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateItProductDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItProductDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Обновить ИТ-продукт",
+        "tags": [
+          "catalogs"
+        ]
+      },
+      "delete": {
+        "operationId": "CatalogsController_deleteItProduct",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "summary": "Удалить ИТ-продукт",
+        "tags": [
+          "catalogs"
+        ]
+      }
+    },
+    "/catalogs/universities": {
+      "get": {
+        "operationId": "CatalogsController_getUniversities",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 1,
+              "type": "string"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 20,
+              "type": "string"
+            }
+          },
+          {
+            "name": "kamId",
+            "required": false,
+            "in": "query",
+            "description": "Фильтр по ответственному КАМу",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "headers": {
+              "X-Total-Count": {
+                "description": "Общее количество записей без учёта пагинации",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UniversityDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Список вузов (с пагинацией). КАМ видит только свои, Руководитель — команду, Администратор — всё",
+        "tags": [
+          "catalogs"
+        ]
+      },
+      "post": {
+        "operationId": "CatalogsController_createUniversity",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUniversityDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UniversityDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Создать вуз",
+        "tags": [
+          "catalogs"
+        ]
+      }
+    },
+    "/catalogs/universities/{id}": {
+      "get": {
+        "operationId": "CatalogsController_getUniversityById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UniversityDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Вуз по идентификатору (403, если вне зоны видимости роли)",
+        "tags": [
+          "catalogs"
+        ]
+      },
+      "put": {
+        "operationId": "CatalogsController_updateUniversity",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUniversityDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UniversityDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Обновить вуз",
+        "tags": [
+          "catalogs"
+        ]
+      },
+      "delete": {
+        "operationId": "CatalogsController_deleteUniversity",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "summary": "Удалить вуз",
+        "tags": [
+          "catalogs"
+        ]
+      }
+    },
+    "/catalogs/universities/{id}/responsible": {
+      "put": {
+        "operationId": "CatalogsController_reassignUniversityResponsible",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReassignUniversityResponsibleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UniversityDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Переназначить/снять КАМа, ответственного за вуз (kamId: null — снять). Руководитель — только в своей команде и по своим вузам",
+        "tags": [
+          "catalogs"
+        ]
+      }
+    },
+    "/catalogs/responsible-persons": {
+      "get": {
+        "operationId": "CatalogsController_getResponsiblePersons",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 1,
+              "type": "string"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 20,
+              "type": "string"
+            }
+          },
+          {
+            "name": "universityId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "itProductId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "headers": {
+              "X-Total-Count": {
+                "description": "Общее количество записей без учёта пагинации",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ResponsiblePersonDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Контактные лица (по вузам и продуктам вендоров). Контакты без вуза видны всем, привязанные к вузу — по видимости роли",
+        "tags": [
+          "catalogs"
+        ]
+      },
+      "post": {
+        "operationId": "CatalogsController_createResponsiblePerson",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateResponsiblePersonDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsiblePersonDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Создать ответственного (контакт вуза и/или продукта вендора)",
+        "tags": [
+          "catalogs"
+        ]
+      }
+    },
+    "/catalogs/responsible-persons/{id}": {
+      "get": {
+        "operationId": "CatalogsController_getResponsiblePersonById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsiblePersonDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Ответственный по идентификатору",
+        "tags": [
+          "catalogs"
+        ]
+      },
+      "put": {
+        "operationId": "CatalogsController_updateResponsiblePerson",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateResponsiblePersonDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsiblePersonDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Обновить ответственного",
+        "tags": [
+          "catalogs"
+        ]
+      },
+      "delete": {
+        "operationId": "CatalogsController_deleteResponsiblePerson",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "summary": "Удалить ответственного",
+        "tags": [
+          "catalogs"
+        ]
+      }
+    },
+    "/catalogs/licenses": {
+      "get": {
+        "operationId": "CatalogsController_getLicenses",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 1,
+              "type": "string"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": 20,
+              "type": "string"
+            }
+          },
+          {
+            "name": "universityId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "itProductId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "headers": {
+              "X-Total-Count": {
+                "description": "Общее количество записей без учёта пагинации",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LicenseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Список лицензий/договоров (источник для радара лицензий и SLA), с пагинацией, фильтрами и видимостью по роли",
+        "tags": [
+          "catalogs"
+        ]
+      },
+      "post": {
+        "operationId": "CatalogsController_createLicense",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLicenseDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LicenseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Создать лицензию/договор",
+        "tags": [
+          "catalogs"
+        ]
+      }
+    },
+    "/catalogs/licenses/{id}": {
+      "get": {
+        "operationId": "CatalogsController_getLicenseById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LicenseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Лицензия/договор по идентификатору",
+        "tags": [
+          "catalogs"
+        ]
+      },
+      "put": {
+        "operationId": "CatalogsController_updateLicense",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateLicenseDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LicenseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Обновить лицензию/договор",
+        "tags": [
+          "catalogs"
+        ]
+      },
+      "delete": {
+        "operationId": "CatalogsController_deleteLicense",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "summary": "Удалить лицензию/договор",
+        "tags": [
+          "catalogs"
+        ]
+      }
+    },
+    "/catalogs/import/preview": {
+      "post": {
+        "operationId": "CatalogsController_previewImport",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportPreviewResultDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Превью xlsx-импорта: маппинг полей, дедуп/фаззи-матчинг по вузу",
+        "tags": [
+          "catalogs"
+        ]
+      }
+    },
+    "/catalogs/import/commit": {
+      "post": {
+        "operationId": "CatalogsController_commitImport",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommitImportDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportJobDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Подтвердить и записать результат импорта, полученный в превью",
+        "tags": [
+          "catalogs"
+        ]
+      }
+    },
+    "/workflow/templates": {
+      "get": {
+        "operationId": "WorkflowController_getTemplates",
+        "parameters": [
+          {
+            "name": "X-Dev-Role",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "administrator"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WorkflowTemplateWithActiveVersionDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Список шаблонов workflow с активной версией (статусы+переходы)",
+        "tags": [
+          "workflow"
+        ]
+      },
+      "post": {
+        "operationId": "WorkflowController_createTemplate",
+        "parameters": [
+          {
+            "name": "X-Dev-Role",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "administrator"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWorkflowTemplateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowTemplateVersionDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Создать шаблон workflow вместе с первой версией (статусы+переходы)",
+        "tags": [
+          "workflow"
+        ]
+      }
+    },
+    "/workflow/templates/{id}": {
+      "put": {
+        "operationId": "WorkflowController_updateTemplate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "b0000000-0000-4000-8000-000000000001",
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Dev-Role",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "administrator"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWorkflowTemplateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowTemplateVersionDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Редактирование шаблона — НЕ мутирует текущую версию, а создаёт новую WorkflowTemplateVersion (isActive=true), предыдущую помечает isActive=false. Существующие InteractionInstance остаются привязаны к своей версии и не переезжают на новую автоматически.",
+        "tags": [
+          "workflow"
+        ]
+      }
+    },
+    "/workflow/template-versions/{id}": {
+      "get": {
+        "operationId": "WorkflowController_getTemplateVersionById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "b0000000-0000-4000-8000-000000000002",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowTemplateVersionDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Версия шаблона со статусами и переходами",
+        "tags": [
+          "workflow"
+        ]
+      }
+    },
+    "/workflow/instances": {
+      "get": {
+        "operationId": "WorkflowController_getInstances",
+        "parameters": [
+          {
+            "name": "X-Dev-Role",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "kam"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InteractionInstanceDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Список взаимодействий с вузами (видимость по роли — как в catalogs)",
+        "tags": [
+          "workflow"
+        ]
+      },
+      "post": {
+        "operationId": "WorkflowController_createInstance",
+        "parameters": [
+          {
+            "name": "X-Dev-Role",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "kam"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInteractionInstanceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InteractionInstanceDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Создать взаимодействие на активной версии активного шаблона для вуза",
+        "tags": [
+          "workflow"
+        ]
+      }
+    },
+    "/workflow/instances/{id}": {
+      "get": {
+        "operationId": "WorkflowController_getInstanceById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "b3000000-0000-4000-8000-000000000001",
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Dev-Role",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "kam"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InteractionInstanceDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Взаимодействие по идентификатору",
+        "tags": [
+          "workflow"
+        ]
+      }
+    },
+    "/workflow/instances/{id}/transition": {
+      "post": {
+        "operationId": "WorkflowController_transition",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "b3000000-0000-4000-8000-000000000001",
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Dev-Role",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "kam"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransitionInteractionInstanceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InteractionInstanceDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Переход в новый статус — проверяется по WorkflowTransition версии этого инстанса (400, если переход не разрешён), пишет append-only StatusHistoryEntry и обновляет currentStatusId. КАМ — только для своих вузов.",
+        "tags": [
+          "workflow"
+        ]
+      }
+    },
+    "/workflow/instances/{id}/history": {
+      "get": {
+        "operationId": "WorkflowController_getInstanceHistory",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "b3000000-0000-4000-8000-000000000001",
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Dev-Role",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "kam"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StatusHistoryEntryDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Вся история переходов по статусам взаимодействия, по возрастанию времени",
+        "tags": [
+          "workflow"
+        ]
+      }
+    },
+    "/reports/interactions": {
+      "get": {
+        "operationId": "ReportsController_getInteractionsReport",
+        "parameters": [
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "2026-09-01",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "2026-09-30",
+              "type": "string"
+            }
+          },
+          {
+            "name": "universityId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "itDirectionId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "itProductId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "responsibleUserId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "onlyOverdue",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InteractionReportItemDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Реестр взаимодействий с фильтрами (период/вуз/направление/продукт/ответственный)",
+        "tags": [
+          "reports"
+        ]
+      }
+    },
+    "/reports/interactions/export": {
+      "get": {
+        "operationId": "ReportsController_exportInteractionsReport",
+        "parameters": [
+          {
+            "name": "format",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "xls",
+                "xlsx",
+                "pdf"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InteractionsReportExportDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Экспорт отфильтрованного реестра взаимодействий",
+        "tags": [
+          "reports"
+        ]
+      }
+    },
+    "/reports/charts": {
+      "get": {
+        "operationId": "ReportsController_getCharts",
+        "parameters": [
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "2026-09-01",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "2026-09-30",
+              "type": "string"
+            }
+          },
+          {
+            "name": "universityId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "itDirectionId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "itProductId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "responsibleUserId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChartsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Данные для графиков отчётного дашборда (pie/line/bar)",
+        "tags": [
+          "reports"
+        ]
+      }
+    },
+    "/reports/jobs": {
+      "post": {
+        "operationId": "ReportsController_createReportJob",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateReportJobDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportJobDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Поставить отчёт в очередь на формирование",
+        "tags": [
+          "reports"
+        ]
+      }
+    },
+    "/reports/jobs/{id}": {
+      "get": {
+        "operationId": "ReportsController_getReportJob",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "d0000000-0000-4000-8000-000000000001",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportJobDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Статус отчёта по идентификатору задания",
+        "tags": [
+          "reports"
+        ]
+      }
+    },
+    "/reports/jobs/{id}/result": {
+      "get": {
+        "operationId": "ReportsController_getReportResult",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "d0000000-0000-4000-8000-000000000001",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LicenseRadarResultDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Результат отчёта «Радар лицензий и SLA»",
+        "tags": [
+          "reports"
+        ]
+      }
+    },
+    "/dashboard/license-radar": {
+      "get": {
+        "operationId": "DashboardController_getLicenseRadar",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LicenseRadarResultDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Лицензии, истекающие в ближайшие 60/30/7 дней (и просроченные)",
+        "tags": [
+          "dashboard"
+        ]
+      }
+    },
+    "/dashboard/sla-radar": {
+      "get": {
+        "operationId": "DashboardController_getSlaRadar",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SlaRadarResultDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Взаимодействия, зависшие на одном статусе дольше SLA-порога",
+        "tags": [
+          "dashboard"
+        ]
+      }
+    },
+    "/files": {
+      "get": {
+        "operationId": "FilesController_getFiles",
+        "parameters": [
+          {
+            "name": "interactionInstanceId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "licenseId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Dev-Role",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "kam"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FileAttachmentDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Список файлов, привязанных к взаимодействию или лицензии",
+        "tags": [
+          "files"
+        ]
+      }
+    },
+    "/files/upload": {
+      "post": {
+        "operationId": "FilesController_uploadFile",
+        "parameters": [
+          {
+            "name": "X-Dev-Role",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "kam"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "interactionInstanceId": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "licenseId": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileAttachmentDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Загрузить файл в MinIO (бакет из .env) и создать вложение, вернуть его id",
+        "tags": [
+          "files"
+        ]
+      }
+    },
+    "/files/{id}": {
+      "get": {
+        "operationId": "FilesController_getFileById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "f0000000-0000-4000-8000-000000000001",
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Dev-Role",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "kam"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileDownloadUrlDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Временная presigned-ссылка на скачивание файла из MinIO",
+        "tags": [
+          "files"
+        ]
+      }
+    },
+    "/integrations/orders": {
+      "get": {
+        "operationId": "IntegrationsController_getOrders",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrderDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Список заявок, полученных из внешней интеграции (сайт/LMS)",
+        "tags": [
+          "integrations"
+        ]
+      },
+      "post": {
+        "operationId": "IntegrationsController_receiveOrder",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Приём заявки из внешней системы (сайт/LMS)",
+        "tags": [
+          "integrations"
+        ]
+      }
+    },
+    "/integrations/orders/{externalId}": {
+      "get": {
+        "operationId": "IntegrationsController_getOrderByExternalId",
+        "parameters": [
+          {
+            "name": "externalId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "ORD-2026-000145",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Заявка по номеру (внешний «Номер заявки»)",
+        "tags": [
+          "integrations"
+        ]
+      }
+    },
+    "/integrations/sync": {
+      "post": {
+        "operationId": "IntegrationsController_runSync",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncRunDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Забрать заявки и создать/обновить workflow-инстансы без дублей",
+        "tags": [
+          "integrations"
+        ]
+      }
+    },
+    "/integrations/sync/log": {
+      "get": {
+        "operationId": "IntegrationsController_getSyncLog",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SyncRunDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "История запусков синхронизации",
+        "tags": [
+          "integrations"
+        ]
+      }
+    },
+    "/integrations/course-mapping": {
+      "get": {
+        "operationId": "IntegrationsController_getCourseMapping",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CourseMappingDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Таблица соответствий «Курс» -> ИТ-направление/ИТ-продукт",
+        "tags": [
+          "integrations"
+        ]
+      },
+      "post": {
+        "operationId": "IntegrationsController_createCourseMapping",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertCourseMappingDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourseMappingDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Добавить соответствие «Курс» -> ИТ-продукт",
+        "tags": [
+          "integrations"
+        ]
+      },
+      "put": {
+        "operationId": "IntegrationsController_updateCourseMapping",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertCourseMappingDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourseMappingDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Изменить соответствие «Курс» -> ИТ-продукт",
+        "tags": [
+          "integrations"
+        ]
+      }
+    },
+    "/auth/dev-login": {
+      "post": {
+        "operationId": "AuthController_devLogin",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DevLoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthSessionDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Dev-авторизация по роли (AUTH_MODE=dev, без Keycloak)",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "operationId": "AuthController_getCurrentUser",
+        "parameters": [
+          {
+            "name": "x-dev-role",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Dev-Role",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "kam"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Текущий пользователь по заголовку X-Dev-Role",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/admin/users": {
+      "get": {
+        "operationId": "AdminController_getUsers",
+        "parameters": [
+          {
+            "name": "X-Dev-Role",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "administrator"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Пользователи и их роли",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/users/{id}": {
+      "put": {
+        "operationId": "AdminController_updateUser",
+        "parameters": [
+          {
+            "name": "X-Dev-Role",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "administrator"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "c0000000-0000-4000-8000-000000000001",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Изменить роль/активность/руководителя пользователя",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "HealthController_getHealth",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Проверка живости сервиса и соединений с Postgres/Redis",
+        "tags": [
+          "health"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "CRM ИТ Школа РТК",
+    "description": "",
+    "version": "0.0.1",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "schemas": {
+      "VendorDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "a3f0c2f0-4444-4a11-9a11-000000000030"
+          },
+          "name": {
+            "type": "string",
+            "example": "ООО «Базис»"
+          },
+          "contactInfo": {
+            "type": "string",
+            "nullable": true,
+            "example": null
+          },
+          "contactName": {
+            "type": "string",
+            "nullable": true,
+            "example": "Иванов Иван Иванович"
+          },
+          "contactPhone": {
+            "type": "string",
+            "nullable": true,
+            "example": "+7 (900) 111-22-33"
+          },
+          "contactEmail": {
+            "type": "string",
+            "nullable": true,
+            "example": "ivanov.ii@example.ru"
+          },
+          "contactChannel": {
+            "type": "string",
+            "nullable": true,
+            "example": "Почта, Чат в ТГ"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-09-26T11:29:07.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "example": "2026-09-26T11:29:07.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateVendorDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "ООО «Базис»"
+          },
+          "contactInfo": {
+            "type": "string",
+            "nullable": true,
+            "example": null
+          },
+          "contactName": {
+            "type": "string",
+            "nullable": true,
+            "example": "Иванов Иван Иванович"
+          },
+          "contactPhone": {
+            "type": "string",
+            "nullable": true,
+            "example": "+7 (900) 111-22-33"
+          },
+          "contactEmail": {
+            "type": "string",
+            "nullable": true,
+            "example": "ivanov.ii@example.ru"
+          },
+          "contactChannel": {
+            "type": "string",
+            "nullable": true,
+            "example": "Почта, Чат в ТГ"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "UpdateVendorDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "ООО «Базис»"
+          },
+          "contactInfo": {
+            "type": "string",
+            "nullable": true,
+            "example": null
+          },
+          "contactName": {
+            "type": "string",
+            "nullable": true,
+            "example": "Иванов Иван Иванович"
+          },
+          "contactPhone": {
+            "type": "string",
+            "nullable": true,
+            "example": "+7 (900) 111-22-33"
+          },
+          "contactEmail": {
+            "type": "string",
+            "nullable": true,
+            "example": "ivanov.ii@example.ru"
+          },
+          "contactChannel": {
+            "type": "string",
+            "nullable": true,
+            "example": "Почта, Чат в ТГ"
+          }
+        }
+      },
+      "ItDirectionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "a3f0c2f0-5555-4a11-9a11-000000000040"
+          },
+          "name": {
+            "type": "string",
+            "example": "Импортированные продукты (реестр вендоров)"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "example": "Автоматически создано из backend/prisma/seed-data/vendors.xlsx"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "CreateItDirectionDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Импортированные продукты (реестр вендоров)"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "example": "Автоматически создано из backend/prisma/seed-data/vendors.xlsx"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "UpdateItDirectionDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Импортированные продукты (реестр вендоров)"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "example": "Автоматически создано из backend/prisma/seed-data/vendors.xlsx"
+          }
+        }
+      },
+      "ItProductDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "a3f0c2f0-6666-4a11-9a11-000000000050"
+          },
+          "name": {
+            "type": "string",
+            "example": "Базис Dynamix"
+          },
+          "itDirectionId": {
+            "type": "string",
+            "example": "a3f0c2f0-5555-4a11-9a11-000000000040"
+          },
+          "vendorId": {
+            "type": "string",
+            "example": "a3f0c2f0-4444-4a11-9a11-000000000030"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "itDirectionId",
+          "vendorId"
+        ]
+      },
+      "CreateItProductDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Базис Dynamix"
+          },
+          "itDirectionId": {
+            "type": "string",
+            "example": "a3f0c2f0-5555-4a11-9a11-000000000040"
+          },
+          "vendorId": {
+            "type": "string",
+            "example": "a3f0c2f0-4444-4a11-9a11-000000000030"
+          }
+        },
+        "required": [
+          "name",
+          "itDirectionId",
+          "vendorId"
+        ]
+      },
+      "UpdateItProductDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Базис Dynamix"
+          },
+          "itDirectionId": {
+            "type": "string",
+            "example": "a3f0c2f0-5555-4a11-9a11-000000000040"
+          },
+          "vendorId": {
+            "type": "string",
+            "example": "a3f0c2f0-4444-4a11-9a11-000000000030"
+          }
+        }
+      },
+      "UniversityDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "a3f0c2f0-2222-4a11-9a11-000000000010"
+          },
+          "name": {
+            "type": "string",
+            "example": "СПбГУ (демо)"
+          },
+          "inn": {
+            "type": "string",
+            "nullable": true,
+            "example": null
+          },
+          "region": {
+            "type": "string",
+            "nullable": true,
+            "example": "демо-регион"
+          },
+          "website": {
+            "type": "string",
+            "nullable": true,
+            "example": null
+          },
+          "kamId": {
+            "type": "string",
+            "nullable": true,
+            "example": "a3f0c2f0-7777-4a11-9a11-000000000060"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "CreateUniversityDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "СПбГУ (демо)"
+          },
+          "inn": {
+            "type": "string",
+            "nullable": true,
+            "example": null
+          },
+          "region": {
+            "type": "string",
+            "nullable": true,
+            "example": "демо-регион"
+          },
+          "website": {
+            "type": "string",
+            "nullable": true,
+            "example": null
+          },
+          "kamId": {
+            "type": "string",
+            "nullable": true,
+            "example": "a3f0c2f0-7777-4a11-9a11-000000000060"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "UpdateUniversityDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "СПбГУ (демо)"
+          },
+          "inn": {
+            "type": "string",
+            "nullable": true,
+            "example": null
+          },
+          "region": {
+            "type": "string",
+            "nullable": true,
+            "example": "демо-регион"
+          },
+          "website": {
+            "type": "string",
+            "nullable": true,
+            "example": null
+          },
+          "kamId": {
+            "type": "string",
+            "nullable": true,
+            "example": "a3f0c2f0-7777-4a11-9a11-000000000060"
+          }
+        }
+      },
+      "ReassignUniversityResponsibleDto": {
+        "type": "object",
+        "properties": {
+          "kamId": {
+            "type": "string",
+            "nullable": true,
+            "example": "c0000000-0000-4000-8000-000000000001",
+            "description": "Новый КАМ, ответственный за вуз; null — снять ответственного"
+          }
+        },
+        "required": [
+          "kamId"
+        ]
+      },
+      "ResponsiblePersonDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "a3f0c2f0-1111-4a11-9a11-000000000001"
+          },
+          "fullName": {
+            "type": "string",
+            "example": "Иванов Иван Иванович"
+          },
+          "position": {
+            "type": "string",
+            "nullable": true,
+            "example": "Менеджер по работе с партнёрами"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true,
+            "example": "ivanov.ii@example.ru"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "example": "+7 (900) 111-22-33"
+          },
+          "contactMethod": {
+            "type": "string",
+            "nullable": true,
+            "example": "Почта, Чат в ТГ"
+          },
+          "universityId": {
+            "type": "string",
+            "nullable": true,
+            "example": "a3f0c2f0-2222-4a11-9a11-000000000010"
+          },
+          "itProductId": {
+            "type": "string",
+            "nullable": true,
+            "example": "a3f0c2f0-3333-4a11-9a11-000000000020"
+          }
+        },
+        "required": [
+          "id",
+          "fullName"
+        ]
+      },
+      "CreateResponsiblePersonDto": {
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string",
+            "example": "Иванов Иван Иванович"
+          },
+          "position": {
+            "type": "string",
+            "nullable": true,
+            "example": "Менеджер по работе с партнёрами"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true,
+            "example": "ivanov.ii@example.ru"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "example": "+7 (900) 111-22-33"
+          },
+          "contactMethod": {
+            "type": "string",
+            "nullable": true,
+            "example": "Почта, Чат в ТГ"
+          },
+          "universityId": {
+            "type": "string",
+            "nullable": true,
+            "example": "a3f0c2f0-2222-4a11-9a11-000000000010"
+          },
+          "itProductId": {
+            "type": "string",
+            "nullable": true,
+            "example": "a3f0c2f0-3333-4a11-9a11-000000000020"
+          }
+        },
+        "required": [
+          "fullName"
+        ]
+      },
+      "UpdateResponsiblePersonDto": {
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string",
+            "example": "Иванов Иван Иванович"
+          },
+          "position": {
+            "type": "string",
+            "nullable": true,
+            "example": "Менеджер по работе с партнёрами"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true,
+            "example": "ivanov.ii@example.ru"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "example": "+7 (900) 111-22-33"
+          },
+          "contactMethod": {
+            "type": "string",
+            "nullable": true,
+            "example": "Почта, Чат в ТГ"
+          },
+          "universityId": {
+            "type": "string",
+            "nullable": true,
+            "example": "a3f0c2f0-2222-4a11-9a11-000000000010"
+          },
+          "itProductId": {
+            "type": "string",
+            "nullable": true,
+            "example": "a3f0c2f0-3333-4a11-9a11-000000000020"
+          }
+        }
+      },
+      "LicenseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "a6000000-0000-4000-8000-000000000001"
+          },
+          "contractNumber": {
+            "type": "string",
+            "nullable": true,
+            "example": "DEMO-a5000000-1"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "PENDING",
+              "TERMINATED"
+            ],
+            "type": "string",
+            "example": "ACTIVE"
+          },
+          "seats": {
+            "type": "number",
+            "nullable": true,
+            "example": 50
+          },
+          "startDate": {
+            "type": "string",
+            "example": "2026-03-30T00:00:00.000Z"
+          },
+          "endDate": {
+            "type": "string",
+            "example": "2026-10-26T00:00:00.000Z"
+          },
+          "universityId": {
+            "type": "string",
+            "example": "a5000000-0000-4000-8000-000000000001"
+          },
+          "itProductId": {
+            "type": "string",
+            "example": "a3000000-0000-4000-8000-000000000001"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-03-30T00:00:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "example": "2026-03-30T00:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "startDate",
+          "endDate",
+          "universityId",
+          "itProductId",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateLicenseDto": {
+        "type": "object",
+        "properties": {
+          "contractNumber": {
+            "type": "string",
+            "nullable": true,
+            "example": "DEMO-a5000000-1"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "PENDING",
+              "TERMINATED"
+            ],
+            "type": "string",
+            "example": "ACTIVE"
+          },
+          "seats": {
+            "type": "number",
+            "nullable": true,
+            "example": 50
+          },
+          "startDate": {
+            "type": "string",
+            "example": "2026-03-30T00:00:00.000Z"
+          },
+          "endDate": {
+            "type": "string",
+            "example": "2026-10-26T00:00:00.000Z"
+          },
+          "universityId": {
+            "type": "string",
+            "example": "a5000000-0000-4000-8000-000000000001"
+          },
+          "itProductId": {
+            "type": "string",
+            "example": "a3000000-0000-4000-8000-000000000001"
+          }
+        },
+        "required": [
+          "status",
+          "startDate",
+          "endDate",
+          "universityId",
+          "itProductId"
+        ]
+      },
+      "UpdateLicenseDto": {
+        "type": "object",
+        "properties": {
+          "contractNumber": {
+            "type": "string",
+            "nullable": true,
+            "example": "DEMO-a5000000-1"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "PENDING",
+              "TERMINATED"
+            ],
+            "type": "string",
+            "example": "ACTIVE"
+          },
+          "seats": {
+            "type": "number",
+            "nullable": true,
+            "example": 50
+          },
+          "startDate": {
+            "type": "string",
+            "example": "2026-03-30T00:00:00.000Z"
+          },
+          "endDate": {
+            "type": "string",
+            "example": "2026-10-26T00:00:00.000Z"
+          },
+          "universityId": {
+            "type": "string",
+            "example": "a5000000-0000-4000-8000-000000000001"
+          },
+          "itProductId": {
+            "type": "string",
+            "example": "a3000000-0000-4000-8000-000000000001"
+          }
+        }
+      },
+      "ImportPreviewRowDto": {
+        "type": "object",
+        "properties": {
+          "rowNumber": {
+            "type": "number",
+            "example": 2,
+            "description": "Номер строки в исходном файле"
+          },
+          "universityName": {
+            "type": "string",
+            "example": "СПбГУ"
+          },
+          "match": {
+            "enum": [
+              "NEW",
+              "DUPLICATE_EXACT",
+              "DUPLICATE_FUZZY"
+            ],
+            "type": "string",
+            "example": "DUPLICATE_FUZZY"
+          },
+          "matchedUniversityId": {
+            "type": "string",
+            "nullable": true,
+            "example": "a5000000-0000-4000-8000-000000000001",
+            "description": "ID существующего вуза, если найдено совпадение"
+          }
+        },
+        "required": [
+          "rowNumber",
+          "universityName",
+          "match"
+        ]
+      },
+      "ImportPreviewResultDto": {
+        "type": "object",
+        "properties": {
+          "previewId": {
+            "type": "string",
+            "example": "h0000000-0000-4000-8000-000000000001"
+          },
+          "fileName": {
+            "type": "string",
+            "example": "Загрузка пользователей.xlsx"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportPreviewRowDto"
+            }
+          },
+          "totalRows": {
+            "type": "number",
+            "example": 30
+          },
+          "duplicateRows": {
+            "type": "number",
+            "example": 3
+          }
+        },
+        "required": [
+          "previewId",
+          "fileName",
+          "rows",
+          "totalRows",
+          "duplicateRows"
+        ]
+      },
+      "CommitImportDto": {
+        "type": "object",
+        "properties": {
+          "previewId": {
+            "type": "string",
+            "example": "h0000000-0000-4000-8000-000000000001"
+          }
+        },
+        "required": [
+          "previewId"
+        ]
+      },
+      "ImportJobDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "h1000000-0000-4000-8000-000000000001"
+          },
+          "fileName": {
+            "type": "string",
+            "example": "Загрузка пользователей.xlsx"
+          },
+          "status": {
+            "enum": [
+              "PENDING",
+              "PROCESSING",
+              "SUCCESS",
+              "FAILED"
+            ],
+            "type": "string",
+            "example": "SUCCESS"
+          },
+          "resultSummary": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true,
+            "example": {
+              "created": 27,
+              "matchedExisting": 3,
+              "failed": 0
+            }
+          },
+          "initiatedById": {
+            "type": "string",
+            "example": "c0000000-0000-4000-8000-000000000002"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-09-27T10:00:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "example": "2026-09-27T10:00:05.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "fileName",
+          "status",
+          "initiatedById",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "WorkflowStatusDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "b1000000-0000-4000-8000-000000000001"
+          },
+          "name": {
+            "type": "string",
+            "example": "Согласование договора"
+          },
+          "phase": {
+            "enum": [
+              "INITIATION",
+              "NEGOTIATION",
+              "CONTRACTING",
+              "IMPLEMENTATION",
+              "ACTIVE_USE",
+              "RENEWAL",
+              "TERMINATION"
+            ],
+            "type": "string",
+            "example": "CONTRACTING"
+          },
+          "order": {
+            "type": "number",
+            "example": 3
+          },
+          "workflowTemplateVersionId": {
+            "type": "string",
+            "example": "b0000000-0000-4000-8000-000000000002"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "phase",
+          "order",
+          "workflowTemplateVersionId"
+        ]
+      },
+      "WorkflowTransitionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "b2000000-0000-4000-8000-000000000001"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "example": "Отправить на согласование"
+          },
+          "workflowTemplateVersionId": {
+            "type": "string",
+            "example": "b0000000-0000-4000-8000-000000000002"
+          },
+          "fromStatusId": {
+            "type": "string",
+            "example": "b1000000-0000-4000-8000-000000000001"
+          },
+          "toStatusId": {
+            "type": "string",
+            "example": "b1000000-0000-4000-8000-000000000002"
+          }
+        },
+        "required": [
+          "id",
+          "workflowTemplateVersionId",
+          "fromStatusId",
+          "toStatusId"
+        ]
+      },
+      "WorkflowTemplateVersionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "b0000000-0000-4000-8000-000000000002"
+          },
+          "versionNumber": {
+            "type": "number",
+            "example": 2
+          },
+          "isActive": {
+            "type": "boolean",
+            "example": true
+          },
+          "workflowTemplateId": {
+            "type": "string",
+            "example": "b0000000-0000-4000-8000-000000000001"
+          },
+          "statuses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkflowStatusDto"
+            }
+          },
+          "transitions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkflowTransitionDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "versionNumber",
+          "isActive",
+          "workflowTemplateId",
+          "statuses",
+          "transitions"
+        ]
+      },
+      "WorkflowTemplateWithActiveVersionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "b0000000-0000-4000-8000-000000000001"
+          },
+          "name": {
+            "type": "string",
+            "example": "Типовой цикл внедрения ИТ-продукта"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "example": "Базовый CLM-шаблон для вузов"
+          },
+          "activeVersion": {
+            "nullable": true,
+            "description": "Активная версия шаблона; null — если у шаблона ещё нет ни одной версии",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WorkflowTemplateVersionDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "WorkflowStatusInputDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Согласование договора"
+          },
+          "phase": {
+            "enum": [
+              "INITIATION",
+              "NEGOTIATION",
+              "CONTRACTING",
+              "IMPLEMENTATION",
+              "ACTIVE_USE",
+              "RENEWAL",
+              "TERMINATION"
+            ],
+            "type": "string",
+            "example": "CONTRACTING"
+          },
+          "order": {
+            "type": "number",
+            "example": 2
+          }
+        },
+        "required": [
+          "name",
+          "phase",
+          "order"
+        ]
+      },
+      "WorkflowTransitionInputDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Отправить на согласование"
+          },
+          "fromStatusOrder": {
+            "type": "number",
+            "example": 1,
+            "description": "order статуса-источника среди statuses этого запроса"
+          },
+          "toStatusOrder": {
+            "type": "number",
+            "example": 2,
+            "description": "order статуса-назначения среди statuses этого запроса"
+          }
+        },
+        "required": [
+          "fromStatusOrder",
+          "toStatusOrder"
+        ]
+      },
+      "CreateWorkflowTemplateDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Типовой цикл внедрения ИТ-продукта"
+          },
+          "description": {
+            "type": "string",
+            "example": "Базовый CLM-шаблон для вузов"
+          },
+          "statuses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkflowStatusInputDto"
+            }
+          },
+          "transitions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkflowTransitionInputDto"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "statuses",
+          "transitions"
+        ]
+      },
+      "UpdateWorkflowTemplateDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Типовой цикл внедрения ИТ-продукта (v3)"
+          },
+          "description": {
+            "type": "string",
+            "example": "Добавлен статус приёмки после внедрения"
+          },
+          "statuses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkflowStatusInputDto"
+            }
+          },
+          "transitions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkflowTransitionInputDto"
+            }
+          }
+        },
+        "required": [
+          "statuses",
+          "transitions"
+        ]
+      },
+      "InteractionInstanceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "b3000000-0000-4000-8000-000000000001"
+          },
+          "universityId": {
+            "type": "string",
+            "example": "a5000000-0000-4000-8000-000000000001"
+          },
+          "itProductId": {
+            "type": "string",
+            "nullable": true,
+            "example": "a3000000-0000-4000-8000-000000000001"
+          },
+          "workflowTemplateVersionId": {
+            "type": "string",
+            "example": "b0000000-0000-4000-8000-000000000002"
+          },
+          "currentStatusId": {
+            "type": "string",
+            "example": "b1000000-0000-4000-8000-000000000002"
+          },
+          "responsibleUserId": {
+            "type": "string",
+            "example": "c0000000-0000-4000-8000-000000000001"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-09-01T09:00:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "example": "2026-09-20T14:30:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "universityId",
+          "workflowTemplateVersionId",
+          "currentStatusId",
+          "responsibleUserId",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateInteractionInstanceDto": {
+        "type": "object",
+        "properties": {
+          "universityId": {
+            "type": "string",
+            "example": "a5000000-0000-4000-8000-000000000001",
+            "description": "id вуза (University)"
+          },
+          "itProductId": {
+            "type": "string",
+            "nullable": true,
+            "example": "a3000000-0000-4000-8000-000000000001"
+          },
+          "responsibleUserId": {
+            "type": "string",
+            "example": "c0000000-0000-4000-8000-000000000001",
+            "description": "Ответственный КАМ; если не указан — берётся University.kamId"
+          }
+        },
+        "required": [
+          "universityId"
+        ]
+      },
+      "TransitionInteractionInstanceDto": {
+        "type": "object",
+        "properties": {
+          "toStatusId": {
+            "type": "string",
+            "example": "b1000000-0000-4000-8000-000000000002"
+          },
+          "comment": {
+            "type": "string",
+            "example": "Договор подписан, переходим к внедрению"
+          },
+          "attachmentId": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "Файл, приложенный к этому переходу (например, подписанный договор)"
+          }
+        },
+        "required": [
+          "toStatusId"
+        ]
+      },
+      "StatusHistoryEntryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "b4000000-0000-4000-8000-000000000001"
+          },
+          "interactionInstanceId": {
+            "type": "string",
+            "example": "b3000000-0000-4000-8000-000000000001"
+          },
+          "fromStatusId": {
+            "type": "string",
+            "nullable": true,
+            "example": "b1000000-0000-4000-8000-000000000001"
+          },
+          "toStatusId": {
+            "type": "string",
+            "example": "b1000000-0000-4000-8000-000000000002"
+          },
+          "comment": {
+            "type": "string",
+            "nullable": true,
+            "example": "Договор подписан, переходим к внедрению"
+          },
+          "changedById": {
+            "type": "string",
+            "example": "c0000000-0000-4000-8000-000000000001"
+          },
+          "attachmentId": {
+            "type": "string",
+            "nullable": true,
+            "example": null,
+            "description": "Файл, приложенный к этому переходу"
+          },
+          "changedAt": {
+            "type": "string",
+            "example": "2026-09-20T14:30:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "interactionInstanceId",
+          "toStatusId",
+          "changedById",
+          "changedAt"
+        ]
+      },
+      "InteractionReportItemDto": {
+        "type": "object",
+        "properties": {
+          "interactionInstanceId": {
+            "type": "string",
+            "example": "b3000000-0000-4000-8000-000000000001"
+          },
+          "universityId": {
+            "type": "string",
+            "example": "a5000000-0000-4000-8000-000000000001"
+          },
+          "universityName": {
+            "type": "string",
+            "example": "СПбГУ (демо)"
+          },
+          "itDirectionId": {
+            "type": "string",
+            "nullable": true,
+            "example": "a1000000-0000-4000-8000-000000000001"
+          },
+          "itDirectionName": {
+            "type": "string",
+            "nullable": true,
+            "example": "Импортированные продукты (реестр вендоров)"
+          },
+          "itProductId": {
+            "type": "string",
+            "nullable": true,
+            "example": "a3000000-0000-4000-8000-000000000001"
+          },
+          "itProductName": {
+            "type": "string",
+            "nullable": true,
+            "example": "Базис Dynamix"
+          },
+          "currentStatusId": {
+            "type": "string",
+            "example": "b1000000-0000-4000-8000-000000000002"
+          },
+          "currentStatusName": {
+            "type": "string",
+            "example": "Согласование договора"
+          },
+          "currentPhase": {
+            "enum": [
+              "INITIATION",
+              "NEGOTIATION",
+              "CONTRACTING",
+              "IMPLEMENTATION",
+              "ACTIVE_USE",
+              "RENEWAL",
+              "TERMINATION"
+            ],
+            "type": "string",
+            "example": "CONTRACTING"
+          },
+          "responsibleUserId": {
+            "type": "string",
+            "example": "c0000000-0000-4000-8000-000000000001"
+          },
+          "responsibleUserName": {
+            "type": "string",
+            "example": "Иванова Мария Сергеевна"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-09-01T09:00:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "example": "2026-09-20T14:30:00.000Z"
+          },
+          "daysInCurrentStatus": {
+            "type": "number",
+            "example": 12,
+            "description": "Сколько дней взаимодействие находится в текущем статусе"
+          },
+          "isOverdue": {
+            "type": "boolean",
+            "example": false,
+            "description": "Превышен ли SLA-порог для текущего статуса"
+          }
+        },
+        "required": [
+          "interactionInstanceId",
+          "universityId",
+          "universityName",
+          "currentStatusId",
+          "currentStatusName",
+          "currentPhase",
+          "responsibleUserId",
+          "responsibleUserName",
+          "createdAt",
+          "updatedAt",
+          "daysInCurrentStatus",
+          "isOverdue"
+        ]
+      },
+      "InteractionsReportExportDto": {
+        "type": "object",
+        "properties": {
+          "format": {
+            "enum": [
+              "xls",
+              "xlsx",
+              "pdf"
+            ],
+            "type": "string",
+            "example": "xlsx"
+          },
+          "fileName": {
+            "type": "string",
+            "example": "reestr-vzaimodeystviy-2026-09-26.xlsx"
+          },
+          "url": {
+            "type": "string",
+            "example": "https://minio.internal/crm-exports/reestr-vzaimodeystviy-2026-09-26.xlsx?X-Amz-Expires=600&..."
+          },
+          "generatedAt": {
+            "type": "string",
+            "example": "2026-09-26T10:00:00.000Z"
+          },
+          "rowCount": {
+            "type": "number",
+            "example": 3
+          }
+        },
+        "required": [
+          "format",
+          "fileName",
+          "url",
+          "generatedAt",
+          "rowCount"
+        ]
+      },
+      "ChartSlicePointDto": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "example": "Согласование договора"
+          },
+          "value": {
+            "type": "number",
+            "example": 4
+          }
+        },
+        "required": [
+          "label",
+          "value"
+        ]
+      },
+      "ChartTimeSeriesPointDto": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "example": "2026-09-01"
+          },
+          "value": {
+            "type": "number",
+            "example": 2
+          }
+        },
+        "required": [
+          "date",
+          "value"
+        ]
+      },
+      "ChartsResponseDto": {
+        "type": "object",
+        "properties": {
+          "statusDistribution": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChartSlicePointDto"
+            }
+          },
+          "interactionsOverTime": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChartTimeSeriesPointDto"
+            }
+          },
+          "licensesByProduct": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChartSlicePointDto"
+            }
+          }
+        },
+        "required": [
+          "statusDistribution",
+          "interactionsOverTime",
+          "licensesByProduct"
+        ]
+      },
+      "CreateReportJobDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "enum": [
+              "LICENSE_RADAR",
+              "SLA_RADAR"
+            ],
+            "type": "string",
+            "example": "LICENSE_RADAR"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "ReportJobDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "d0000000-0000-4000-8000-000000000001"
+          },
+          "type": {
+            "enum": [
+              "LICENSE_RADAR",
+              "SLA_RADAR"
+            ],
+            "type": "string",
+            "example": "LICENSE_RADAR"
+          },
+          "status": {
+            "enum": [
+              "QUEUED",
+              "PROCESSING",
+              "SUCCESS",
+              "FAILED"
+            ],
+            "type": "string",
+            "example": "QUEUED"
+          },
+          "requestedById": {
+            "type": "string",
+            "example": "c0000000-0000-4000-8000-000000000001"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-09-26T10:00:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "example": "2026-09-26T10:00:00.000Z"
+          },
+          "resultUrl": {
+            "type": "string",
+            "nullable": true,
+            "example": "/reports/jobs/d0000000-0000-4000-8000-000000000001/result"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "status",
+          "requestedById",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "LicenseRadarItemDto": {
+        "type": "object",
+        "properties": {
+          "licenseId": {
+            "type": "string",
+            "example": "e0000000-0000-4000-8000-000000000001"
+          },
+          "contractNumber": {
+            "type": "string",
+            "example": "DEMO-a5000000-1"
+          },
+          "universityId": {
+            "type": "string",
+            "example": "a5000000-0000-4000-8000-000000000001"
+          },
+          "universityName": {
+            "type": "string",
+            "example": "СПбГУ (демо)"
+          },
+          "itProductId": {
+            "type": "string",
+            "example": "a3000000-0000-4000-8000-000000000001"
+          },
+          "itProductName": {
+            "type": "string",
+            "example": "Базис Dynamix"
+          },
+          "endDate": {
+            "type": "string",
+            "example": "2026-10-03T00:00:00.000Z"
+          },
+          "bucket": {
+            "enum": [
+              "OVERDUE",
+              "DUE_IN_7_DAYS",
+              "DUE_IN_30_DAYS",
+              "DUE_IN_60_DAYS"
+            ],
+            "type": "string",
+            "example": "DUE_IN_7_DAYS"
+          }
+        },
+        "required": [
+          "licenseId",
+          "contractNumber",
+          "universityId",
+          "universityName",
+          "itProductId",
+          "itProductName",
+          "endDate",
+          "bucket"
+        ]
+      },
+      "LicenseRadarResultDto": {
+        "type": "object",
+        "properties": {
+          "jobId": {
+            "type": "string",
+            "example": "d0000000-0000-4000-8000-000000000001"
+          },
+          "generatedAt": {
+            "type": "string",
+            "example": "2026-09-26T10:05:00.000Z"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LicenseRadarItemDto"
+            }
+          }
+        },
+        "required": [
+          "jobId",
+          "generatedAt",
+          "items"
+        ]
+      },
+      "SlaRadarItemDto": {
+        "type": "object",
+        "properties": {
+          "interactionInstanceId": {
+            "type": "string",
+            "example": "b3000000-0000-4000-8000-000000000001"
+          },
+          "universityId": {
+            "type": "string",
+            "example": "a5000000-0000-4000-8000-000000000001"
+          },
+          "universityName": {
+            "type": "string",
+            "example": "СПбГУ (демо)"
+          },
+          "currentStatusId": {
+            "type": "string",
+            "example": "b1000000-0000-4000-8000-000000000002"
+          },
+          "currentStatusName": {
+            "type": "string",
+            "example": "Согласование договора"
+          },
+          "phase": {
+            "enum": [
+              "INITIATION",
+              "NEGOTIATION",
+              "CONTRACTING",
+              "IMPLEMENTATION",
+              "ACTIVE_USE",
+              "RENEWAL",
+              "TERMINATION"
+            ],
+            "type": "string",
+            "example": "CONTRACTING"
+          },
+          "responsibleUserId": {
+            "type": "string",
+            "example": "c0000000-0000-4000-8000-000000000001"
+          },
+          "responsibleUserName": {
+            "type": "string",
+            "example": "Иванова Мария Сергеевна"
+          },
+          "statusSince": {
+            "type": "string",
+            "example": "2026-09-06T14:30:00.000Z"
+          },
+          "daysInStatus": {
+            "type": "number",
+            "example": 20,
+            "description": "Сколько дней взаимодействие находится в текущем статусе"
+          },
+          "slaThresholdDays": {
+            "type": "number",
+            "example": 14,
+            "description": "SLA-порог (дней) для данной фазы"
+          }
+        },
+        "required": [
+          "interactionInstanceId",
+          "universityId",
+          "universityName",
+          "currentStatusId",
+          "currentStatusName",
+          "phase",
+          "responsibleUserId",
+          "responsibleUserName",
+          "statusSince",
+          "daysInStatus",
+          "slaThresholdDays"
+        ]
+      },
+      "SlaRadarResultDto": {
+        "type": "object",
+        "properties": {
+          "generatedAt": {
+            "type": "string",
+            "example": "2026-09-26T10:05:00.000Z"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SlaRadarItemDto"
+            }
+          }
+        },
+        "required": [
+          "generatedAt",
+          "items"
+        ]
+      },
+      "FileAttachmentDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "f0000000-0000-4000-8000-000000000001"
+          },
+          "fileName": {
+            "type": "string",
+            "example": "dogovor-spbgu-basis-dynamix.pdf"
+          },
+          "mimeType": {
+            "type": "string",
+            "example": "application/pdf"
+          },
+          "size": {
+            "type": "number",
+            "example": 245760
+          },
+          "storageKey": {
+            "type": "string",
+            "example": "attachments/2026/09/f0000000-0000-4000-8000-000000000001.pdf"
+          },
+          "uploadedById": {
+            "type": "string",
+            "example": "c0000000-0000-4000-8000-000000000001"
+          },
+          "interactionInstanceId": {
+            "type": "string",
+            "nullable": true,
+            "example": "b3000000-0000-4000-8000-000000000001"
+          },
+          "licenseId": {
+            "type": "string",
+            "nullable": true,
+            "example": null
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-09-20T14:30:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "fileName",
+          "mimeType",
+          "size",
+          "storageKey",
+          "uploadedById",
+          "createdAt"
+        ]
+      },
+      "FileDownloadUrlDto": {
+        "type": "object",
+        "properties": {
+          "fileId": {
+            "type": "string",
+            "example": "f0000000-0000-4000-8000-000000000001"
+          },
+          "url": {
+            "type": "string",
+            "example": "https://minio.internal/crm-attachments/attachments/2026/09/f0000000-0000-4000-8000-000000000001.pdf?X-Amz-Expires=600&..."
+          },
+          "expiresAt": {
+            "type": "string",
+            "example": "2026-09-26T10:10:00.000Z"
+          }
+        },
+        "required": [
+          "fileId",
+          "url",
+          "expiresAt"
+        ]
+      },
+      "OrderDto": {
+        "type": "object",
+        "properties": {
+          "externalId": {
+            "type": "string",
+            "example": "ORD-2026-000145"
+          },
+          "course": {
+            "type": "string",
+            "example": "Базис Dynamix: администрирование СУБД"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Смирнова"
+          },
+          "firstName": {
+            "type": "string",
+            "example": "Анна"
+          },
+          "middleName": {
+            "type": "string",
+            "nullable": true,
+            "example": "Петровна"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+7 (911) 222-33-44"
+          },
+          "email": {
+            "type": "string",
+            "example": "smirnova.ap@example.ru"
+          },
+          "cohortNumber": {
+            "type": "number",
+            "example": 12
+          }
+        },
+        "required": [
+          "externalId",
+          "course",
+          "lastName",
+          "firstName",
+          "phone",
+          "email",
+          "cohortNumber"
+        ]
+      },
+      "SyncErrorDto": {
+        "type": "object",
+        "properties": {
+          "externalId": {
+            "type": "string",
+            "example": "ORD-2026-000148"
+          },
+          "message": {
+            "type": "string",
+            "example": "Курс \"Устаревший курс\" не найден в course-mapping"
+          }
+        },
+        "required": [
+          "externalId",
+          "message"
+        ]
+      },
+      "SyncRunDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "f1000000-0000-4000-8000-000000000001"
+          },
+          "status": {
+            "enum": [
+              "SUCCESS",
+              "PARTIAL",
+              "FAILED"
+            ],
+            "type": "string",
+            "example": "SUCCESS"
+          },
+          "startedAt": {
+            "type": "string",
+            "example": "2026-09-26T10:00:00.000Z"
+          },
+          "finishedAt": {
+            "type": "string",
+            "example": "2026-09-26T10:00:02.000Z"
+          },
+          "createdCount": {
+            "type": "number",
+            "example": 2,
+            "description": "Новые InteractionInstance, созданные из заявок"
+          },
+          "updatedCount": {
+            "type": "number",
+            "example": 1,
+            "description": "Существующие заявки, обновлённые повторно (по externalId)"
+          },
+          "skippedDuplicateCount": {
+            "type": "number",
+            "example": 0,
+            "description": "Пропущено как дубликат по «Номер заявки»"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SyncErrorDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "startedAt",
+          "finishedAt",
+          "createdCount",
+          "updatedCount",
+          "skippedDuplicateCount"
+        ]
+      },
+      "CourseMappingDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "g0000000-0000-4000-8000-000000000001"
+          },
+          "course": {
+            "type": "string",
+            "example": "Базис Dynamix: администрирование СУБД"
+          },
+          "itDirectionId": {
+            "type": "string",
+            "nullable": true,
+            "example": "a1000000-0000-4000-8000-000000000001"
+          },
+          "itProductId": {
+            "type": "string",
+            "nullable": true,
+            "example": "a3000000-0000-4000-8000-000000000001"
+          },
+          "status": {
+            "enum": [
+              "MAPPED",
+              "NEEDS_REVIEW"
+            ],
+            "type": "string",
+            "example": "MAPPED"
+          },
+          "updatedAt": {
+            "type": "string",
+            "example": "2026-09-26T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "course",
+          "status",
+          "updatedAt"
+        ]
+      },
+      "UpsertCourseMappingDto": {
+        "type": "object",
+        "properties": {
+          "course": {
+            "type": "string",
+            "example": "Базис Dynamix: администрирование СУБД"
+          },
+          "itProductId": {
+            "type": "string",
+            "example": "a3000000-0000-4000-8000-000000000001"
+          }
+        },
+        "required": [
+          "course",
+          "itProductId"
+        ]
+      },
+      "DevLoginDto": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "enum": [
+              "KAM",
+              "RUKOVODITEL",
+              "ADMINISTRATOR"
+            ],
+            "type": "string",
+            "example": "KAM"
+          }
+        },
+        "required": [
+          "role"
+        ]
+      },
+      "UserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "c0000000-0000-4000-8000-000000000001"
+          },
+          "email": {
+            "type": "string",
+            "example": "kam@it-shkola-rtk.ru"
+          },
+          "fullName": {
+            "type": "string",
+            "example": "Иванова Мария Сергеевна"
+          },
+          "role": {
+            "enum": [
+              "KAM",
+              "RUKOVODITEL",
+              "ADMINISTRATOR"
+            ],
+            "type": "string",
+            "example": "KAM"
+          },
+          "isActive": {
+            "type": "boolean",
+            "example": true
+          },
+          "managerId": {
+            "type": "string",
+            "nullable": true,
+            "example": "c0000000-0000-4000-8000-000000000002"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "fullName",
+          "role",
+          "isActive"
+        ]
+      },
+      "AuthSessionDto": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "example": "dev.eyJhbGciOiJIUzI1NiJ9.stub-access-token"
+          },
+          "expiresIn": {
+            "type": "number",
+            "example": 3600
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserDto"
+          }
+        },
+        "required": [
+          "accessToken",
+          "expiresIn",
+          "user"
+        ]
+      },
+      "UpdateUserDto": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "enum": [
+              "KAM",
+              "RUKOVODITEL",
+              "ADMINISTRATOR"
+            ],
+            "type": "string",
+            "example": "RUKOVODITEL"
+          },
+          "isActive": {
+            "type": "boolean",
+            "example": false
+          },
+          "managerId": {
+            "type": "string",
+            "nullable": true,
+            "example": "c0000000-0000-4000-8000-000000000002"
+          }
+        }
+      },
+      "HealthDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "enum": [
+              "ok",
+              "degraded"
+            ],
+            "type": "string",
+            "example": "ok"
+          },
+          "db": {
+            "enum": [
+              "ok",
+              "error"
+            ],
+            "type": "string",
+            "example": "ok",
+            "description": "Соединение с Postgres (Prisma)"
+          },
+          "redis": {
+            "enum": [
+              "ok",
+              "error"
+            ],
+            "type": "string",
+            "example": "ok",
+            "description": "Соединение с Redis"
+          },
+          "minio": {
+            "enum": [
+              "ok",
+              "error"
+            ],
+            "type": "string",
+            "example": "ok",
+            "description": "Соединение с MinIO"
+          },
+          "uptime": {
+            "type": "number",
+            "example": 128.42,
+            "description": "Время работы процесса, секунды"
+          }
+        },
+        "required": [
+          "status",
+          "db",
+          "redis",
+          "minio",
+          "uptime"
+        ]
+      }
+    }
+  }
+}

@@ -29,23 +29,22 @@ services:
       timeout: 5s
       retries: 10
 
-  minio:
-    image: pgsty/minio:latest # официальный minio/minio больше не публикуется на Docker Hub
+  # minio/minio закрыт на Docker Hub без логина (pull access denied) — замена
+  # на scality/s3server: тот же S3 API (мы говорим с ним через npm-пакет
+  # `minio`, который просто S3-клиент — от S3-сервера ему нужен только
+  # совместимый REST+SigV4, реализация неважна). Порт 8000 — дефолтный для
+  # этого образа; backend/.env(.example) MINIO_PORT указывает на него же.
+  storage:
+    image: scality/s3server:latest
     restart: unless-stopped
-    command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: crm-minio
-      MINIO_ROOT_PASSWORD: crm-minio-secret
+      SCALITY_ACCESS_KEY_ID: crm-minio
+      SCALITY_SECRET_ACCESS_KEY: crm-minio-secret
     ports:
-      - "9000:9000" # S3 API
-      - "9001:9001" # Web-консоль
+      - "8000:8000" # S3 API
     volumes:
-      - minio-data:/data
-    healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
+      - storage-data:/usr/src/app/localData
+      - storage-metadata:/usr/src/app/localMetadata
 
   # Realm it-school-crm импортируется из infra/keycloak/realm-export.json при каждом
   # старте контейнера (--import-realm). Образ quay.io/keycloak/keycloak — Quarkus-дистрибутив
@@ -69,5 +68,6 @@ services:
 volumes:
   postgres-data:
   redis-data:
-  minio-data:
+  storage-data:
+  storage-metadata:
   keycloak-data:

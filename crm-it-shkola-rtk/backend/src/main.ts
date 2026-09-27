@@ -3,15 +3,40 @@ import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
+// Дефолт — те же dev-порты, что уже прописаны как redirectUris в
+// infra/keycloak/realm-export.json (5173 vite, 4200 angular, 3000, 8081) —
+// фронт открывает браузер именно с одного из них, не с origin бэкенда.
+// 8123 — статический прототип frontend/prototype (python3 serve.py).
+// CORS_ORIGINS в .env переопределяет список, если порт фронта другой.
+const DEFAULT_CORS_ORIGINS = [
+  'http://localhost:5173',
+  'http://localhost:4200',
+  'http://localhost:3000',
+  'http://localhost:8081',
+  'http://localhost:8123',
+  'http://127.0.0.1:8123',
+];
+
+function resolveCorsOrigins(): string[] {
+  const fromEnv = process.env.CORS_ORIGINS;
+  if (!fromEnv) {
+    return DEFAULT_CORS_ORIGINS;
+  }
+  return fromEnv
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter((origin) => origin.length > 0);
+}
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Прототип фронта открывается как статический HTML (в том числе прямо с диска,
-  // Origin: null) и ходит в API с заголовком X-Dev-Role — без CORS браузер
-  // блокирует такие запросы. CORS_ORIGINS (через запятую) сужает список источников.
-  const corsOrigins = process.env.CORS_ORIGINS?.split(',').map((origin) => origin.trim()).filter(Boolean);
+  // Без этого браузер блокирует все fetch() фронта к бэкенду на другом origin —
+  // preflight (OPTIONS) на X-Dev-Role/Authorization иначе даже не отвечает.
   app.enableCors({
-    origin: corsOrigins?.length ? corsOrigins : true,
+    origin: resolveCorsOrigins(),
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Dev-Role', 'X-Dev-User-Id'],
     exposedHeaders: ['X-Total-Count'],
   });
 

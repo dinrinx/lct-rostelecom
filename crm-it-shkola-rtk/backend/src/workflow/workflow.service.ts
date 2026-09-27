@@ -12,6 +12,8 @@ import { WorkflowStatusDto } from './dto/workflow-status.dto';
 import { CreateInteractionInstanceDto } from './dto/create-interaction-instance.dto';
 import { TransitionInteractionInstanceDto } from './dto/transition-interaction-instance.dto';
 import { InteractionInstanceDto, StatusHistoryEntryDto } from './dto/interaction-instance.dto';
+import type { CatalogScope } from '../catalogs/catalog-scope.interceptor';
+import { assertUniversityVisible, universityWhereForScope } from '../catalogs/catalogs.service';
 
 function toInstanceDto(instance: {
   id: string;
@@ -254,19 +256,30 @@ export class WorkflowService {
     }
   }
 
-  async listInstances(): Promise<InteractionInstanceDto[]> {
-    const instances = await this.prisma.interactionInstance.findMany({ orderBy: { createdAt: 'desc' } });
+  // Видимость — та же построчная модель, что и в catalogs (КАМ — свои вузы,
+  // Руководитель — команда, Админ — всё), т.к. instance наследует видимость
+  // от своего University. Фильтр — на уровне Prisma-запроса (через связь
+  // university), а не постфильтрацией уже полученной страницы.
+  async listInstances(scope: CatalogScope): Promise<InteractionInstanceDto[]> {
+    const instances = await this.prisma.interactionInstance.findMany({
+      where: scope.visibleKamIds === null ? {} : { university: universityWhereForScope(scope) },
+      orderBy: { createdAt: 'desc' },
+    });
     return instances.map(toInstanceDto);
   }
 
-  async getInstanceById(id: string): Promise<InteractionInstanceDto> {
-    const instance = await this.prisma.interactionInstance.findUnique({ where: { id } });
+  async getInstanceById(id: string, scope: CatalogScope): Promise<InteractionInstanceDto> {
+    const instance = await this.prisma.interactionInstance.findUnique({
+      where: { id },
+      include: { university: true },
+    });
     if (!instance) {
       throw new NotFoundException({
         code: 'WORKFLOW_INSTANCE_NOT_FOUND',
         message: `Взаимодействие с id "${id}" не найдено`,
       });
     }
+    assertUniversityVisible(instance.university, scope);
     return toInstanceDto(instance);
   }
 
@@ -274,7 +287,7 @@ export class WorkflowService {
   // шаблона/версии вручную не поддерживается (в системе предполагается один
   // действующий CLM-цикл; если когда-нибудь понадобится несколько параллельных
   // шаблонов, тут придётся добавить явный workflowTemplateId в DTO).
-  async createInstance(dto: CreateInteractionInstanceDto): Promise<InteractionInstanceDto> {
+  async createInstance(dto: CreateInteractionInstanceDto, scope: CatalogScope): Promise<InteractionInstanceDto> {
     const university = await this.prisma.university.findUnique({ where: { id: dto.universityId } });
     if (!university) {
       throw new NotFoundException({
@@ -282,6 +295,10 @@ export class WorkflowService {
         message: `Вуз с id "${dto.universityId}" не найден`,
       });
     }
+    // КАМ заводит взаимодействие только для своего вуза (visibleKamIds=[свой id]
+    // для КАМ) — та же проверка, что и на чтении, так что прямой POST с чужим
+    // vuzId не обходит видимость через "создание".
+    assertUniversityVisible(university, scope);
 
     const responsibleUserId = dto.responsibleUserId ?? university.kamId ?? undefined;
     if (!responsibleUserId) {
@@ -346,14 +363,21 @@ export class WorkflowService {
     instanceId: string,
     dto: TransitionInteractionInstanceDto,
     actorUserId: string,
+    scope: CatalogScope,
   ): Promise<InteractionInstanceDto> {
-    const instance = await this.prisma.interactionInstance.findUnique({ where: { id: instanceId } });
+    const instance = await this.prisma.interactionInstance.findUnique({
+      where: { id: instanceId },
+      include: { university: true },
+    });
     if (!instance) {
       throw new NotFoundException({
         code: 'WORKFLOW_INSTANCE_NOT_FOUND',
         message: `Взаимодействие с id "${instanceId}" не найдено`,
       });
     }
+    // Тот же вопрос видимости, что и на чтении: КАМ не может протолкнуть
+    // переход по чужому вузу, даже зная id инстанса напрямую.
+    assertUniversityVisible(instance.university, scope);
 
     // Единственный источник истины "можно ли перейти" — WorkflowTransition
     // этой конкретной версии. Проверяем ДО записи в историю, а не полагаемся
@@ -409,14 +433,18 @@ export class WorkflowService {
     return toInstanceDto(updated);
   }
 
-  async getHistory(instanceId: string): Promise<StatusHistoryEntryDto[]> {
-    const instance = await this.prisma.interactionInstance.findUnique({ where: { id: instanceId } });
+  async getHistory(instanceId: string, scope: CatalogScope): Promise<StatusHistoryEntryDto[]> {
+    const instance = await this.prisma.interactionInstance.findUnique({
+      where: { id: instanceId },
+      include: { university: true },
+    });
     if (!instance) {
       throw new NotFoundException({
         code: 'WORKFLOW_INSTANCE_NOT_FOUND',
         message: `Взаимодействие с id "${instanceId}" не найдено`,
       });
     }
+    assertUniversityVisible(instance.university, scope);
 
     // StatusHistoryEntry не хранит отдельного createdAt — changedAt и есть
     // момент записи (append-only, никаких update/delete), сортируем по нему.
