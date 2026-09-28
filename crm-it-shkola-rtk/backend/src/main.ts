@@ -60,6 +60,9 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document, { jsonDocumentUrl: 'api-json' });
 
-  await app.listen(process.env.PORT ?? 3000);
+  // Явно 0.0.0.0, а не только дефолт Node (который и так слушает все интерфейсы,
+  // но неявно) — чтобы в контейнере/на сервере сервис гарантированно был
+  // доступен по внешнему адресу, а не только с localhost внутри хоста.
+  await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
 }
 bootstrap();

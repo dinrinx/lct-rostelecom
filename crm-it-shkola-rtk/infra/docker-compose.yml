@@ -1,17 +1,29 @@
+# Полный стенд одной командой: docker compose up -d (из этой папки — тогда
+# docker compose сам подхватит .env рядом; из корня репозитория — добавьте
+# --env-file infra/.env). Перед первым запуском: cp .env.example .env и
+# поменяйте пароли/домен — см. infra/README.md.
+#
+# Наружу (0.0.0.0, доступно с внешнего адреса сервера) публикуется только то,
+# с чем говорит браузер или внешний мониторинг: backend (API) и Keycloak (нужен
+# извне только если реально используете AUTH_MODE=keycloak — для AUTH_MODE=dev
+# порт можно смело убрать). Postgres/Redis/Garage слушают только 127.0.0.1 —
+# это инфраструктура для сервисов внутри той же docker-сети, а не для интернета;
+# незапароленный Redis или Postgres с дефолтным паролем на 0.0.0.0 — реальная
+# дыра, если стенд стоит на машине с публичным IP.
 services:
   postgres:
     image: postgres:16
     restart: unless-stopped
     environment:
-      POSTGRES_USER: crm
-      POSTGRES_PASSWORD: crm
-      POSTGRES_DB: crm_it_shkola_rtk
+      POSTGRES_USER: ${POSTGRES_USER:-crm}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-crm}
+      POSTGRES_DB: ${POSTGRES_DB:-crm_it_shkola_rtk}
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U crm -d crm_it_shkola_rtk"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-crm} -d ${POSTGRES_DB:-crm_it_shkola_rtk}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -20,7 +32,7 @@ services:
     image: redis:7
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - redis-data:/data
     healthcheck:
@@ -35,34 +47,52 @@ services:
   # и фронтендеры на таких машинах об это спотыкались. Garage (dxflrs/garage)
   # собирается нативно и под arm64, и под amd64 — тот же S3 API, мы говорим
   # с ним через npm-пакет `minio` (обычный S3-клиент, ему всё равно, что за
-  # сервер отвечает). Порт 3900 — S3 API Garage; backend/.env(.example)
-  # MINIO_PORT/MINIO_REGION указывают на него же.
+  # сервер отвечает). Порт 3900 — S3 API Garage; backend MINIO_PORT/MINIO_REGION
+  # (ниже, сервис backend) указывают на него же.
   #
   # В отличие от MinIO/scality, Garage не создаёт бакет сам по первому
   # запросу — узлу нужен назначенный "layout" кластера, а бакет/ключ доступа
   # заводятся отдельно через его собственный CLI. Это делает соседний
   # сервис storage-init (см. infra/garage/init/init.sh) — безопасно
   # перезапускаемый, ничего не ломает при повторных `docker compose up`.
+  #
+  # rpc_secret/admin_token НЕ в garage.toml — подставляются из окружения
+  # (GARAGE_RPC_SECRET/GARAGE_ADMIN_TOKEN), это и есть единственное место
+  # хранения этих значений при реальном деплое (infra/.env).
   storage:
     image: dxflrs/garage:v1.0.1
     restart: unless-stopped
+    environment:
+      GARAGE_RPC_SECRET: ${GARAGE_RPC_SECRET:?задайте GARAGE_RPC_SECRET в infra/.env}
+      GARAGE_ADMIN_TOKEN: ${GARAGE_ADMIN_TOKEN:?задайте GARAGE_ADMIN_TOKEN в infra/.env}
     volumes:
       - ./garage/garage.toml:/etc/garage.toml:ro
       - storage-meta:/var/lib/garage/meta
       - storage-data:/var/lib/garage/data
     ports:
-      - "3900:3900" # S3 API
+      - "127.0.0.1:3900:3900" # S3 API
+    healthcheck:
+      # Образ garage — без shell, только сам бинарник: "garage status" отвечает
+      # успехом, когда демон реально поднят и его RPC доступен (не просто "порт
+      # слушает"), поэтому exec-форма CMD, без CMD-SHELL.
+      test: ["CMD", "/garage", "status"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
 
   storage-init:
     build: ./garage/init
     restart: "no"
     network_mode: "service:storage"
     depends_on:
-      - storage
+      storage:
+        condition: service_healthy
     environment:
-      GARAGE_KEY_ID: GK8533518c26b556bb9a9dde7d
-      GARAGE_SECRET_KEY: 3918d67710daeb39d6d1b2cd780ae56b7eaa61d884dd0050163a0660dc4d3b88
-      GARAGE_BUCKET: crm-attachments
+      GARAGE_RPC_SECRET: ${GARAGE_RPC_SECRET:?задайте GARAGE_RPC_SECRET в infra/.env}
+      GARAGE_KEY_ID: ${MINIO_ACCESS_KEY:?задайте MINIO_ACCESS_KEY в infra/.env}
+      GARAGE_SECRET_KEY: ${MINIO_SECRET_KEY:?задайте MINIO_SECRET_KEY в infra/.env}
+      GARAGE_BUCKET: ${MINIO_BUCKET:-crm-attachments}
     volumes:
       - ./garage/garage.toml:/etc/garage.toml:ro
       - storage-meta:/var/lib/garage/meta
@@ -73,19 +103,85 @@ services:
   # (Keycloak 17+), поэтому легаси-переменная KEYCLOAK_IMPORT тут не работает: нужно
   # класть файл(ы) в /opt/keycloak/data/import и явно просить импорт флагом команды.
   # Dev-режим бэкенда (AUTH_MODE=dev, заголовок X-Dev-Role) продолжает работать
-  # независимо от Keycloak — см. backend/.env.example.
+  # независимо от Keycloak — см. infra/.env.example.
+  #
+  # KC_HEALTH_ENABLED включает /health/ready на отдельном management-порту 9000
+  # (не публикуется наружу — только для healthcheck внутри контейнера).
   keycloak:
     image: quay.io/keycloak/keycloak:26.0
     restart: unless-stopped
     command: start-dev --import-realm
     environment:
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?задайте KEYCLOAK_ADMIN_PASSWORD в infra/.env}
+      KC_HEALTH_ENABLED: "true"
     ports:
-      - "8080:8080"
+      - "${KEYCLOAK_PUBLISH_ADDR:-0.0.0.0}:8080:8080"
     volumes:
       - keycloak-data:/opt/keycloak/data
       - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
+    healthcheck:
+      # Образ Keycloak тоже без curl/wget — используем bash (он есть) и
+      # встроенный /dev/tcp, чтобы прочитать реальный HTTP-ответ health-эндпоинта,
+      # а не просто убедиться, что порт открыт.
+      test:
+        [
+          "CMD-SHELL",
+          "exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && head -1 <&3 | grep -q 200",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      storage-init:
+        condition: service_completed_successfully
+      # Keycloak поднимается медленно и в AUTH_MODE=dev backend'у не нужен
+      # вообще — ждём только "процесс стартовал", не полную готовность.
+      keycloak:
+        condition: service_started
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-crm}:${POSTGRES_PASSWORD:-crm}@postgres:5432/${POSTGRES_DB:-crm_it_shkola_rtk}?schema=public
+      REDIS_URL: redis://redis:6379
+      MINIO_ENDPOINT: storage
+      MINIO_PORT: 3900
+      MINIO_USE_SSL: "false"
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:?задайте MINIO_ACCESS_KEY в infra/.env}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:?задайте MINIO_SECRET_KEY в infra/.env}
+      MINIO_BUCKET: ${MINIO_BUCKET:-crm-attachments}
+      MINIO_REGION: garage
+      AUTH_MODE: ${AUTH_MODE:-dev}
+      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM:-it-school-crm}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-it-school-crm-backend}
+      PORT: 3000
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://localhost:4200,http://localhost:8123}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      CACHE_TTL_CATALOGS_SEC: ${CACHE_TTL_CATALOGS_SEC:-300}
+      CACHE_TTL_DASHBOARD_SEC: ${CACHE_TTL_DASHBOARD_SEC:-60}
+      CACHE_TTL_CHARTS_SEC: ${CACHE_TTL_CHARTS_SEC:-180}
+      # always — пересеять демо-данными при каждом старте контейнера (удобно для
+      # одноразовых демо-прогонов, но стирает то, что накопилось на сервере);
+      # if-empty (по умолчанию) — только при первом старте на пустой БД; never —
+      # миграции применяются, seed не трогаем (реальные пользовательские данные).
+      SEED_ON_START: ${SEED_ON_START:-if-empty}
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
+    # Healthcheck самого backend не переопределён здесь: используется тот,
+    # что уже задан HEALTHCHECK-инструкцией в backend/Dockerfile (GET /health —
+    # тот же эндпоинт, что проверяет Postgres/Redis/MinIO по одному лёгкому
+    # пингу на каждый, см. src/health). `docker compose ps` сразу покажет
+    # backend healthy/unhealthy.
 
 volumes:
   postgres-data:
