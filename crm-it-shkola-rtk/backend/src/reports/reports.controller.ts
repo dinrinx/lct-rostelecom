@@ -1,11 +1,10 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query, Req, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query, Req, UseInterceptors } from '@nestjs/common';
 import { ApiBody, ApiHeader, ApiOkResponse, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { ExportFormat, InteractionReportFilters, ReportsService } from './reports.service';
-import { CreateReportJobDto, ReportJobDto } from './dto/report-job.dto';
-import { LicenseRadarResultDto } from './dto/license-radar.dto';
+import { CreateReportJobDto, ReportJobDto, ReportTypeDto } from './dto/report-job.dto';
+import { ReportQueueService } from './report-queue.service';
 import { InteractionReportItemDto, InteractionsReportExportDto } from './dto/interaction-report-item.dto';
 import { ChartsResponseDto } from './dto/charts.dto';
-import { LICENSE_RADAR_RESULT_FIXTURE, REPORT_JOB_FIXTURE } from './fixtures/reports.fixtures';
 import { CatalogScopeInterceptor, RequestWithCatalogScope } from '../catalogs/catalog-scope.interceptor';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRoleDto } from '../auth/dto/user.dto';
@@ -21,7 +20,10 @@ export const ANY_ROLE = [UserRoleDto.KAM, UserRoleDto.RUKOVODITEL, UserRoleDto.A
 @UseInterceptors(CatalogScopeInterceptor)
 @Controller('reports')
 export class ReportsController {
-  constructor(private readonly reportsService: ReportsService) {}
+  constructor(
+    private readonly reportsService: ReportsService,
+    private readonly reportQueue: ReportQueueService,
+  ) {}
 
   @Get('interactions')
   @ApiOperation({ summary: 'Реестр взаимодействий с фильтрами (период/вуз/направление/продукт/ответственный)' })
@@ -75,31 +77,39 @@ export class ReportsController {
     return this.reportsService.getCharts(request.catalogScope!, parseFilters(query));
   }
 
-  // Отчёты формируются асинхронно (очередь BullMQ), поэтому запрос сразу
-  // возвращает job без ожидания результата.
+  // Асинхронные отчёты (BullMQ): POST сразу отдаёт jobId, файл готовится в
+  // воркере и кладётся в хранилище. Синхронный GET /reports/interactions/export
+  // остаётся как fallback для небольших выгрузок.
   @Post('jobs')
   @HttpCode(HttpStatus.ACCEPTED)
-  @ApiOperation({ summary: 'Поставить отчёт в очередь на формирование' })
+  @ApiOperation({
+    summary: 'Поставить отчёт/экспорт в очередь (INTERACTIONS_EXPORT xls|xlsx|pdf, LICENSE_RADAR, SLA_RADAR)',
+    description: 'Возвращает job (id = jobId). Статус и ссылка на файл — GET /reports/export-status/{jobId}.',
+  })
   @ApiBody({ type: CreateReportJobDto })
   @ApiOkResponse({ type: ReportJobDto })
-  createReportJob(@Body() _dto: CreateReportJobDto): ReportJobDto {
-    return REPORT_JOB_FIXTURE;
+  createReportJob(
+    @Req() request: RequestWithCatalogScope,
+    @Body() dto: CreateReportJobDto,
+  ): Promise<ReportJobDto> {
+    if (!Object.values(ReportTypeDto).includes(dto?.type)) {
+      throw new BadRequestException({
+        code: 'REPORT_TYPE_INVALID',
+        message: `type должен быть одним из: ${Object.values(ReportTypeDto).join(', ')}`,
+      });
+    }
+    return this.reportQueue.enqueue(dto, request.catalogScope!);
   }
 
-  @Get('jobs/:id')
-  @ApiOperation({ summary: 'Статус отчёта по идентификатору задания' })
-  @ApiParam({ name: 'id', example: REPORT_JOB_FIXTURE.id })
+  @Get('export-status/:jobId')
+  @ApiOperation({
+    summary: 'Статус задания отчёта; при SUCCESS — временная ссылка на файл (resultUrl)',
+    description: 'Задание видит его автор и Администратор. Готовые задания хранятся ~1 час, затем 404.',
+  })
+  @ApiParam({ name: 'jobId', example: '42' })
   @ApiOkResponse({ type: ReportJobDto })
-  getReportJob(@Param('id') _id: string): ReportJobDto {
-    return REPORT_JOB_FIXTURE;
-  }
-
-  @Get('jobs/:id/result')
-  @ApiOperation({ summary: 'Результат отчёта «Радар лицензий и SLA»' })
-  @ApiParam({ name: 'id', example: REPORT_JOB_FIXTURE.id })
-  @ApiOkResponse({ type: LicenseRadarResultDto })
-  getReportResult(@Param('id') _id: string): LicenseRadarResultDto {
-    return LICENSE_RADAR_RESULT_FIXTURE;
+  getExportStatus(@Req() request: RequestWithCatalogScope, @Param('jobId') jobId: string): Promise<ReportJobDto> {
+    return this.reportQueue.getStatus(jobId, request.catalogScope!);
   }
 }
 

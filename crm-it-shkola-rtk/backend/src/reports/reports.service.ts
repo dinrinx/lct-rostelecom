@@ -29,6 +29,13 @@ export interface InteractionReportFilters {
 
 export type ExportFormat = 'xls' | 'xlsx' | 'pdf';
 
+export interface GeneratedReportFile {
+  storageKey: string;
+  fileName: string;
+  mimeType: string;
+  rowCount: number;
+}
+
 // Колонки выгрузки — те же, что в таблице реестра на фронте.
 const EXPORT_COLUMNS: Array<{ header: string; key: keyof InteractionReportItemDto; width: number }> = [
   { header: 'Наименование вуза', key: 'universityName', width: 36 },
@@ -186,9 +193,23 @@ export class ReportsService {
     filters: InteractionReportFilters,
     format: ExportFormat,
   ): Promise<InteractionsReportExportDto> {
-    const rows = await this.listInteractions(scope, filters);
     const generatedAt = new Date();
-    const fileName = `reestr-vzaimodeystviy-${generatedAt.toISOString().slice(0, 10)}.${format}`;
+    const file = await this.generateInteractionsFile(scope, filters, format);
+    const url = await this.presignExport(file.storageKey, file.fileName);
+    return { format, fileName: file.fileName, url, generatedAt: generatedAt.toISOString(), rowCount: file.rowCount };
+  }
+
+  // Общий путь для синхронного GET /reports/interactions/export и для BullMQ-воркера
+  // (report-queue.service.ts): строит файл, кладёт в хранилище, возвращает ключ.
+  // Ссылка НЕ генерируется здесь — в асинхронном режиме она выдаётся заново при
+  // каждом GET /reports/export-status, чтобы не протухать, пока файл лежит.
+  async generateInteractionsFile(
+    scope: CatalogScope,
+    filters: InteractionReportFilters,
+    format: ExportFormat,
+  ): Promise<GeneratedReportFile> {
+    const rows = await this.listInteractions(scope, filters);
+    const fileName = `reestr-vzaimodeystviy-${new Date().toISOString().slice(0, 10)}.${format}`;
 
     let buffer: Buffer;
     let mimeType: string;
@@ -208,20 +229,44 @@ export class ReportsService {
       mimeType = 'application/vnd.ms-excel';
     }
 
-    const storageKey = `exports/${randomUUID()}.${format}`;
-    let url: string;
+    const storageKey = await this.storeExport(buffer, mimeType, format);
+    return { storageKey, fileName, mimeType, rowCount: rows.length };
+  }
+
+  // Радары в очереди отдаются JSON-файлом с тем же телом, что и синхронные
+  // GET /dashboard/*-radar — фронт разбирает один и тот же формат.
+  async generateRadarFile(type: 'LICENSE_RADAR' | 'SLA_RADAR', scope: CatalogScope): Promise<GeneratedReportFile> {
+    const result = type === 'LICENSE_RADAR' ? await this.getLicenseRadar(scope) : await this.getSlaRadar(scope);
+    const buffer = Buffer.from(JSON.stringify(result, null, 2), 'utf-8');
+    const fileName = `${type === 'LICENSE_RADAR' ? 'radar-licenziy' : 'radar-sla'}-${new Date().toISOString().slice(0, 10)}.json`;
+    const storageKey = await this.storeExport(buffer, 'application/json', 'json');
+    return { storageKey, fileName, mimeType: 'application/json', rowCount: result.items.length };
+  }
+
+  async presignExport(storageKey: string, fileName: string): Promise<string> {
+    try {
+      return await this.minio.presignedDownloadUrl(storageKey, EXPORT_URL_EXPIRY_SECONDS, fileName);
+    } catch (error) {
+      throw this.storageUnavailable(error);
+    }
+  }
+
+  private async storeExport(buffer: Buffer, mimeType: string, extension: string): Promise<string> {
+    const storageKey = `exports/${randomUUID()}.${extension}`;
     try {
       await this.minio.putObject(storageKey, buffer, mimeType);
-      url = await this.minio.presignedDownloadUrl(storageKey, EXPORT_URL_EXPIRY_SECONDS, fileName);
     } catch (error) {
-      const err = error as { message?: string; code?: string };
-      throw new ServiceUnavailableException({
-        code: 'STORAGE_UNAVAILABLE',
-        message: `Хранилище файлов (MinIO) недоступно: ${err?.message || err?.code || String(error)}`,
-      });
+      throw this.storageUnavailable(error);
     }
+    return storageKey;
+  }
 
-    return { format, fileName, url, generatedAt: generatedAt.toISOString(), rowCount: rows.length };
+  private storageUnavailable(error: unknown): ServiceUnavailableException {
+    const err = error as { message?: string; code?: string };
+    return new ServiceUnavailableException({
+      code: 'STORAGE_UNAVAILABLE',
+      message: `Хранилище файлов (MinIO) недоступно: ${err?.message || err?.code || String(error)}`,
+    });
   }
 
   async getLicenseRadar(scope: CatalogScope): Promise<LicenseRadarResultDto> {

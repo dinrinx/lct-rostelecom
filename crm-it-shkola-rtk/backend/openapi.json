@@ -1088,7 +1088,38 @@
     "/catalogs/import/preview": {
       "post": {
         "operationId": "CatalogsController_previewImport",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "X-Dev-Role",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "administrator"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "mapping": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "JSON-массив ImportColumnMappingDto[], например [{\"column\":\"Название вуза\",\"field\":\"universityName\"},{\"column\":\"Регион\",\"field\":\"region\"}]"
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "",
@@ -1101,7 +1132,7 @@
             }
           }
         },
-        "summary": "Превью xlsx-импорта: маппинг полей, дедуп/фаззи-матчинг по вузу",
+        "summary": "Превью xlsx-импорта вузов: маппинг колонок файла на поля University, дедуп/фаззи-матчинг по названию. Без \"mapping\" в теле — вернёт заголовки колонок файла и предложенный маппинг (rows пустой, isMappingSuggestion=true); с \"mapping\" — реальный построчный результат: NEW (создастся), DUPLICATE_EXACT (смэтчится), DUPLICATE_FUZZY (похоже, но требует проверки — commit её не применяет).",
         "tags": [
           "catalogs"
         ]
@@ -1110,7 +1141,17 @@
     "/catalogs/import/commit": {
       "post": {
         "operationId": "CatalogsController_commitImport",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "X-Dev-Role",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "administrator"
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1133,7 +1174,7 @@
             }
           }
         },
-        "summary": "Подтвердить и записать результат импорта, полученный в превью",
+        "summary": "Подтвердить и записать результат импорта из preview: NEW создаёт University, DUPLICATE_EXACT обновляет смэтченный, DUPLICATE_FUZZY (\"требует проверки\") пропускается — не применяется автоматически.",
         "tags": [
           "catalogs"
         ]
@@ -1417,6 +1458,58 @@
           }
         },
         "summary": "Взаимодействие по идентификатору",
+        "tags": [
+          "workflow"
+        ]
+      }
+    },
+    "/workflow/instances/{id}/assignment": {
+      "put": {
+        "description": "Не мутирует статус/историю — только universityId/responsibleUserId (+пересчитывает needsReview). Хотя бы одно из полей обязательно. Если передан только universityId — ответственным по умолчанию становится кАМ этого вуза (University.kamId), как и при создании инстанса вручную. Руководитель может назначать вуз/ответственного только в пределах своей команды.",
+        "operationId": "WorkflowController_assignInstance",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "b3000000-0000-4000-8000-000000000001",
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Dev-Role",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "rukovoditel"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignInteractionInstanceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InteractionInstanceDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Назначить вуз и/или ответственного инстансу без них (needsReview=true из integrations/sync)",
         "tags": [
           "workflow"
         ]
@@ -1763,6 +1856,7 @@
     },
     "/reports/jobs": {
       "post": {
+        "description": "Возвращает job (id = jobId). Статус и ссылка на файл — GET /reports/export-status/{jobId}.",
         "operationId": "ReportsController_createReportJob",
         "parameters": [
           {
@@ -1797,15 +1891,16 @@
             }
           }
         },
-        "summary": "Поставить отчёт в очередь на формирование",
+        "summary": "Поставить отчёт/экспорт в очередь (INTERACTIONS_EXPORT xls|xlsx|pdf, LICENSE_RADAR, SLA_RADAR)",
         "tags": [
           "reports"
         ]
       }
     },
-    "/reports/jobs/{id}": {
+    "/reports/export-status/{jobId}": {
       "get": {
-        "operationId": "ReportsController_getReportJob",
+        "description": "Задание видит его автор и Администратор. Готовые задания хранятся ~1 час, затем 404.",
+        "operationId": "ReportsController_getExportStatus",
         "parameters": [
           {
             "name": "X-Dev-Role",
@@ -1817,11 +1912,11 @@
             }
           },
           {
-            "name": "id",
+            "name": "jobId",
             "required": true,
             "in": "path",
             "schema": {
-              "example": "d0000000-0000-4000-8000-000000000001",
+              "example": "42",
               "type": "string"
             }
           }
@@ -1838,48 +1933,7 @@
             }
           }
         },
-        "summary": "Статус отчёта по идентификатору задания",
-        "tags": [
-          "reports"
-        ]
-      }
-    },
-    "/reports/jobs/{id}/result": {
-      "get": {
-        "operationId": "ReportsController_getReportResult",
-        "parameters": [
-          {
-            "name": "X-Dev-Role",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "example": "kam"
-            }
-          },
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "example": "d0000000-0000-4000-8000-000000000001",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LicenseRadarResultDto"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Результат отчёта «Радар лицензий и SLA»",
+        "summary": "Статус задания отчёта; при SUCCESS — временная ссылка на файл (resultUrl)",
         "tags": [
           "reports"
         ]
@@ -2099,6 +2153,7 @@
     },
     "/integrations/orders": {
       "get": {
+        "description": "МОК: читает backend/fixtures/integrations/orders.json вместо реального обращения к внешнему API. Контракт (форма заявки, см. OrderDto) принят самостоятельно по итогам разбора реального экспортного файла от организаторов — в проде здесь был бы HTTP-вызов к сайту/LMS с тем же самым выходным контрактом.",
         "operationId": "IntegrationsController_getOrders",
         "parameters": [],
         "responses": {
@@ -2120,72 +2175,11 @@
         "tags": [
           "integrations"
         ]
-      },
-      "post": {
-        "operationId": "IntegrationsController_receiveOrder",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/OrderDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OrderDto"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Приём заявки из внешней системы (сайт/LMS)",
-        "tags": [
-          "integrations"
-        ]
-      }
-    },
-    "/integrations/orders/{externalId}": {
-      "get": {
-        "operationId": "IntegrationsController_getOrderByExternalId",
-        "parameters": [
-          {
-            "name": "externalId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "example": "ORD-2026-000145",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OrderDto"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Заявка по номеру (внешний «Номер заявки»)",
-        "tags": [
-          "integrations"
-        ]
       }
     },
     "/integrations/sync": {
       "post": {
+        "description": "МОК: в реальной интеграции это был бы вызов внешнего API сайта/LMS (см. GET /integrations/orders); здесь синхронизация читает тот же фиктивный адаптер. Заявка не содержит вуза — маппинг заявка→вуз НЕ выполняется автоматически: определяется только направление/продукт (через course-mapping), а вуз и ответственный назначаются вручную (needsReview=true до назначения).",
         "operationId": "IntegrationsController_runSync",
         "parameters": [],
         "responses": {
@@ -3165,6 +3159,30 @@
           }
         }
       },
+      "ImportColumnMappingDto": {
+        "type": "object",
+        "properties": {
+          "column": {
+            "type": "string",
+            "example": "Название вуза",
+            "description": "Точный заголовок колонки в файле"
+          },
+          "field": {
+            "enum": [
+              "universityName",
+              "inn",
+              "region",
+              "website"
+            ],
+            "type": "string",
+            "example": "universityName"
+          }
+        },
+        "required": [
+          "column",
+          "field"
+        ]
+      },
       "ImportPreviewRowDto": {
         "type": "object",
         "properties": {
@@ -3191,6 +3209,11 @@
             "nullable": true,
             "example": "a5000000-0000-4000-8000-000000000001",
             "description": "ID существующего вуза, если найдено совпадение"
+          },
+          "similarity": {
+            "type": "number",
+            "example": 0.86,
+            "description": "Оценка схожести названия с matchedUniversityId (0..1), только для DUPLICATE_FUZZY"
           }
         },
         "required": [
@@ -3210,6 +3233,31 @@
             "type": "string",
             "example": "Загрузка пользователей.xlsx"
           },
+          "availableColumns": {
+            "example": [
+              "Название вуза",
+              "ИНН",
+              "Регион",
+              "Сайт"
+            ],
+            "description": "Заголовки колонок первого листа файла — кандидаты для маппинга",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "appliedMapping": {
+            "description": "Маппинг, который реально применён к rows. Если запрос пришёл без mapping — это авто-подобранное предположение (по ключевым словам в заголовках), а rows пустой: сначала подтвердите/поправьте маппинг и вызовите preview повторно с ним же в теле запроса.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportColumnMappingDto"
+            }
+          },
+          "isMappingSuggestion": {
+            "type": "boolean",
+            "example": false,
+            "description": "true — маппинг не был передан явно, это только предложенный вариант; rows ещё пустой"
+          },
           "rows": {
             "type": "array",
             "items": {
@@ -3218,19 +3266,27 @@
           },
           "totalRows": {
             "type": "number",
-            "example": 30
+            "example": 30,
+            "description": "Строк с данными в файле (без учёта строки заголовка)"
           },
           "duplicateRows": {
             "type": "number",
             "example": 3
+          },
+          "skippedRows": {
+            "type": "number",
+            "example": 1,
+            "description": "Строки, пропущенные из rows — пустое значение в колонке, смапленной на universityName"
           }
         },
         "required": [
           "previewId",
           "fileName",
+          "isMappingSuggestion",
           "rows",
           "totalRows",
-          "duplicateRows"
+          "duplicateRows",
+          "skippedRows"
         ]
       },
       "CommitImportDto": {
@@ -3672,6 +3728,7 @@
           },
           "universityId": {
             "type": "string",
+            "nullable": true,
             "example": "a5000000-0000-4000-8000-000000000001"
           },
           "itProductId": {
@@ -3689,7 +3746,19 @@
           },
           "responsibleUserId": {
             "type": "string",
+            "nullable": true,
             "example": "c0000000-0000-4000-8000-000000000001"
+          },
+          "externalId": {
+            "type": "string",
+            "nullable": true,
+            "example": "ORD-20260313051569-OYJRVN",
+            "description": "«Номер заявки» из внешней интеграции — ключ дедупа. null для инстансов, созданных вручную."
+          },
+          "needsReview": {
+            "type": "boolean",
+            "example": false,
+            "description": "true — требует ручной проверки (вуз/направление не удалось определить автоматически из интеграции)"
           },
           "createdAt": {
             "type": "string",
@@ -3702,10 +3771,9 @@
         },
         "required": [
           "id",
-          "universityId",
           "workflowTemplateVersionId",
           "currentStatusId",
-          "responsibleUserId",
+          "needsReview",
           "createdAt",
           "updatedAt"
         ]
@@ -3732,6 +3800,19 @@
         "required": [
           "universityId"
         ]
+      },
+      "AssignInteractionInstanceDto": {
+        "type": "object",
+        "properties": {
+          "universityId": {
+            "type": "string",
+            "example": "a5000000-0000-4000-8000-000000000001"
+          },
+          "responsibleUserId": {
+            "type": "string",
+            "example": "c0000000-0000-4000-8000-000000000001"
+          }
+        }
       },
       "TransitionInteractionInstanceDto": {
         "type": "object",
@@ -3836,10 +3917,12 @@
           },
           "universityId": {
             "type": "string",
+            "nullable": true,
             "example": "a5000000-0000-4000-8000-000000000001"
           },
           "universityName": {
             "type": "string",
+            "nullable": true,
             "example": "СПбГУ (демо)"
           },
           "itDirectionId": {
@@ -3885,10 +3968,12 @@
           },
           "responsibleUserId": {
             "type": "string",
+            "nullable": true,
             "example": "c0000000-0000-4000-8000-000000000001"
           },
           "responsibleUserName": {
             "type": "string",
+            "nullable": true,
             "example": "Иванова Мария Сергеевна"
           },
           "createdAt": {
@@ -3908,21 +3993,23 @@
             "type": "boolean",
             "example": false,
             "description": "Превышен ли SLA-порог для текущего статуса"
+          },
+          "needsReview": {
+            "type": "boolean",
+            "example": false,
+            "description": "true — требует ручной проверки (вуз/направление не определены автоматически из интеграции)"
           }
         },
         "required": [
           "interactionInstanceId",
-          "universityId",
-          "universityName",
           "currentStatusId",
           "currentStatusName",
           "currentPhase",
-          "responsibleUserId",
-          "responsibleUserName",
           "createdAt",
           "updatedAt",
           "daysInCurrentStatus",
-          "isOverdue"
+          "isOverdue",
+          "needsReview"
         ]
       },
       "InteractionsReportExportDto": {
@@ -4030,10 +4117,44 @@
           "type": {
             "enum": [
               "LICENSE_RADAR",
-              "SLA_RADAR"
+              "SLA_RADAR",
+              "INTERACTIONS_EXPORT"
             ],
             "type": "string",
-            "example": "LICENSE_RADAR"
+            "example": "INTERACTIONS_EXPORT"
+          },
+          "format": {
+            "enum": [
+              "xls",
+              "xlsx",
+              "pdf"
+            ],
+            "type": "string",
+            "example": "xlsx",
+            "description": "Только для INTERACTIONS_EXPORT (по умолчанию xlsx). Радары отдаются файлом JSON."
+          },
+          "from": {
+            "type": "string",
+            "example": "2026-09-01"
+          },
+          "to": {
+            "type": "string",
+            "example": "2026-09-30"
+          },
+          "universityId": {
+            "type": "string"
+          },
+          "itDirectionId": {
+            "type": "string"
+          },
+          "itProductId": {
+            "type": "string"
+          },
+          "responsibleUserId": {
+            "type": "string"
+          },
+          "onlyOverdue": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -4045,15 +4166,17 @@
         "properties": {
           "id": {
             "type": "string",
-            "example": "d0000000-0000-4000-8000-000000000001"
+            "example": "42",
+            "description": "jobId очереди BullMQ"
           },
           "type": {
             "enum": [
               "LICENSE_RADAR",
-              "SLA_RADAR"
+              "SLA_RADAR",
+              "INTERACTIONS_EXPORT"
             ],
             "type": "string",
-            "example": "LICENSE_RADAR"
+            "example": "INTERACTIONS_EXPORT"
           },
           "status": {
             "enum": [
@@ -4080,7 +4203,23 @@
           "resultUrl": {
             "type": "string",
             "nullable": true,
-            "example": "/reports/jobs/d0000000-0000-4000-8000-000000000001/result"
+            "example": "http://localhost:3900/crm-attachments/exports/....xlsx?X-Amz-Expires=600&...",
+            "description": "Временная ссылка на готовый файл в хранилище (только при status=SUCCESS); при каждом GET выдаётся заново"
+          },
+          "fileName": {
+            "type": "string",
+            "nullable": true,
+            "example": "reestr-vzaimodeystviy-2026-09-26.xlsx"
+          },
+          "rowCount": {
+            "type": "number",
+            "nullable": true,
+            "example": 120
+          },
+          "error": {
+            "type": "string",
+            "nullable": true,
+            "description": "Причина ошибки (только при status=FAILED)"
           }
         },
         "required": [
@@ -4178,10 +4317,12 @@
           },
           "universityId": {
             "type": "string",
+            "nullable": true,
             "example": "a5000000-0000-4000-8000-000000000001"
           },
           "universityName": {
             "type": "string",
+            "nullable": true,
             "example": "СПбГУ (демо)"
           },
           "currentStatusId": {
@@ -4207,10 +4348,12 @@
           },
           "responsibleUserId": {
             "type": "string",
+            "nullable": true,
             "example": "c0000000-0000-4000-8000-000000000001"
           },
           "responsibleUserName": {
             "type": "string",
+            "nullable": true,
             "example": "Иванова Мария Сергеевна"
           },
           "statusSince": {
@@ -4230,13 +4373,9 @@
         },
         "required": [
           "interactionInstanceId",
-          "universityId",
-          "universityName",
           "currentStatusId",
           "currentStatusName",
           "phase",
-          "responsibleUserId",
-          "responsibleUserName",
           "statusSince",
           "daysInStatus",
           "slaThresholdDays"

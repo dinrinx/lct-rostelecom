@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ReportsController } from './reports.controller';
 import { DashboardController } from './dashboard.controller';
 import { ReportsService } from './reports.service';
+import { ReportQueueService } from './report-queue.service';
 import { CatalogScopeInterceptor } from '../catalogs/catalog-scope.interceptor';
 
 // CatalogScopeInterceptor переиспользуется из catalogs (та же построчная
@@ -9,6 +10,6 @@ import { CatalogScopeInterceptor } from '../catalogs/catalog-scope.interceptor';
 // за тем же паттерном.
 @Module({
   controllers: [ReportsController, DashboardController],
-  providers: [ReportsService, CatalogScopeInterceptor],
+  providers: [ReportsService, ReportQueueService, CatalogScopeInterceptor],
 })
 export class ReportsModule {}
