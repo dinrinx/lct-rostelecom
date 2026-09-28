@@ -17,74 +17,183 @@
 <script src="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/_ds_bundle.js"></script>
 <script src="crm-data.js"></script>
 </helmet>
-<div style="display:flex;flex-direction:column;gap:16px;font-family:var(--font-sans);color:var(--color-fg-default)">
+<div style="display:flex;flex-direction:column;gap:24px;font-family:var(--font-sans);color:rgb(32,33,51)">
 
   <sc-if value="{{ isLoading }}" hint-placeholder-val="{{ true }}">
-    <div style="display:flex;flex-direction:column;gap:8px"><sc-for list="{{ skeleton }}" as="k" hint-placeholder-count="5"><div style="height:72px;border-radius:12px;background:var(--color-bg-surface3);animation:crmPulse 1.2s ease-in-out infinite"></div></sc-for></div>
+    <div style="display:flex;flex-direction:column;gap:12px"><sc-for list="{{ skeleton }}" as="k" hint-placeholder-count="4"><div style="height:72px;border-radius:14px;background:rgb(238,240,245);animation:crmPulse 1.2s ease-in-out infinite"></div></sc-for></div>
   </sc-if>
   <sc-if value="{{ isError }}">
-    <div role="alert" style="display:flex;flex-direction:column;gap:12px;align-items:flex-start;padding:32px;border-radius:16px;background:var(--color-bg-surface3)">
-      <div style="font-weight:700;font-size:22px;line-height:1.2">Не удалось загрузить данные команды</div>
-      <div style="font-size:14px;line-height:20px;color:var(--color-error-strong)">Код: {{ error.code }}</div>
-      <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" size="m" on-click="{{ retry }}" hint-size="140px,48px">Повторить</x-import>
+    <div role="alert" style="display:flex;gap:12px;align-items:flex-start;padding:20px;border-radius:14px;background:rgb(255,240,241)">
+      <img src="assets/icons/alert25--red2.svg" alt="" style="display:block;width:25px;height:25px;flex-shrink:0">
+      <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+        <span style="font-weight:700;font-size:16px;line-height:22px;color:rgb(184,48,62)">Не удалось загрузить данные команды</span>
+        <span style="font-size:13px;line-height:19px;color:rgb(184,48,62)">Код: {{ error.code }}</span>
+        <button onClick="{{ retry }}" style="height:44px;padding:0 20px;box-sizing:border-box;border:none;border-radius:10px;background:#fff;box-shadow:inset 0 0 0 1px rgb(227,229,237);font-family:inherit;font-weight:700;font-size:14px;line-height:20px;color:rgb(32,33,51);cursor:pointer;" style-hover="background:rgb(245,246,250)">Повторить</button>
+      </div>
     </div>
   </sc-if>
   <sc-if value="{{ isEmpty }}">
-    <div style="display:flex;flex-direction:column;gap:8px;padding:40px 32px;border-radius:16px;background:var(--color-bg-surface3)">
-      <div style="font-weight:700;font-size:22px;line-height:1.2">{{ emptyTitle }}</div>
-      <div style="max-width:520px;font-size:16px;line-height:24px;color:var(--color-fg-soft)">{{ emptyText }}</div>
+    <div style="display:flex;flex-direction:column;gap:8px;padding:32px;border-radius:14px;background:#fff;box-shadow:inset 0 0 0 1px rgb(227,229,237)">
+      <span style="font-weight:700;font-size:21px;line-height:28px">{{ emptyTitle }}</span>
+      <span style="max-width:520px;font-size:14px;line-height:20px;color:rgb(104,112,133)">{{ emptyText }}</span>
     </div>
   </sc-if>
 
   <sc-if value="{{ showRadar }}">
-    <div data-screen-label="07 Командный радар" style="display:flex;flex-direction:column;gap:8px">
-      <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;line-height:16px;color:var(--color-fg-soft);padding-bottom:4px">
-        <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:999px;background:var(--color-error)"></span>Зависли по SLA</span>
-        <sc-for list="{{ bucketLegend }}" as="b"><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:2px;background:{{ b.color }}"></span>Лицензии: {{ b.label }}</span></sc-for>
+    <div data-screen-label="07 Командный радар" style="display:flex;flex-direction:column;gap:24px">
+      <div style="display:grid;grid-template-columns:{{ kpiCols }};gap:24px">
+        <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="3">
+          <div style="display:flex;flex-direction:column;gap:10px;padding:22px 20px;border-radius:14px;background:#fff;box-shadow:inset 0 0 0 1px rgb(227,229,237)">
+            <span style="font-size:14px;line-height:20px;color:rgb(104,112,133)">{{ k.label }}</span>
+            <span style="font-weight:700;font-size:32px;line-height:40px;color:{{ k.color }}">{{ k.value }}</span>
+          </div>
+        </sc-for>
       </div>
-      <sc-for list="{{ kams }}" as="k" hint-placeholder-count="5">
-        <button onClick="{{ k.go }}" style="display:grid;grid-template-columns:{{ radarCols }};gap:16px;align-items:center;padding:16px 20px;border:none;border-radius:16px;background:var(--color-bg-surface3);text-align:left;cursor:pointer;color:var(--color-fg-default);font-family:var(--font-sans)" style-hover="background:var(--color-bg-surface4)">
-          <span style="font-weight:700;font-size:22px;line-height:1.2;color:{{ k.rankColor }}">{{ k.rank }}</span>
-          <span style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-size:16px;line-height:24px;font-weight:500">{{ k.name }}</span><span style="font-size:12px;line-height:16px;color:var(--color-fg-muted)">{{ k.meta }}</span></span>
-          <span style="display:flex;flex-direction:column;gap:6px">
-            <span style="display:flex;align-items:center;gap:8px"><span style="flex:1;height:10px;border-radius:999px;background:#fff;overflow:hidden"><span style="display:block;height:100%;width:{{ k.slaPct }};background:var(--color-error);border-radius:999px"></span></span><span style="width:28px;text-align:right;font-size:14px;line-height:20px;font-weight:500;color:{{ k.slaColor }}">{{ k.sla }}</span></span>
-            <span style="display:flex;gap:4px;flex-wrap:wrap"><sc-for list="{{ k.lic }}" as="b"><span title="{{ b.label }}" style="display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 8px;border-radius:999px;background:#fff;font-size:12px;line-height:16px;color:var(--color-fg-soft)"><span style="width:8px;height:8px;border-radius:2px;background:{{ b.color }}"></span>{{ b.n }}</span></sc-for></span>
-          </span>
-        </button>
-      </sc-for>
+
+      <section style="display:flex;flex-direction:column;padding:24px 0 8px;border-radius:14px;background:#fff;box-shadow:inset 0 0 0 1px rgb(227,229,237);overflow:hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:0 22px 16px;flex-wrap:wrap">
+          <h2 style="margin:0;font-weight:700;font-size:21px;line-height:28px">Где больше просрочек</h2>
+          <button onClick="{{ toggleSort }}" style="display:flex;align-items:center;gap:12px;padding:0;border:none;background:transparent;cursor:pointer;font-family:inherit;font-size:13px;line-height:19px;color:rgb(104,112,133)"><img src="assets/icons/sort18--slate.svg" alt="" style="display:block;width:18px;height:18px;flex-shrink:0">{{ sortLabel }}</button>
+        </div>
+        <div style="overflow-x:auto"><div style="min-width:820px">
+          <div style="display:grid;grid-template-columns:{{ rankCols }};gap:12px;padding:0 22px 12px;font-weight:700;font-size:12px;line-height:16px;color:rgb(104,112,133)"><span>Ответственный</span><span>Вузы</span><span>Просрочено SLA</span><span style="text-align:center">До 7 дней</span><span style="text-align:center">До 30 дней</span><span style="text-align:center">До 60 дней</span><span></span></div>
+          <sc-for list="{{ kams }}" as="k" hint-placeholder-count="4">
+            <button onClick="{{ k.pick }}" aria-pressed="{{ k.selected }}" style="position:relative;display:grid;grid-template-columns:{{ rankCols }};gap:12px;align-items:center;width:100%;min-height:54px;padding:0 22px;box-sizing:border-box;border:none;background:{{ k.bg }};text-align:left;cursor:pointer;font-family:inherit;color:rgb(32,33,51)" style-hover="background:{{ k.hover }}">
+              <sc-if value="{{ k.selected }}"><span style="position:absolute;left:0;top:0;bottom:0;width:3px;background:rgb(119,0,255)"></span></sc-if>
+              <span style="display:flex;align-items:center;gap:14px;min-width:0"><span style="width:32px;height:32px;border-radius:50%;background:rgb(242,234,254);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;line-height:16px;color:rgb(89,0,199);flex-shrink:0">{{ k.initials }}</span><span style="font-weight:700;font-size:14px;line-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ k.name }}</span></span>
+              <span style="font-size:14px;line-height:20px;padding-left:24px">{{ k.unis }}</span>
+              <span style="display:flex;align-items:center;gap:16px"><span style="flex:1;max-width:158px;height:6px;border-radius:3px;background:rgb(238,240,245);overflow:hidden"><span style="display:block;height:100%;width:{{ k.slaPct }};border-radius:3px;background:rgb(184,48,62)"></span></span><span style="font-weight:700;font-size:14px;line-height:20px;color:{{ k.slaColor }}">{{ k.sla }}</span></span>
+              <span style="text-align:center;font-weight:700;font-size:14px;line-height:20px">{{ k.w7 }}</span>
+              <span style="text-align:center;font-weight:700;font-size:14px;line-height:20px">{{ k.w30 }}</span>
+              <span style="text-align:center;font-weight:700;font-size:14px;line-height:20px">{{ k.w60 }}</span>
+              <span style="display:flex;justify-content:flex-end"><sc-if value="{{ k.chev }}"><img src="{{ k.chev }}" alt="" style="display:block;width:16px;height:16px"></sc-if></span>
+            </button>
+          </sc-for>
+        </div></div>
+      </section>
+
+      <sc-if value="{{ hasSel }}">
+        <div style="display:flex;align-items:baseline;gap:24px;flex-wrap:wrap">
+          <h2 style="margin:0;font-weight:700;font-size:24px;line-height:32px">{{ sel.name }}</h2>
+          <span style="font-size:13px;line-height:19px;color:rgb(104,112,133)">{{ sel.meta }}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:{{ detailCols }};gap:24px">
+          <section style="display:flex;flex-direction:column;gap:16px;padding:24px 22px;border-radius:14px;background:#fff;box-shadow:inset 0 0 0 1px rgb(227,229,237)">
+            <h3 style="margin:0;font-weight:700;font-size:18px;line-height:26px">Ближайшие лицензии</h3>
+            <div style="display:flex;gap:18px;flex-wrap:wrap">
+              <sc-for list="{{ sel.chips }}" as="c" hint-placeholder-count="3">
+                <button onClick="{{ c.pick }}" style="min-width:148px;height:28px;padding:0 10px;box-sizing:border-box;border:none;border-radius:7px;background:{{ c.bg }};text-align:left;font-family:inherit;font-weight:700;font-size:12px;line-height:16px;color:{{ c.fg }};cursor:pointer">{{ c.label }}</button>
+              </sc-for>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <sc-for list="{{ sel.lics }}" as="l" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:28px"><span style="font-weight:{{ l.weight }};font-size:14px;line-height:20px">{{ l.title }}</span><span style="min-width:84px;height:28px;padding:0 10px;box-sizing:border-box;display:flex;align-items:center;border-radius:7px;background:{{ l.bg }};font-weight:700;font-size:12px;line-height:16px;color:{{ l.fg }}">{{ l.when }}</span></div>
+              </sc-for>
+              <sc-if value="{{ sel.licNone }}"><span style="font-size:13px;line-height:19px;color:rgb(104,112,133)">Лицензий в этом окне нет.</span></sc-if>
+            </div>
+          </section>
+          <section style="display:flex;flex-direction:column;gap:16px;padding:24px 22px;border-radius:14px;background:#fff;box-shadow:inset 0 0 0 1px rgb(227,229,237)">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+              <h3 style="margin:0;font-weight:700;font-size:18px;line-height:26px">Задержки по SLA</h3>
+              <sc-if value="{{ sel.slaCount }}"><span style="min-width:140px;height:28px;padding:0 10px;box-sizing:border-box;display:flex;align-items:center;border-radius:7px;background:rgb(255,240,241);font-weight:700;font-size:12px;line-height:16px;color:rgb(184,48,62)">{{ sel.slaBadge }}</span></sc-if>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:16px">
+              <sc-for list="{{ sel.sla }}" as="r" hint-placeholder-count="2">
+                <button onClick="{{ r.open }}" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0;border:none;background:transparent;text-align:left;cursor:pointer;font-family:inherit;color:rgb(32,33,51)"><span style="font-weight:{{ r.weight }};font-size:14px;line-height:20px">{{ r.title }}</span><span style="min-width:84px;font-weight:700;font-size:13px;line-height:19px;color:rgb(184,48,62)">{{ r.over }}</span></button>
+              </sc-for>
+              <sc-if value="{{ sel.slaNone }}"><span style="font-size:13px;line-height:19px;color:rgb(104,112,133)">Все взаимодействия в пределах нормы.</span></sc-if>
+            </div>
+            <button onClick="{{ sel.goAll }}" style="margin-top:auto;display:flex;align-items:center;justify-content:center;gap:12px;height:44px;border:none;border-radius:10px;background:rgb(242,234,254);font-family:inherit;font-weight:700;font-size:14px;line-height:20px;color:rgb(119,0,255);cursor:pointer" style-hover="background:rgb(232,220,253)">{{ sel.allLabel }}<img src="assets/icons/arrow18--brand.svg" alt="" style="display:block;width:18px;height:18px;flex-shrink:0"></button>
+          </section>
+        </div>
+      </sc-if>
+      <span style="font-size:12px;line-height:16px;color:rgb(104,112,133)">Окна лицензий вложенные: до 60 дней включает до 30 и до 7 дней. Счётчики не суммируются.</span>
     </div>
   </sc-if>
 
   <sc-if value="{{ showAssign }}">
-    <div data-screen-label="06 Ответственные" style="display:flex;flex-direction:column;gap:12px">
-      <div style="font-size:14px;line-height:20px;color:var(--color-fg-soft)">{{ assignCaption }}</div>
-      <div style="display:flex;flex-direction:column;border-radius:16px;box-shadow:inset 0 0 0 1px var(--color-border-muted)">
-        <sc-if value="{{ isDesktop }}">
-          <div style="display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) 110px minmax(240px,1.3fr) 150px;gap:16px;padding:12px 20px;background:var(--color-bg-surface2);border-radius:16px 16px 0 0;font-size:14px;line-height:20px;color:var(--color-fg-soft)"><span>Вуз</span><span>Регион</span><span>В работе</span><span>Ответственный КАМ</span><span></span></div>
-        </sc-if>
-        <sc-for list="{{ unis }}" as="u" hint-placeholder-count="6">
-          <div style="display:grid;grid-template-columns:{{ assignCols }};gap:{{ assignGap }};align-items:center;padding:{{ rowPad }};border-top:1px solid var(--color-border-muted)">
-            <span style="display:flex;flex-direction:column;gap:2px"><span style="font-size:16px;line-height:24px;font-weight:500">{{ u.name }}</span><sc-if value="{{ u.unassigned }}"><span style="font-size:12px;line-height:16px;color:var(--color-error-strong)">Нет ответственного — вуз не виден ни одному КАМ</span></sc-if></span>
-            <sc-if value="{{ isDesktop }}"><span style="font-size:14px;line-height:20px;color:var(--color-fg-soft)">{{ u.region }}</span></sc-if>
-            <sc-if value="{{ isDesktop }}"><span style="font-size:14px;line-height:20px">{{ u.count }}</span></sc-if>
-            <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Select" label="{{ null }}" hint="{{ null }}" placeholder="Не назначен" options="{{ kamOpts }}" value="{{ u.kamId }}" on-change="{{ u.change }}" hint-size="100%,48px"></x-import>
-            <sc-if value="{{ u.assigned }}"><x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" variant="outline" size="s" on-click="{{ u.remove }}" hint-size="150px,40px">Снять назначение</x-import></sc-if>
-            <sc-if value="{{ u.unassigned }}"><span></span></sc-if>
-          </div>
-        </sc-for>
+    <div data-screen-label="06 Ответственные" style="display:flex;flex-direction:column;gap:24px">
+      <section style="display:grid;grid-template-columns:{{ filterCols }};gap:24px;align-items:end;padding:22px;border-radius:14px;background:#fff;box-shadow:inset 0 0 0 1px rgb(227,229,237)">
+        <label style="display:flex;flex-direction:column;gap:7px;min-width:0"><span style="font-size:12px;line-height:16px;color:rgb(104,112,133)">Вуз</span><span style="position:relative;display:block"><select value="{{ fd.universityId }}" onChange="{{ setFUni }}" style="width:100%;height:42px;padding:0 36px 0 12px;box-sizing:border-box;border:none;border-radius:8px;background:#fff;box-shadow:inset 0 0 0 1px rgb(227,229,237);font-family:inherit;font-size:13px;line-height:19px;color:rgb(32,33,51);appearance:none;-webkit-appearance:none;cursor:pointer"><sc-for list="{{ uniOpts }}" as="o"><option value="{{ o.value }}">{{ o.label }}</option></sc-for></select><span style="position:absolute;right:14px;top:14px;pointer-events:none"><img src="assets/icons/chev-d14--slate.svg" alt="" style="display:block;width:14px;height:14px;flex-shrink:0"></span></span></label>
+        <label style="display:flex;flex-direction:column;gap:7px;min-width:0"><span style="font-size:12px;line-height:16px;color:rgb(104,112,133)">Текущий ответственный</span><span style="position:relative;display:block"><select value="{{ fd.kamId }}" onChange="{{ setFKam }}" style="width:100%;height:42px;padding:0 36px 0 12px;box-sizing:border-box;border:none;border-radius:8px;background:#fff;box-shadow:inset 0 0 0 1px rgb(227,229,237);font-family:inherit;font-size:13px;line-height:19px;color:rgb(32,33,51);appearance:none;-webkit-appearance:none;cursor:pointer"><sc-for list="{{ kamFilterOpts }}" as="o"><option value="{{ o.value }}">{{ o.label }}</option></sc-for></select><span style="position:absolute;right:14px;top:14px;pointer-events:none"><img src="assets/icons/chev-d14--slate.svg" alt="" style="display:block;width:14px;height:14px;flex-shrink:0"></span></span></label>
+        <button onClick="{{ applyF }}" style="height:44px;border:none;border-radius:10px;background:rgb(119,0,255);font-family:inherit;font-weight:700;font-size:14px;line-height:20px;color:#fff;cursor:pointer" style-hover="background:rgb(101,0,217)">Применить</button>
+      </section>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
+        <h2 style="margin:0;font-weight:700;font-size:21px;line-height:28px">Вузы команды</h2>
+        <span style="font-size:13px;line-height:19px;color:rgb(104,112,133)">{{ shownText }}</span>
+      </div>
+      <section style="border-radius:14px;background:#fff;box-shadow:inset 0 0 0 1px rgb(227,229,237);overflow:hidden">
+        <sc-if value="{{ isDesktop }}"><div style="display:grid;grid-template-columns:{{ assignCols }};gap:16px;align-items:center;height:44px;padding:0 22px;background:rgb(245,246,250);font-weight:700;font-size:12px;line-height:16px;color:rgb(104,112,133)"><span>Вуз</span><span>Ответственный</span><span>Действия</span></div></sc-if>
+        <div style="padding:0 22px">
+          <sc-for list="{{ unis }}" as="u" hint-placeholder-count="6">
+            <div style="display:grid;grid-template-columns:{{ assignCols }};gap:16px;align-items:center;min-height:70px;padding:12px 0;box-sizing:border-box;border-bottom:1px solid rgb(227,229,237)">
+              <span style="display:flex;flex-direction:column;gap:4px;min-width:0"><span style="font-weight:700;font-size:14px;line-height:20px">{{ u.name }}</span><span style="font-size:12px;line-height:16px;color:rgb(104,112,133)">{{ u.region }}</span></span>
+              <span style="display:flex;align-items:center;gap:14px;min-width:0">
+                <sc-if value="{{ u.assigned }}"><span style="width:32px;height:32px;border-radius:50%;background:rgb(242,234,254);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;line-height:16px;color:rgb(89,0,199);flex-shrink:0">{{ u.initials }}</span><span style="font-size:14px;line-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ u.kamName }}</span></sc-if>
+                <sc-if value="{{ u.unassigned }}"><span style="font-size:14px;line-height:20px;color:rgb(184,48,62)">Не назначен</span></sc-if>
+              </span>
+              <span style="display:flex;align-items:center;gap:24px">
+                <button onClick="{{ u.reassign }}" style="height:44px;padding:0 20px;box-sizing:border-box;border:none;border-radius:10px;background:#fff;box-shadow:inset 0 0 0 1px rgb(227,229,237);font-family:inherit;font-weight:700;font-size:14px;line-height:20px;color:rgb(32,33,51);cursor:pointer;width:190px;padding:0 10px" style-hover="background:rgb(245,246,250)">{{ u.actionLabel }}</button>
+                <sc-if value="{{ u.assigned }}"><button onClick="{{ u.remove }}" aria-label="Удалить назначение" title="Удалить назначение" style="width:36px;height:36px;border:none;border-radius:8px;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:rgb(245,246,250)"><img src="assets/icons/trash--slate.svg" alt="" style="display:block;width:20px;height:20px;flex-shrink:0"></button></sc-if>
+              </span>
+            </div>
+          </sc-for>
+          <sc-if value="{{ noUnis }}"><div style="padding:24px 0;font-size:13px;line-height:19px;color:rgb(104,112,133)">Нет вузов по выбранным фильтрам.</div></sc-if>
+        </div>
+      </section>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding-left:22px">
+        <span style="font-size:13px;line-height:19px;color:rgb(104,112,133)">{{ pageText }}</span>
+        <div style="display:flex;gap:12px">
+          <sc-if value="{{ hasPrev }}"><button onClick="{{ prev }}" style="height:44px;padding:0 20px;box-sizing:border-box;border:none;border-radius:10px;background:#fff;box-shadow:inset 0 0 0 1px rgb(227,229,237);font-family:inherit;font-weight:700;font-size:14px;line-height:20px;color:rgb(32,33,51);cursor:pointer;" style-hover="background:rgb(245,246,250)">Назад</button></sc-if>
+          <sc-if value="{{ hasNext }}"><button onClick="{{ next }}" style="display:flex;align-items:center;gap:12px;height:44px;padding:0 28px;border:none;border-radius:10px;background:#fff;box-shadow:inset 0 0 0 1px rgb(227,229,237);font-family:inherit;font-weight:700;font-size:14px;line-height:20px;color:rgb(32,33,51);cursor:pointer" style-hover="background:rgb(245,246,250)">Следующая<img src="assets/icons/arrow18--ink.svg" alt="" style="display:block;width:18px;height:18px;flex-shrink:0"></button></sc-if>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;min-height:44px;padding:0 18px;border-radius:11px;background:rgb(242,234,254)">
+        <img src="assets/icons/help--brand.svg" alt="" style="display:block;width:18px;height:18px;padding:1.5px;box-sizing:border-box;flex-shrink:0">
+        <span style="font-size:13px;line-height:19px;color:rgb(89,0,199)">Удаление назначения требует подтверждения: КАМ потеряет доступ к данным этого вуза.</span>
       </div>
     </div>
   </sc-if>
 
-  <sc-if value="{{ confirm }}">
-    <div onClick="{{ cancel }}" style="position:fixed;inset:0;background:rgba(15,26,40,.4);z-index:70"></div>
-    <div role="dialog" aria-modal="true" style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(480px,calc(100% - 32px));background:#fff;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:16px;z-index:71">
-      <div style="font-weight:700;font-size:22px;line-height:1.2">{{ confirm.title }}</div>
-      <div style="font-size:16px;line-height:24px;color:var(--color-fg-soft);text-wrap:pretty">{{ confirm.text }}</div>
-      <sc-if value="{{ confirmError }}"><div role="alert" style="padding:12px 16px;border-radius:12px;box-shadow:inset 0 0 0 1px var(--color-error);font-size:14px;line-height:20px">{{ confirmError.message }} · <span style="color:var(--color-error-strong)">код {{ confirmError.code }}</span></div></sc-if>
-      <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
-        <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" variant="secondary" size="m" on-click="{{ cancel }}" hint-size="100px,48px">Отмена</x-import>
-        <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" size="m" disabled="{{ busy }}" on-click="{{ doConfirm }}" hint-size="180px,48px">{{ confirm.cta }}</x-import>
+  <sc-if value="{{ reassignOpen }}">
+    <div onClick="{{ cancel }}" style="position:fixed;inset:0;background:rgba(32,33,51,.24);z-index:70"></div>
+    <div role="dialog" aria-modal="true" data-screen-label="06A Переназначение КАМ" style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(600px,calc(100% - 32px));max-height:calc(100vh - 32px);overflow-y:auto;box-sizing:border-box;background:#fff;border-radius:16px;padding:28px;display:flex;flex-direction:column;z-index:71;box-shadow:0 16px 48px rgba(32,33,51,.16)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px">
+        <h2 style="margin:0;font-weight:700;font-size:24px;line-height:32px">{{ rTitle }}</h2>
+        <button onClick="{{ cancel }}" aria-label="Закрыть" style="width:28px;height:28px;border:none;border-radius:8px;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center"><img src="assets/icons/close20--slate.svg" alt="" style="display:block;width:20px;height:20px;flex-shrink:0"></button>
+      </div>
+      <span style="margin-top:12px;font-weight:700;font-size:16px;line-height:22px">{{ r.uniName }}</span>
+      <span style="margin-top:28px;font-size:12px;line-height:16px;color:rgb(104,112,133)">Текущий ответственный</span>
+      <span style="margin-top:12px;font-weight:700;font-size:14px;line-height:20px">{{ r.current }}</span>
+      <span style="margin-top:32px;font-size:12px;line-height:16px;color:rgb(104,112,133)">Новый ответственный</span>
+      <button onClick="{{ toggleList }}" aria-haspopup="listbox" aria-expanded="{{ listOpen }}" style="margin-top:9px;display:flex;align-items:center;justify-content:space-between;height:42px;padding:0 14px 0 12px;box-sizing:border-box;border:none;border-radius:8px;background:#fff;box-shadow:inset 0 0 0 1px rgb(227,229,237);text-align:left;cursor:pointer;font-family:inherit;font-size:13px;line-height:19px;color:{{ r.pickColor }}">{{ r.pickName }}<img src="assets/icons/chev-d14--slate.svg" alt="" style="display:block;width:14px;height:14px;flex-shrink:0"></button>
+      <sc-if value="{{ listOpen }}">
+        <div role="listbox" style="margin-top:6px;padding:4px 0;border-radius:8px;background:#fff;box-shadow:inset 0 0 0 1px rgb(227,229,237)">
+          <sc-for list="{{ kamList }}" as="o">
+            <button role="option" aria-selected="{{ o.selected }}" onClick="{{ o.pick }}" style="display:flex;align-items:center;justify-content:space-between;width:100%;height:40px;padding:0 16px;box-sizing:border-box;border:none;background:{{ o.bg }};text-align:left;cursor:pointer;font-family:inherit;font-weight:{{ o.weight }};font-size:13px;line-height:19px;color:{{ o.fg }}" style-hover="background:rgb(245,246,250)">{{ o.label }}<sc-if value="{{ o.selected }}"><img src="assets/icons/check16--brand.svg" alt="" style="display:block;width:16px;height:16px;flex-shrink:0"></sc-if></button>
+          </sc-for>
+        </div>
+      </sc-if>
+      <sc-if value="{{ r.note }}"><p style="margin:24px 0 0;max-width:400px;font-size:13px;line-height:19px;color:rgb(104,112,133)">{{ r.note }}</p></sc-if>
+      <sc-if value="{{ confirmError }}"><div role="alert" style="margin-top:16px;padding:12px 16px;border-radius:10px;background:rgb(255,240,241);font-size:12px;line-height:16px;color:rgb(184,48,62)">{{ confirmError.message }} · код {{ confirmError.code }}</div></sc-if>
+      <div style="margin-top:32px;padding-top:22px;border-top:1px solid rgb(227,229,237);display:flex;justify-content:space-between;gap:12px">
+        <button onClick="{{ cancel }}" style="height:44px;padding:0 20px;box-sizing:border-box;border:none;border-radius:10px;background:#fff;box-shadow:inset 0 0 0 1px rgb(227,229,237);font-family:inherit;font-weight:700;font-size:14px;line-height:20px;color:rgb(32,33,51);cursor:pointer;width:137px" style-hover="background:rgb(245,246,250)">Отмена</button>
+        <button onClick="{{ doConfirm }}" disabled="{{ saveDisabled }}" style="width:272px;max-width:60%;height:44px;border:none;border-radius:10px;background:{{ saveBg }};font-family:inherit;font-weight:700;font-size:14px;line-height:20px;color:{{ saveFg }};cursor:pointer">Сохранить назначение</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ removeOpen }}">
+    <div onClick="{{ cancel }}" style="position:fixed;inset:0;background:rgba(32,33,51,.24);z-index:70"></div>
+    <div role="alertdialog" aria-modal="true" data-screen-label="06B Удаление назначения" style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(580px,calc(100% - 32px));box-sizing:border-box;background:#fff;border-radius:16px;padding:28px;display:flex;flex-direction:column;z-index:71;box-shadow:0 16px 48px rgba(32,33,51,.16)">
+      <span style="width:44px;height:44px;border-radius:50%;background:rgb(255,240,241);display:flex;align-items:center;justify-content:center"><img src="assets/icons/alert--red2.svg" alt="" style="display:block;width:24px;height:24px;flex-shrink:0"></span>
+      <h2 style="margin:28px 0 0;font-weight:700;font-size:24px;line-height:32px">Удалить назначение?</h2>
+      <span style="margin-top:16px;font-weight:700;font-size:16px;line-height:22px">{{ del.title }}</span>
+      <p style="margin:18px 0 0;max-width:360px;font-size:13px;line-height:19px;color:rgb(104,112,133)">{{ del.text }}</p>
+      <sc-if value="{{ confirmError }}"><div role="alert" style="margin-top:16px;padding:12px 16px;border-radius:10px;background:rgb(255,240,241);font-size:12px;line-height:16px;color:rgb(184,48,62)">{{ confirmError.message }} · код {{ confirmError.code }}</div></sc-if>
+      <div style="margin-top:44px;display:flex;justify-content:space-between;gap:12px">
+        <button onClick="{{ cancel }}" style="height:44px;padding:0 20px;box-sizing:border-box;border:none;border-radius:10px;background:#fff;box-shadow:inset 0 0 0 1px rgb(227,229,237);font-family:inherit;font-weight:700;font-size:14px;line-height:20px;color:rgb(32,33,51);cursor:pointer;width:177px" style-hover="background:rgb(245,246,250)">Отмена</button>
+        <button onClick="{{ doConfirm }}" disabled="{{ busy }}" style="width:297px;max-width:60%;height:44px;border:none;border-radius:10px;background:rgb(184,48,62);font-family:inherit;font-weight:700;font-size:14px;line-height:20px;color:#fff;cursor:pointer" style-hover="background:rgb(160,40,53)">Удалить назначение</button>
       </div>
     </div>
   </sc-if>
@@ -93,7 +202,7 @@
 <script type="text/x-dc" data-dc-script data-props="{&quot;mode&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;radar&quot;,&quot;assign&quot;],&quot;default&quot;:&quot;radar&quot;,&quot;tsType&quot;:&quot;'radar'|'assign'&quot;},&quot;role&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;rukovoditel&quot;],&quot;default&quot;:&quot;rukovoditel&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;isMobile&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;demoState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;auto&quot;,&quot;loading&quot;,&quot;empty&quot;,&quot;error&quot;],&quot;default&quot;:&quot;auto&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;refreshKey&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;number&quot;},&quot;onNavigate&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(screen:string,preset?:object)=&gt;void&quot;},&quot;onToast&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(t:object)=&gt;void&quot;}}">
 const waitCRM = () => new Promise((r) => { const t = () => (window.CRM ? r(window.CRM) : setTimeout(t, 30)); t(); });
 class Component extends DCLogic {
-  state = { status: 'loading', d: null, error: null, confirm: null, busy: false, confirmError: null };
+  state = { status: 'loading', d: null, error: null, confirm: null, busy: false, confirmError: null, f: { universityId: 'all', kamId: 'all' }, fd: { universityId: 'all', kamId: 'all' }, page: 1, selKam: null, win: 'W7', sortAsc: false, listOpen: false };
   componentDidMount() { this.load(); }
   componentDidUpdate(pp) { if (pp.refreshKey !== this.props.refreshKey || pp.demoState !== this.props.demoState || pp.mode !== this.props.mode) this.load(); }
   async load() {
@@ -108,47 +217,96 @@ class Component extends DCLogic {
   }
   async doConfirm() {
     const CRM = window.CRM, c = this.state.confirm;
+    if (c.kind === 'reassign' && (!c.kamId || c.kamId === c.uni.kamId)) return;
     this.setState({ busy: true, confirmError: null });
     try {
       if (c.kind === 'reassign') await CRM.api.reassign(c.uni.id, c.kamId); else await CRM.api.unassign(c.uni.id);
-      this.setState({ busy: false, confirm: null });
-      this.props.onToast && this.props.onToast({ kind: 'success', title: c.kind === 'reassign' ? 'Ответственный изменён' : 'Назначение снято', text: c.uni.name });
+      this.setState({ busy: false, confirm: null, listOpen: false });
+      this.props.onToast && this.props.onToast({ kind: 'success', title: c.kind === 'reassign' ? 'Ответственный изменён' : 'Назначение удалено', text: c.uni.name });
       this.load();
     } catch (e) { this.setState({ busy: false, confirmError: { code: e.code, message: e.message } }); }
   }
   renderVals() {
     const s = this.state, CRM = window.CRM, m = !!this.props.isMobile, mode = this.props.mode || 'radar', ready = s.status === 'ready' && s.d && CRM;
-    const base = { isLoading: s.status === 'loading', isError: s.status === 'error', error: s.error || {}, retry: () => this.load(), isEmpty: s.status === 'empty', skeleton: [1, 2, 3, 4, 5],
+    const short = (full) => { const p = String(full || '').split(/\s+/).filter(Boolean); return p.length >= 2 ? p[1] + ' ' + p[0] : (full || '—'); };
+    const ini = (nm) => nm.split(' ').map((w) => w[0] || '').join('').slice(0, 2).toUpperCase();
+    const pl = (n, a, b, c) => CRM ? CRM.plural(n, a, b, c) : c;
+    const base = { isLoading: s.status === 'loading', isError: s.status === 'error', error: s.error || {}, retry: () => this.load(), isEmpty: s.status === 'empty', skeleton: [1, 2, 3, 4],
       emptyTitle: mode === 'radar' ? 'В команде пока нет КАМ с вузами' : 'Нет вузов в команде', emptyText: 'Когда администратор добавит вузы в каталог или импортирует реестр, их можно будет распределить по КАМ.',
-      isDesktop: !m, confirm: s.confirm, busy: s.busy, confirmError: s.confirmError, cancel: () => this.setState({ confirm: null, confirmError: null }), doConfirm: () => this.doConfirm(),
-      showRadar: false, showAssign: false, kams: [], unis: [], kamOpts: [], bucketLegend: CRM ? CRM.BUCKETS.slice(0, 3) : [] };
+      isDesktop: !m, busy: s.busy, confirmError: s.confirmError, cancel: () => this.setState({ confirm: null, confirmError: null, listOpen: false }), doConfirm: () => this.doConfirm(),
+      showRadar: false, showAssign: false, kams: [], kpis: [], unis: [], kamList: [], uniOpts: [], kamFilterOpts: [], hasSel: false, sel: { chips: [], lics: [], sla: [] },
+      reassignOpen: !!s.confirm && s.confirm.kind === 'reassign', removeOpen: !!s.confirm && s.confirm.kind === 'unassign', r: {}, del: {}, fd: s.fd };
     if (!ready) return base;
     const { unis, rows, sla, lic } = s.d;
     const kamOf = (uid) => (unis.find((u) => u.id === uid) || {}).kamId;
+    const W = { W7: ['OVERDUE', 'DUE_IN_7_DAYS'], W30: ['OVERDUE', 'DUE_IN_7_DAYS', 'DUE_IN_30_DAYS'], W60: ['OVERDUE', 'DUE_IN_7_DAYS', 'DUE_IN_30_DAYS', 'DUE_IN_60_DAYS'] };
     if (mode === 'radar') {
       const list = CRM.local.KAMS.map((k) => {
-        const mySla = sla.filter((x) => x.responsibleUserId === k.id).length;
         const myLic = lic.filter((l) => kamOf(l.universityId) === k.id);
-        const b = (key) => myLic.filter((l) => l.bucket === key).length;
-        return { k, sla: mySla, over: b('OVERDUE'), b7: b('DUE_IN_7_DAYS'), b30: b('DUE_IN_30_DAYS'), total: rows.filter((r) => r.responsibleUserId === k.id).length, unis: unis.filter((u) => u.kamId === k.id).length };
-      }).sort((a, b) => b.sla - a.sla || b.over - a.over || b.b7 - a.b7);
-      const max = Math.max(1, ...list.map((x) => x.sla));
-      return { ...base, showRadar: true, radarCols: m ? '32px 1fr' : '40px minmax(0,1fr) minmax(0,1.4fr)',
-        kams: list.map((x, i) => ({ rank: i + 1, rankColor: x.sla ? 'var(--color-error-strong)' : 'var(--color-fg-disabled)', name: x.k.fullName,
-          meta: x.unis + ' ' + CRM.plural(x.unis, 'вуз', 'вуза', 'вузов') + ' · ' + x.total + ' ' + CRM.plural(x.total, 'взаимодействие', 'взаимодействия', 'взаимодействий'),
-          sla: x.sla, slaPct: Math.round((x.sla / max) * 100) + '%', slaColor: x.sla ? 'var(--color-error-strong)' : 'var(--color-fg-muted)',
-          lic: CRM.BUCKETS.slice(0, 3).map((bk, j) => ({ label: 'Лицензии: ' + bk.label, color: bk.color, n: [x.over, x.b7, x.b30][j] })),
-          go: () => this.props.onNavigate && this.props.onNavigate('registry', { responsibleUserId: x.k.id }) })) };
+        const w = (key) => myLic.filter((l) => W[key].includes(l.bucket)).length;
+        return { k, sla: sla.filter((x) => x.responsibleUserId === k.id), lic: myLic, w7: w('W7'), w30: w('W30'), w60: w('W60'), total: rows.filter((r) => r.responsibleUserId === k.id).length, unis: unis.filter((u) => u.kamId === k.id).length };
+      }).sort((a, b) => s.sortAsc ? a.sla.length - b.sla.length : b.sla.length - a.sla.length || b.w7 - a.w7);
+      const max = Math.max(1, ...list.map((x) => x.sla.length));
+      const selId = s.selKam && list.some((x) => x.k.id === s.selKam) ? s.selKam : list[0] && list[0].k.id;
+      const cur = list.find((x) => x.k.id === selId);
+      const win = s.win || 'W7';
+      let sel = { chips: [], lics: [], sla: [] };
+      if (cur) {
+        const nm = short(cur.k.fullName);
+        const lics = cur.lic.filter((l) => W[win].includes(l.bucket)).sort((a, b) => a.endDate.localeCompare(b.endDate)).slice(0, 3);
+        const tone = (b) => b === 'DUE_IN_60_DAYS' ? ['rgb(238,240,245)', 'rgb(104,112,133)'] : b === 'DUE_IN_30_DAYS' ? ['rgb(255,245,223)', 'rgb(152,98,11)'] : ['rgb(255,240,241)', 'rgb(184,48,62)'];
+        const first = nm.split(' ')[0];
+        sel = { name: nm, meta: cur.unis + ' ' + pl(cur.unis, 'вуз', 'вуза', 'вузов') + ' · ' + cur.total + ' ' + pl(cur.total, 'взаимодействие', 'взаимодействия', 'взаимодействий'),
+          chips: [['W7', '7 дней', cur.w7], ['W30', '30 дней', cur.w30], ['W60', '60 дней', cur.w60]].map(([k, l, n]) => ({ label: l + ' · ' + n, bg: win === k ? 'rgb(255,240,241)' : 'rgb(238,240,245)', fg: win === k ? 'rgb(184,48,62)' : 'rgb(104,112,133)', pick: () => this.setState({ win: k }) })),
+          lics: lics.map((l, i) => { const d = CRM.daysLeft(l.endDate); const [bg, fg] = tone(l.bucket); return { title: l.universityName + ' · ' + l.itProductName, weight: i === 0 ? 700 : 400, when: d < 0 ? 'истекла' : d + ' ' + pl(d, 'день', 'дня', 'дней'), bg, fg }; }),
+          licNone: !lics.length, slaCount: cur.sla.length, slaBadge: cur.sla.length + ' ' + pl(cur.sla.length, 'запись', 'записи', 'записей'), slaNone: !cur.sla.length,
+          sla: cur.sla.slice(0, 3).map((r, i) => { const o = r.daysInStatus - r.slaThresholdDays; return { title: r.universityName + ' · ' + r.currentStatusName, weight: i === 0 ? 700 : 400, over: '+' + o + ' ' + pl(o, 'день', 'дня', 'дней'), open: () => this.props.onOpen && this.props.onOpen(r.interactionInstanceId) }; }),
+          allLabel: 'Все просроченные ' + (first.endsWith('а') ? first.slice(0, -1) + 'ы' : first.endsWith('я') ? first.slice(0, -1) + 'и' : first), goAll: () => this.props.onNavigate && this.props.onNavigate('registry', { responsibleUserId: cur.k.id, onlyOverdue: true }) };
+      }
+      const lic7 = lic.filter((l) => W.W7.includes(l.bucket)).length;
+      return { ...base, showRadar: true, kpiCols: m ? '1fr' : 'repeat(3,minmax(0,1fr))', detailCols: m ? '1fr' : 'minmax(0,1fr) minmax(0,1fr)',
+        rankCols: 'minmax(200px,1.5fr) 110px minmax(200px,1.3fr) 90px 90px 90px 24px',
+        kpis: [{ label: 'Просрочек SLA', value: sla.length, color: 'rgb(184,48,62)' }, { label: 'Лицензий до 7 дней', value: lic7, color: 'rgb(152,98,11)' }, { label: 'КАМ в команде', value: CRM.local.KAMS.length, color: 'rgb(119,0,255)' }],
+        sortLabel: s.sortAsc ? 'По просрочкам SLA ↑' : 'По просрочкам SLA ↓', toggleSort: () => this.setState({ sortAsc: !s.sortAsc }),
+        kams: list.map((x) => { const nm = short(x.k.fullName); const on = x.k.id === selId; return { name: nm, initials: ini(nm), unis: x.unis, sla: x.sla.length, slaPct: Math.round((x.sla.length / max) * 100) + '%', slaColor: x.sla.length ? 'rgb(184,48,62)' : 'rgb(19,119,95)', w7: x.w7, w30: x.w30, w60: x.w60,
+          selected: on, bg: on ? 'rgb(242,234,254)' : '#fff', hover: on ? 'rgb(242,234,254)' : 'rgb(245,246,250)', chev: on ? 'assets/icons/chev-d16--brand.svg' : 'assets/icons/chev-r16--slate.svg', pick: () => this.setState({ selKam: x.k.id }) }; }),
+        hasSel: !!cur, sel };
     }
-    const kamOpts = CRM.local.KAMS.map((k) => ({ value: k.id, label: k.fullName }));
-    const sorted = [...unis].sort((a, b) => (a.kamId ? 1 : 0) - (b.kamId ? 1 : 0) || a.name.localeCompare(b.name));
-    const nm = (id) => CRM.userName(id);
-    return { ...base, showAssign: true, kamOpts, assignCaption: unis.length + ' ' + CRM.plural(unis.length, 'вуз', 'вуза', 'вузов') + ' · ' + unis.filter((u) => !u.kamId).length + ' без ответственного',
-      assignCols: m ? '1fr' : 'minmax(0,1.4fr) minmax(0,1fr) 110px minmax(240px,1.3fr) 150px', assignGap: m ? '8px' : '16px', rowPad: m ? '16px' : '12px 20px',
-      unis: sorted.map((u) => ({ ...u, count: rows.filter((r) => r.universityId === u.id).length, assigned: !!u.kamId, unassigned: !u.kamId,
-        change: (kamId) => { if (kamId === u.kamId) return; this.setState({ confirmError: null, confirm: { kind: 'reassign', uni: u, kamId, title: 'Переназначить ' + u.name + '?', cta: 'Переназначить',
-          text: u.kamId ? nm(u.kamId) + ' перестанет видеть взаимодействия и лицензии вуза. Они перейдут к ' + nm(kamId) + '.' : nm(kamId) + ' получит доступ ко всем взаимодействиям и лицензиям вуза.' } }); this.forceUpdate(); },
-        remove: () => this.setState({ confirmError: null, confirm: { kind: 'unassign', uni: u, title: 'Снять назначение?', cta: 'Снять назначение', text: nm(u.kamId) + ' перестанет видеть ' + u.name + '. Вуз пропадёт из радара, пока не будет назначен новый КАМ.' } }) })) };
+    const PER = 6, f = s.f;
+    const filtered = [...unis].filter((u) => (f.universityId === 'all' || u.id === f.universityId) && (f.kamId === 'all' || (f.kamId === 'none' ? !u.kamId : u.kamId === f.kamId))).sort((a, b) => (a.kamId ? 1 : 0) - (b.kamId ? 1 : 0) || a.name.localeCompare(b.name));
+    const pages = Math.max(1, Math.ceil(filtered.length / PER)), page = Math.min(s.page || 1, pages);
+    const slice = filtered.slice((page - 1) * PER, page * PER);
+    const kamName = (id) => short(CRM.userName(id));
+    const c = s.confirm;
+    const gen = (full) => { const p = short(full).split(' '); const [n, l] = p; const fn = n.endsWith('а') ? n.slice(0, -1) + 'ы' : n.endsWith('я') ? n.slice(0, -1) + 'и' : n; const ln = l && l.endsWith('ва') ? l.slice(0, -1) + 'ой' : l && l.endsWith('на') ? l.slice(0, -1) + 'ой' : l ? l + 'а' : ''; return (fn + ' ' + ln).trim(); };
+    const dat = (full) => { const p = short(full).split(' '); const [n, l] = p; const fn = n.endsWith('а') || n.endsWith('я') ? n.slice(0, -1) + 'е' : n + 'у'; const ln = l && (l.endsWith('ва') || l.endsWith('на')) ? l.slice(0, -1) + 'ой' : l ? l + 'у' : ''; return (fn + ' ' + ln).trim(); };
+    let r = {}, del = {};
+    if (c && c.kind === 'reassign') {
+      const cur = c.uni.kamId ? CRM.userName(c.uni.kamId) : null, nxt = c.kamId ? CRM.userName(c.kamId) : null;
+      r = { uniName: c.uni.name, current: cur ? short(cur) : 'Не назначен', pickName: nxt ? short(nxt) : 'Выберите КАМ', pickColor: nxt ? 'rgb(32,33,51)' : 'rgb(104,112,133)',
+        note: nxt && nxt !== cur ? 'После сохранения доступ к вузу и его взаимодействиям ' + (cur ? 'перейдёт от ' + gen(cur) + ' к ' + dat(nxt) + '.' : 'получит ' + short(nxt) + '.') : '' };
+    }
+    if (c && c.kind === 'unassign') {
+      const cur = CRM.userName(c.uni.kamId); const first = short(cur).split(' ')[0];
+      del = { title: c.uni.name + ' · ' + short(cur), text: first + ' потеряет доступ к вузу и его взаимодействиям. Вуз останется без ответственного. История работы и данные сохранятся.' };
+    }
+    const saveDisabled = !c || !c.kamId || c.kamId === (c.uni && c.uni.kamId) || s.busy;
+    return { ...base, showAssign: true, fd: s.fd,
+      filterCols: m ? '1fr' : 'minmax(0,1.24fr) minmax(0,1fr) 272px', assignCols: m ? '1fr' : 'minmax(0,1.3fr) minmax(0,1fr) 250px',
+      uniOpts: [{ value: 'all', label: 'Все вузы' }, ...unis.map((u) => ({ value: u.id, label: u.name }))],
+      kamFilterOpts: [{ value: 'all', label: 'Все КАМ команды' }, { value: 'none', label: 'Не назначен' }, ...CRM.local.KAMS.map((k) => ({ value: k.id, label: short(k.fullName) }))],
+      setFUni: (e) => this.setState({ fd: { ...this.state.fd, universityId: e.target.value } }), setFKam: (e) => this.setState({ fd: { ...this.state.fd, kamId: e.target.value } }),
+      applyF: () => this.setState({ f: { ...this.state.fd }, page: 1 }),
+      shownText: 'Показано ' + slice.length + ' из ' + filtered.length, noUnis: !filtered.length,
+      pageText: filtered.length ? ((page - 1) * PER + 1) + '–' + Math.min(page * PER, filtered.length) + ' из ' + filtered.length : '0 из 0',
+      hasPrev: page > 1, hasNext: page < pages, prev: () => this.setState({ page: page - 1 }), next: () => this.setState({ page: page + 1 }),
+      unis: slice.map((u) => { const nm = u.kamId ? kamName(u.kamId) : ''; return { ...u, region: u.region || '', assigned: !!u.kamId, unassigned: !u.kamId, kamName: nm, initials: nm ? ini(nm) : '', actionLabel: u.kamId ? 'Переназначить' : 'Назначить',
+        reassign: () => this.setState({ confirmError: null, listOpen: true, confirm: { kind: 'reassign', uni: u, kamId: u.kamId || null } }),
+        remove: () => this.setState({ confirmError: null, confirm: { kind: 'unassign', uni: u } }) }; }),
+      rTitle: c && c.uni && !c.uni.kamId ? 'Назначить ответственного' : 'Переназначить ответственного', r, del,
+      listOpen: !!s.listOpen, toggleList: () => this.setState({ listOpen: !s.listOpen }),
+      kamList: CRM.local.KAMS.map((k) => { const on = c && c.kamId === k.id; return { label: short(k.fullName), selected: on, bg: on ? 'rgb(242,234,254)' : '#fff', fg: on ? 'rgb(89,0,199)' : 'rgb(32,33,51)', weight: on ? 700 : 400, pick: () => this.setState({ confirm: { ...this.state.confirm, kamId: k.id }, listOpen: false }) }; }),
+      saveDisabled, saveBg: saveDisabled ? 'rgb(238,240,245)' : 'rgb(119,0,255)', saveFg: saveDisabled ? 'rgb(104,112,133)' : '#fff' };
   }
 }
 </script>

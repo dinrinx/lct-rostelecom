@@ -17,179 +17,189 @@
 <script src="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/_ds_bundle.js"></script>
 <script src="crm-data.js"></script>
 </helmet>
-<div data-screen-label="05 Отчёты" style="display:flex;flex-direction:column;gap:24px;font-family:var(--font-sans);color:var(--color-fg-default)">
-  <div style="display:grid;grid-template-columns:{{ topCols }};gap:24px;align-items:start">
-    <section style="display:flex;flex-direction:column;gap:20px;padding:{{ pad }};border-radius:16px;background:var(--color-bg-surface3)">
-      <h2 style="margin:0;font-weight:700;font-size:22px;line-height:1.2">Новый отчёт</h2>
-      <div style="display:grid;grid-template-columns:{{ twoCols }};gap:12px">
-        <label style="display:flex;flex-direction:column;gap:4px"><span style="font-size:14px;line-height:20px;font-weight:300;color:var(--color-fg-soft)">Период с</span><input type="date" value="{{ f.from }}" onChange="{{ setFrom }}" style="height:48px;padding:0 16px;border:none;border-radius:12px;background:#fff;box-shadow:inset 0 0 0 1px var(--color-border-default);font-family:var(--font-sans);font-size:16px;font-weight:300;color:var(--color-fg-default)"></label>
-        <label style="display:flex;flex-direction:column;gap:4px"><span style="font-size:14px;line-height:20px;font-weight:300;color:var(--color-fg-soft)">по</span><input type="date" value="{{ f.to }}" onChange="{{ setTo }}" style="height:48px;padding:0 16px;border:none;border-radius:12px;background:#fff;box-shadow:inset 0 0 0 1px var(--color-border-default);font-family:var(--font-sans);font-size:16px;font-weight:300;color:var(--color-fg-default)"></label>
-        <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Select" label="Вуз" hint="{{ null }}" options="{{ uniOpts }}" value="{{ f.universityId }}" on-change="{{ set.universityId }}" hint-size="100%,72px"></x-import>
-        <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Select" label="ИТ-направление" hint="{{ null }}" options="{{ dirOpts }}" value="{{ f.itDirectionId }}" on-change="{{ set.itDirectionId }}" hint-size="100%,72px"></x-import>
-        <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Select" label="ИТ-продукт" hint="{{ null }}" options="{{ prodOpts }}" value="{{ f.itProductId }}" on-change="{{ set.itProductId }}" hint-size="100%,72px"></x-import>
-        <sc-if value="{{ isRuk }}"><x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Select" label="Ответственный" hint="{{ null }}" options="{{ respOpts }}" value="{{ f.responsibleUserId }}" on-change="{{ set.responsibleUserId }}" hint-size="100%,72px"></x-import></sc-if>
-      </div>
-      <sc-if value="{{ periodError }}"><span style="font-size:12px;line-height:16px;color:var(--color-error)">Дата начала позже даты окончания</span></sc-if>
-      <fieldset style="border:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px">
-        <legend style="padding:0;margin-bottom:8px;font-size:14px;line-height:20px;color:var(--color-fg-soft)">Колонки</legend>
-        <div style="display:flex;flex-wrap:wrap;gap:8px 20px">
-          <sc-for list="{{ columns }}" as="c" hint-placeholder-count="5">
-            <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Checkbox" label="{{ c.label }}" checked="{{ c.on }}" on-change="{{ c.toggle }}" hint-size="auto,24px"></x-import>
-          </sc-for>
-        </div>
-      </fieldset>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <span style="font-size:14px;line-height:20px;color:var(--color-fg-soft)">Формат</span>
-        <div style="display:flex;gap:8px">
-          <sc-for list="{{ formats }}" as="x" hint-placeholder-count="3">
-            <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Tag" removable="{{ false }}" selected="{{ x.selected }}" on-click="{{ x.pick }}" hint-size="64px,32px">{{ x.label }}</x-import>
-          </sc-for>
+<div data-screen-label="05 Отчёты" style="display:flex;flex-direction:column;gap:24px;font-family:var(--font-sans);color:rgb(32,33,51)">
+  <section style="display:flex;flex-direction:column;gap:16px;padding:22px;border-radius:14px;background:#fff;box-shadow:inset 0 0 0 1px rgb(227,229,237)">
+    <h2 style="margin:0;font-weight:700;font-size:18px;line-height:26px">Параметры отчёта</h2>
+    <div style="display:grid;grid-template-columns:{{ paramCols }};gap:18px">
+      <div style="display:flex;flex-direction:column;gap:7px;min-width:0">
+        <span style="font-size:12px;line-height:16px;color:rgb(104,112,133)">Период</span>
+        <div style="display:flex;align-items:center;gap:8px;height:42px;padding:0 12px;box-sizing:border-box;border-radius:8px;background:#fff;box-shadow:inset 0 0 0 1px {{ periodRing }}">
+          <img src="assets/icons/cal17--slate.svg" alt="" style="display:block;width:17px;height:17px;flex-shrink:0">
+          <input type="date" value="{{ d.from }}" onChange="{{ setFrom }}" aria-label="Период с" style="flex:1;min-width:0;border:none;background:transparent;font-family:inherit;font-size:13px;line-height:19px;color:rgb(32,33,51)">
+          <span style="font-size:13px;color:rgb(104,112,133)">—</span>
+          <input type="date" value="{{ d.to }}" onChange="{{ setTo }}" aria-label="Период по" style="flex:1;min-width:0;border:none;background:transparent;font-family:inherit;font-size:13px;line-height:19px;color:rgb(32,33,51)">
         </div>
       </div>
-      <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" size="m" disabled="{{ cantBuild }}" on-click="{{ build }}" hint-size="220px,48px">Сформировать отчёт</x-import>
-    </section>
+      <label style="display:flex;flex-direction:column;gap:7px;min-width:0"><span style="font-size:12px;line-height:16px;color:rgb(104,112,133)">Вуз</span><span style="position:relative;display:block"><select value="{{ d.universityId }}" onChange="{{ set.universityId }}" style="width:100%;height:42px;padding:0 36px 0 12px;box-sizing:border-box;border:none;border-radius:8px;background:#fff;box-shadow:inset 0 0 0 1px rgb(227,229,237);font-family:inherit;font-size:13px;line-height:19px;color:rgb(32,33,51);appearance:none;-webkit-appearance:none;cursor:pointer"><sc-for list="{{ uniOpts }}" as="o"><option value="{{ o.value }}">{{ o.label }}</option></sc-for></select><span style="position:absolute;right:14px;top:14px;pointer-events:none"><img src="assets/icons/chev-d14--slate.svg" alt="" style="display:block;width:14px;height:14px;flex-shrink:0"></span></span></label>
+      <label style="display:flex;flex-direction:column;gap:7px;min-width:0"><span style="font-size:12px;line-height:16px;color:rgb(104,112,133)">ИТ-направление</span><span style="position:relative;display:block"><select value="{{ d.itDirectionId }}" onChange="{{ set.itDirectionId }}" style="width:100%;height:42px;padding:0 36px 0 12px;box-sizing:border-box;border:none;border-radius:8px;background:#fff;box-shadow:inset 0 0 0 1px rgb(227,229,237);font-family:inherit;font-size:13px;line-height:19px;color:rgb(32,33,51);appearance:none;-webkit-appearance:none;cursor:pointer"><sc-for list="{{ dirOpts }}" as="o"><option value="{{ o.value }}">{{ o.label }}</option></sc-for></select><span style="position:absolute;right:14px;top:14px;pointer-events:none"><img src="assets/icons/chev-d14--slate.svg" alt="" style="display:block;width:14px;height:14px;flex-shrink:0"></span></span></label>
+      <label style="display:flex;flex-direction:column;gap:7px;min-width:0"><span style="font-size:12px;line-height:16px;color:rgb(104,112,133)">ИТ-продукт</span><span style="position:relative;display:block"><select value="{{ d.itProductId }}" onChange="{{ set.itProductId }}" style="width:100%;height:42px;padding:0 36px 0 12px;box-sizing:border-box;border:none;border-radius:8px;background:#fff;box-shadow:inset 0 0 0 1px rgb(227,229,237);font-family:inherit;font-size:13px;line-height:19px;color:rgb(32,33,51);appearance:none;-webkit-appearance:none;cursor:pointer"><sc-for list="{{ prodOpts }}" as="o"><option value="{{ o.value }}">{{ o.label }}</option></sc-for></select><span style="position:absolute;right:14px;top:14px;pointer-events:none"><img src="assets/icons/chev-d14--slate.svg" alt="" style="display:block;width:14px;height:14px;flex-shrink:0"></span></span></label>
+    </div>
+    <sc-if value="{{ periodError }}"><span style="font-size:12px;line-height:16px;color:rgb(184,48,62)">Дата начала позже даты окончания</span></sc-if>
+    <div style="display:grid;grid-template-columns:{{ row2Cols }};gap:18px;align-items:end;margin-top:6px">
+      <sc-if value="{{ isRuk }}"><label style="display:flex;flex-direction:column;gap:7px;min-width:0"><span style="font-size:12px;line-height:16px;color:rgb(104,112,133)">Ответственные</span><span style="position:relative;display:block"><select value="{{ d.responsibleUserId }}" onChange="{{ set.responsibleUserId }}" style="width:100%;height:42px;padding:0 36px 0 12px;box-sizing:border-box;border:none;border-radius:8px;background:#fff;box-shadow:inset 0 0 0 1px rgb(227,229,237);font-family:inherit;font-size:13px;line-height:19px;color:rgb(32,33,51);appearance:none;-webkit-appearance:none;cursor:pointer"><sc-for list="{{ respOpts }}" as="o"><option value="{{ o.value }}">{{ o.label }}</option></sc-for></select><span style="position:absolute;right:14px;top:14px;pointer-events:none"><img src="assets/icons/chev-d14--slate.svg" alt="" style="display:block;width:14px;height:14px;flex-shrink:0"></span></span></label></sc-if>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;min-height:44px">
+        <sc-if value="{{ isRuk }}">
+          <button onClick="{{ toggleCompare }}" role="checkbox" aria-checked="{{ compareOn }}" style="display:flex;align-items:center;gap:14px;padding:0;border:none;background:transparent;cursor:pointer;font-family:inherit;font-size:13px;line-height:19px;color:rgb(32,33,51)">
+            <span style="width:18px;height:18px;border-radius:4px;background:{{ cbBg }};box-shadow:{{ cbRing }};display:flex;align-items:center;justify-content:center;flex-shrink:0"><sc-if value="{{ compareOn }}"><img src="assets/icons/check16--white.svg" alt="" style="display:block;width:16px;height:16px;flex-shrink:0"></sc-if></span>Сравнить по ответственным
+          </button>
+        </sc-if>
+        <div style="display:flex;align-items:center;gap:32px;margin-left:auto">
+          <button onClick="{{ resetF }}" style="padding:0;border:none;background:transparent;cursor:pointer;font-family:inherit;font-size:13px;line-height:19px;color:rgb(104,112,133)">Сбросить</button>
+          <button onClick="{{ apply }}" style="width:154px;height:44px;border:none;border-radius:10px;background:rgb(119,0,255);font-family:inherit;font-weight:700;font-size:14px;line-height:20px;color:#fff;cursor:pointer" style-hover="background:rgb(101,0,217)">Применить</button>
+        </div>
+      </div>
+    </div>
+  </section>
 
-    <section style="display:flex;flex-direction:column;gap:12px;padding:{{ pad }};border-radius:16px;box-shadow:inset 0 0 0 1px var(--color-border-muted)">
-      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px">
-        <h2 style="margin:0;font-weight:700;font-size:22px;line-height:1.2">Мои отчёты</h2>
-      </div>
-      <sc-if value="{{ jfOpen }}">
-        <div style="display:flex;flex-direction:column;gap:12px;padding:12px;border-radius:12px;background:var(--color-bg-surface3)">
-          <div style="display:flex;flex-wrap:wrap;gap:6px"><sc-for list="{{ jfStatus }}" as="x"><x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Tag" size="s" removable="{{ false }}" selected="{{ x.selected }}" on-click="{{ x.pick }}" hint-size="auto,24px">{{ x.label }}</x-import></sc-for></div>
-          <div style="max-width:220px"><x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Select" label="Формат" hint="{{ null }}" options="{{ jfFormatOpts }}" value="{{ jfFormatVal }}" on-change="{{ setJfFormat }}" hint-size="100%,72px"></x-import></div>
-        </div>
-      </sc-if>
-      <sc-if value="{{ jfNone }}"><div style="padding:12px 0;font-size:14px;line-height:20px;color:var(--color-fg-muted)">Нет отчётов по выбранным условиям</div></sc-if>
-      <sc-if value="{{ noJobs }}"><div style="padding:24px 0;font-size:14px;line-height:20px;color:var(--color-fg-muted)">Сформированные отчёты появятся здесь. Можно уйти с экрана — о готовности придёт уведомление.</div></sc-if>
-      <sc-for list="{{ jobs }}" as="j" hint-placeholder-count="0">
-        <div style="display:flex;flex-direction:column;gap:8px;padding:12px 0;border-top:1px solid var(--color-border-muted)">
-          <div style="display:flex;justify-content:space-between;gap:12px;align-items:center">
-            <span style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-size:16px;line-height:24px;font-weight:500">{{ j.title }}</span><span style="font-size:12px;line-height:16px;color:var(--color-fg-muted)">{{ j.params }}</span></span>
-            <sc-if value="{{ j.done }}"><x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" variant="outline" size="s" on-click="{{ j.download }}" hint-size="110px,40px">Скачать</x-import></sc-if>
-            <sc-if value="{{ j.failed }}"><x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" variant="outline" size="s" on-click="{{ j.retry }}" hint-size="110px,40px">Повторить</x-import></sc-if>
+  <div style="display:grid;grid-template-columns:{{ midCols }};gap:24px;align-items:stretch">
+    <sc-if value="{{ showCompare }}">
+      <section style="display:flex;flex-direction:column;gap:6px;padding:24px;border-radius:14px;background:#fff;box-shadow:inset 0 0 0 1px rgb(227,229,237)">
+        <h2 style="margin:0;font-weight:700;font-size:21px;line-height:28px">Сравнение КАМ</h2>
+        <span style="font-size:13px;line-height:19px;color:rgb(104,112,133)">{{ compareSub }}</span>
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) 150px 110px;gap:12px;margin-top:22px;padding-bottom:10px;font-weight:700;font-size:12px;line-height:16px;color:rgb(104,112,133)"><span>Ответственный</span><span>Взаимодействия</span><span>Просрочено SLA</span></div>
+        <sc-for list="{{ compare }}" as="k" hint-placeholder-count="4">
+          <div style="display:grid;grid-template-columns:minmax(0,1fr) 150px 110px;gap:12px;align-items:center;min-height:52px;border-bottom:1px solid rgb(227,229,237)">
+            <span style="display:flex;align-items:center;gap:14px;min-width:0"><span style="width:32px;height:32px;border-radius:50%;background:rgb(242,234,254);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;line-height:16px;color:rgb(89,0,199);flex-shrink:0">{{ k.initials }}</span><span style="font-weight:700;font-size:14px;line-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ k.name }}</span></span>
+            <span style="font-size:14px;line-height:20px;padding-left:60px">{{ k.total }}</span>
+            <span style="display:flex;justify-content:center"><span style="min-width:44px;height:28px;padding:0 10px;box-sizing:border-box;border-radius:7px;background:{{ k.bg }};display:flex;align-items:center;justify-content:flex-start;font-weight:700;font-size:12px;line-height:16px;color:{{ k.fg }}">{{ k.over }}</span></span>
           </div>
-          <sc-if value="{{ j.running }}">
-            <div style="display:flex;align-items:center;gap:12px"><span style="flex:1;height:4px;border-radius:2px;background:var(--color-bg-surface3);overflow:hidden"><span style="display:block;height:100%;width:{{ j.pct }};background:var(--color-accent);transition:width 200ms"></span></span><span style="font-size:12px;line-height:16px;color:var(--color-fg-soft)">{{ j.statusText }}</span></div>
-          </sc-if>
-          <sc-if value="{{ j.done }}"><span style="font-size:12px;line-height:16px;color:var(--color-success-strong)">{{ j.statusText }}</span></sc-if>
-          <sc-if value="{{ j.failed }}"><span style="font-size:12px;line-height:16px;color:var(--color-error-strong)">{{ j.statusText }}</span></sc-if>
+        </sc-for>
+        <sc-if value="{{ compareEmpty }}"><span style="padding:16px 0;font-size:13px;line-height:19px;color:rgb(104,112,133)">Нет взаимодействий по выбранным фильтрам.</span></sc-if>
+      </section>
+    </sc-if>
+
+    <section data-screen-label="05A Файл отчёта" style="display:flex;flex-direction:column;padding:24px;border-radius:14px;background:#fff;box-shadow:inset 0 0 0 1px rgb(227,229,237)">
+      <sc-if value="{{ showForm }}">
+        <h2 style="margin:0;font-weight:700;font-size:21px;line-height:28px">Файл отчёта</h2>
+        <span style="margin-top:15px;font-size:12px;line-height:16px;color:rgb(104,112,133)">Формат</span>
+        <div style="display:flex;gap:11px;margin-top:9px">
+          <sc-for list="{{ formats }}" as="x" hint-placeholder-count="3">
+            <button onClick="{{ x.pick }}" aria-pressed="{{ x.selected }}" style="flex:1 1 0;max-width:108px;height:49px;border:none;border-radius:8px;background:{{ x.bg }};box-shadow:inset 0 0 0 1px {{ x.ring }};font-family:inherit;font-weight:700;font-size:14px;line-height:20px;color:{{ x.fg }};cursor:pointer">{{ x.label }}</button>
+          </sc-for>
         </div>
-      </sc-for>
+        <span style="margin-top:26px;font-weight:700;font-size:16px;line-height:22px">{{ countText }}</span>
+        <span style="margin-top:8px;font-size:13px;line-height:19px;color:rgb(104,112,133)">{{ scopeText }}</span>
+        <div style="margin-top:40px"><button onClick="{{ build }}" disabled="{{ cantBuild }}" style="display:flex;align-items:center;justify-content:center;gap:12px;width:100%;height:44px;padding:0 10px;box-sizing:border-box;border:none;border-radius:10px;background:rgb(119,0,255);font-family:inherit;font-weight:700;font-size:14px;line-height:20px;color:#fff;cursor:pointer" style-hover="background:rgb(101,0,217)">Сформировать отчёт</button></div>
+        <span style="margin-top:19px;max-width:260px;font-size:13px;line-height:19px;color:rgb(104,112,133)">Можно продолжать работу — сообщим, когда файл будет готов.</span>
+      </sc-if>
+      <sc-if value="{{ showJob }}">
+        <h2 style="margin:0;font-weight:700;font-size:19px;line-height:26px">Отчёт по взаимодействиям</h2>
+        <span style="margin-top:8px;font-size:13px;line-height:19px;color:rgb(104,112,133)">{{ job.params }}</span>
+        <span style="align-self:flex-start;margin-top:14px;height:28px;padding:0 10px;display:flex;align-items:center;border-radius:7px;background:rgb(238,240,245);font-weight:700;font-size:12px;line-height:16px;color:rgb(104,112,133)">{{ job.chip }}</span>
+        <div style="margin-top:44px">
+          <sc-if value="{{ job.running }}"><img src="assets/icons/clock25--brand.svg" alt="" style="display:block;width:25px;height:25px;flex-shrink:0"></sc-if>
+          <sc-if value="{{ job.done }}"><img src="assets/icons/check25--green2.svg" alt="" style="display:block;width:25px;height:25px;flex-shrink:0"></sc-if>
+          <sc-if value="{{ job.failed }}"><img src="assets/icons/alert25--red2.svg" alt="" style="display:block;width:25px;height:25px;flex-shrink:0"></sc-if>
+        </div>
+        <span style="margin-top:14px;font-weight:700;font-size:21px;line-height:28px">{{ job.title }}</span>
+        <p style="margin:14px 0 0;max-width:300px;font-size:14px;line-height:20px;color:rgb(104,112,133);white-space:pre-line">{{ job.text }}</p>
+        <sc-if value="{{ job.running }}">
+          <span style="position:relative;display:block;height:4px;margin-top:26px;border-radius:2px;background:rgb(238,240,245);overflow:hidden">{{ job.bar }}</span>
+          <span style="margin-top:42px;font-size:13px;line-height:19px;color:rgb(104,112,133)">Сообщим, когда файл будет готов.</span>
+          <div style="margin-top:auto;padding-top:40px"><button onClick="{{ backToWork }}" style="width:100%;height:44px;padding:0 10px;box-sizing:border-box;border:none;border-radius:10px;background:#fff;box-shadow:inset 0 0 0 1px rgb(227,229,237);font-family:inherit;font-weight:700;font-size:14px;line-height:20px;color:rgb(32,33,51);cursor:pointer" style-hover="background:rgb(245,246,250)">Вернуться к работе</button></div>
+        </sc-if>
+        <sc-if value="{{ job.done }}">
+          <div style="margin-top:26px"><button onClick="{{ job.download }}"  style="display:flex;align-items:center;justify-content:center;gap:12px;width:100%;height:44px;padding:0 10px;box-sizing:border-box;border:none;border-radius:10px;background:rgb(119,0,255);font-family:inherit;font-weight:700;font-size:14px;line-height:20px;color:#fff;cursor:pointer" style-hover="background:rgb(101,0,217)">Скачать отчёт<img src="assets/icons/download18--white.svg" alt="" style="display:block;width:18px;height:18px;flex-shrink:0"></button></div>
+          <span style="margin-top:19px;max-width:240px;font-size:13px;line-height:19px;color:rgb(104,112,133)">Параметры отчёта сохранены в этом запросе.</span>
+          <button onClick="{{ backToWork }}" style="align-self:flex-start;margin-top:16px;padding:0;border:none;background:transparent;cursor:pointer;font-family:inherit;font-size:13px;line-height:19px;color:rgb(119,0,255)">Новый отчёт</button>
+        </sc-if>
+        <sc-if value="{{ job.failed }}">
+          <div style="margin-top:26px"><button onClick="{{ job.retry }}" style="width:100%;height:44px;padding:0 10px;box-sizing:border-box;border:none;border-radius:10px;background:#fff;box-shadow:inset 0 0 0 1px rgb(227,229,237);font-family:inherit;font-weight:700;font-size:14px;line-height:20px;color:rgb(32,33,51);cursor:pointer" style-hover="background:rgb(245,246,250)">Повторить формирование</button></div>
+        </sc-if>
+      </sc-if>
     </section>
   </div>
 
-  <section style="display:flex;flex-direction:column;gap:16px">
+
+  <section data-screen-label="05 Статистика" style="display:flex;flex-direction:column;gap:16px">
     <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
-      <h2 style="margin:0;font-weight:700;font-size:22px;line-height:1.2">Статистика по фильтрам</h2>
-      <span style="font-size:14px;line-height:20px;color:var(--color-fg-muted)">{{ chartsCaption }}</span>
+      <h2 style="margin:0;font-weight:700;font-size:21px;line-height:28px">Статистика по фильтрам</h2>
+      <span style="font-size:13px;line-height:19px;color:rgb(104,112,133)">{{ chartsCaption }}</span>
     </div>
     <sc-if value="{{ chLoading }}" hint-placeholder-val="{{ true }}">
-      <div style="display:grid;grid-template-columns:{{ chartCols }};gap:16px"><div style="height:280px;border-radius:16px;background:var(--color-bg-surface3);animation:crmPulse 1.2s ease-in-out infinite"></div><div style="height:280px;border-radius:16px;background:var(--color-bg-surface3);animation:crmPulse 1.2s ease-in-out infinite"></div><div style="height:280px;border-radius:16px;background:var(--color-bg-surface3);animation:crmPulse 1.2s ease-in-out infinite"></div></div>
+      <div style="display:grid;grid-template-columns:{{ chartCols }};gap:24px"><div style="height:280px;border-radius:14px;background:rgb(238,240,245);animation:crmPulse 1.2s ease-in-out infinite"></div><div style="height:280px;border-radius:14px;background:rgb(238,240,245);animation:crmPulse 1.2s ease-in-out infinite"></div><div style="height:280px;border-radius:14px;background:rgb(238,240,245);animation:crmPulse 1.2s ease-in-out infinite"></div></div>
     </sc-if>
     <sc-if value="{{ chError }}">
-      <div role="alert" style="display:flex;flex-direction:column;gap:8px;align-items:flex-start;padding:24px;border-radius:16px;background:var(--color-bg-surface3)"><span style="font-weight:700;font-size:18px;line-height:1.2">Графики не загрузились</span><span style="font-size:14px;line-height:20px;color:var(--color-error-strong)">Код: {{ chErr.code }}</span><x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" size="s" on-click="{{ reloadCharts }}" hint-size="120px,40px">Повторить</x-import></div>
+      <div role="alert" style="display:flex;gap:12px;align-items:flex-start;padding:20px;border-radius:14px;background:rgb(255,240,241)"><img src="assets/icons/alert25--red2.svg" alt="" style="width:25px;height:25px;flex-shrink:0"><div style="display:flex;flex-direction:column;gap:8px;align-items:flex-start"><span style="font-weight:700;font-size:16px;line-height:22px;color:rgb(184,48,62)">Графики не загрузились</span><span style="font-size:12px;line-height:16px;color:rgb(184,48,62)">Код: {{ chErr.code }}</span><button onClick="{{ reloadCharts }}" style="height:44px;padding:0 20px;border:none;border-radius:10px;background:#fff;box-shadow:inset 0 0 0 1px rgb(227,229,237);font-family:inherit;font-weight:700;font-size:14px;color:rgb(32,33,51);cursor:pointer">Повторить</button></div></div>
     </sc-if>
     <sc-if value="{{ chEmpty }}">
-      <div style="padding:32px;border-radius:16px;background:var(--color-bg-surface3);font-size:16px;line-height:24px;color:var(--color-fg-soft)">Нет данных за выбранный период. Расширьте период или уберите фильтры.</div>
+      <div style="padding:24px;border-radius:14px;background:#fff;box-shadow:inset 0 0 0 1px rgb(227,229,237);font-size:14px;line-height:20px;color:rgb(104,112,133)">Нет данных за выбранный период. Расширьте период или уберите фильтры.</div>
     </sc-if>
     <sc-if value="{{ chReady }}">
-      <div style="display:grid;grid-template-columns:{{ chartCols }};gap:16px">
-        <div style="display:flex;flex-direction:column;gap:12px;padding:20px;border-radius:16px;box-shadow:inset 0 0 0 1px var(--color-border-muted)">
-          <h3 style="margin:0;font-weight:700;font-size:16px;line-height:1.2">Взаимодействия по статусам</h3>
-          <sc-for list="{{ statusBars }}" as="b"><div style="display:flex;flex-direction:column;gap:4px"><div style="display:flex;justify-content:space-between;gap:8px;font-size:14px;line-height:20px"><span>{{ b.label }}</span><span style="font-weight:500">{{ b.value }}</span></div><span style="height:8px;border-radius:999px;background:var(--color-bg-surface3)"><span style="display:block;height:100%;width:{{ b.pct }};border-radius:999px;background:{{ b.color }}"></span></span></div></sc-for>
+      <div style="display:grid;grid-template-columns:{{ chartCols }};gap:24px">
+        <div style="display:flex;flex-direction:column;gap:14px;padding:24px 22px;border-radius:14px;background:#fff;box-shadow:inset 0 0 0 1px rgb(227,229,237)">
+          <div style="display:flex;flex-direction:column;gap:6px"><h3 style="margin:0;font-weight:700;font-size:18px;line-height:26px">Взаимодействия по статусам</h3></div>
+          <sc-for list="{{ statusBars }}" as="b"><div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;justify-content:space-between;gap:12px;font-size:13px;line-height:19px"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ b.label }}</span><span style="font-weight:700;flex-shrink:0">{{ b.value }}</span></div><span style="display:block;height:6px;border-radius:3px;background:rgb(238,240,245);overflow:hidden"><span style="display:block;height:100%;width:{{ b.pct }};border-radius:3px;background:{{ b.color }}"></span></span></div></sc-for>
         </div>
-        <div style="display:flex;flex-direction:column;gap:12px;padding:20px;border-radius:16px;box-shadow:inset 0 0 0 1px var(--color-border-muted)">
-          <h3 style="margin:0;font-weight:700;font-size:16px;line-height:1.2">Новые взаимодействия по месяцам</h3>
-          <div style="flex:1;min-height:180px;display:flex;align-items:flex-end;gap:8px;border-bottom:1px solid var(--color-border-default)">
-            <sc-for list="{{ months }}" as="b"><div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end"><span style="font-size:12px;line-height:16px;font-weight:500">{{ b.value }}</span><span style="width:100%;max-width:40px;height:{{ b.pct }};border-radius:6px 6px 0 0;background:var(--color-accent)"></span></div></sc-for>
+        <div style="display:flex;flex-direction:column;gap:14px;padding:24px 22px;border-radius:14px;background:#fff;box-shadow:inset 0 0 0 1px rgb(227,229,237)">
+          <div style="display:flex;flex-direction:column;gap:6px"><h3 style="margin:0;font-weight:700;font-size:18px;line-height:26px">Новые взаимодействия по месяцам</h3></div>
+          <div style="flex:1;min-height:180px;display:flex;align-items:flex-end;gap:10px;border-bottom:1px solid rgb(227,229,237)">
+            <sc-for list="{{ months }}" as="b"><div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;height:100%"><span style="font-weight:700;font-size:12px;line-height:16px">{{ b.value }}</span><span style="width:100%;max-width:36px;height:{{ b.pct }};border-radius:6px 6px 0 0;background:rgb(119,0,255)"></span></div></sc-for>
           </div>
-          <div style="display:flex;gap:8px"><sc-for list="{{ months }}" as="b"><span style="flex:1;text-align:center;font-size:12px;line-height:16px;color:var(--color-fg-soft)">{{ b.label }}</span></sc-for></div>
+          <div style="display:flex;gap:10px"><sc-for list="{{ months }}" as="b"><span style="flex:1;text-align:center;font-size:12px;line-height:16px;color:rgb(104,112,133)">{{ b.label }}</span></sc-for></div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:12px;padding:20px;border-radius:16px;box-shadow:inset 0 0 0 1px var(--color-border-muted)">
-          <h3 style="margin:0;font-weight:700;font-size:16px;line-height:1.2">Лицензии по продуктам</h3>
-          <sc-for list="{{ licBars }}" as="b"><div style="display:grid;grid-template-columns:110px 1fr 24px;gap:8px;align-items:center;font-size:14px;line-height:20px"><span>{{ b.label }}</span><span style="height:8px;border-radius:999px;background:var(--color-bg-surface3)"><span style="display:block;height:100%;width:{{ b.pct }};border-radius:999px;background:var(--color-fg-soft)"></span></span><span style="font-weight:500;text-align:right">{{ b.value }}</span></div></sc-for>
+        <div style="display:flex;flex-direction:column;gap:14px;padding:24px 22px;border-radius:14px;background:#fff;box-shadow:inset 0 0 0 1px rgb(227,229,237)">
+          <div style="display:flex;flex-direction:column;gap:6px"><h3 style="margin:0;font-weight:700;font-size:18px;line-height:26px">Лицензии по продуктам</h3></div>
+          <sc-for list="{{ licBars }}" as="b"><div style="display:grid;grid-template-columns:minmax(0,120px) minmax(0,1fr) 28px;gap:12px;align-items:center;font-size:13px;line-height:19px"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ b.label }}</span><span style="display:block;height:6px;border-radius:3px;background:rgb(238,240,245);overflow:hidden"><span style="display:block;height:100%;width:{{ b.pct }};border-radius:3px;background:rgb(104,112,133)"></span></span><span style="font-weight:700;text-align:right">{{ b.value }}</span></div></sc-for>
         </div>
       </div>
     </sc-if>
   </section>
 
-
-  <section data-screen-label="05b Риски" style="display:flex;flex-direction:column;gap:16px">
+  <section data-screen-label="05 Риски" style="display:flex;flex-direction:column;gap:16px">
     <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
-      <h2 style="margin:0;font-weight:700;font-size:22px;line-height:1.2">Риски</h2>
-      <span style="font-size:14px;line-height:20px;color:var(--color-fg-muted)">На сегодня · учитываются фильтры по вузу, направлению, продукту и ответственному, период — нет</span>
+      <h2 style="margin:0;font-weight:700;font-size:21px;line-height:28px">Риски</h2>
+      <span style="font-size:13px;line-height:19px;color:rgb(104,112,133)">На сегодня · учитываются фильтры по вузу, направлению, продукту и ответственному</span>
     </div>
-    <sc-if value="{{ rkLoading }}" hint-placeholder-val="{{ true }}">
-      <div style="height:120px;border-radius:16px;background:var(--color-bg-surface3);animation:crmPulse 1.2s ease-in-out infinite"></div>
-    </sc-if>
+    <sc-if value="{{ rkLoading }}" hint-placeholder-val="{{ true }}"><div style="height:120px;border-radius:14px;background:rgb(238,240,245);animation:crmPulse 1.2s ease-in-out infinite"></div></sc-if>
     <sc-if value="{{ rkReady }}">
-      <div style="display:grid;grid-template-columns:{{ kpiCols }};gap:12px">
+      <div style="display:grid;grid-template-columns:{{ kpiCols }};gap:24px">
         <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4">
-          <div style="display:flex;flex-direction:column;gap:4px;padding:16px 20px;border-radius:16px;background:var(--color-bg-surface2)">
-            <span style="font-size:14px;line-height:20px;color:var(--color-fg-soft)">{{ k.label }}</span>
-            <span style="font-weight:700;font-size:32px;line-height:1.1;color:{{ k.color }}">{{ k.value }}</span>
-            <span style="font-size:12px;line-height:16px;color:var(--color-fg-muted)">{{ k.note }}</span>
+          <div style="display:flex;flex-direction:column;gap:8px;padding:22px 20px;border-radius:14px;background:#fff;box-shadow:inset 0 0 0 1px rgb(227,229,237)">
+            <span style="font-size:14px;line-height:20px;color:rgb(104,112,133)">{{ k.label }}</span>
+            <span style="font-weight:700;font-size:32px;line-height:40px;color:{{ k.color }}">{{ k.value }}</span>
+            <span style="font-size:12px;line-height:16px;color:rgb(104,112,133)">{{ k.note }}</span>
           </div>
         </sc-for>
       </div>
-      <div style="display:grid;grid-template-columns:{{ riskCols }};gap:16px">
-        <div style="display:flex;flex-direction:column;gap:12px;padding:20px;border-radius:16px;box-shadow:inset 0 0 0 1px var(--color-border-muted)">
-          <div><h3 style="margin:0;font-weight:700;font-size:16px;line-height:1.2">Лицензии без продления</h3><div style="font-size:12px;line-height:16px;color:var(--color-fg-muted);margin-top:4px">Места по сроку окончания лицензии: есть ли по паре «вуз + продукт» процесс на стадии «Сопровождение»</div></div>
-          <sc-for list="{{ expiry }}" as="b"><div style="display:grid;grid-template-columns:96px 1fr auto;gap:10px;align-items:center;font-size:14px;line-height:20px"><span>{{ b.label }}</span><span style="display:flex;height:10px;border-radius:999px;overflow:hidden;gap:2px;background:var(--color-bg-surface3)"><sc-for list="{{ b.segs }}" as="g"><span title="{{ g.title }}" style="flex:{{ g.n }};background:{{ g.color }}"></span></sc-for></span><span style="white-space:nowrap;color:{{ b.fg }}">{{ b.text }}</span></div></sc-for>
-          <div style="display:flex;flex-wrap:wrap;gap:6px 14px"><sc-for list="{{ expiryLegend }}" as="p"><span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;line-height:16px;color:var(--color-fg-muted)"><span style="width:8px;height:8px;border-radius:999px;background:{{ p.color }}"></span>{{ p.label }}</span></sc-for></div>
+      <div style="display:grid;grid-template-columns:{{ riskCols }};gap:24px">
+        <div style="display:flex;flex-direction:column;gap:14px;padding:24px 22px;border-radius:14px;background:#fff;box-shadow:inset 0 0 0 1px rgb(227,229,237)">
+          <div style="display:flex;flex-direction:column;gap:6px"><h3 style="margin:0;font-weight:700;font-size:18px;line-height:26px">Лицензии без продления</h3><span style="font-size:12px;line-height:16px;color:rgb(104,112,133)">Места по сроку окончания: есть ли по паре «вуз + продукт» процесс на стадии продления</span></div>
+          <sc-for list="{{ expiry }}" as="b"><div style="display:grid;grid-template-columns:96px minmax(0,1fr) auto;gap:12px;align-items:center;font-size:13px;line-height:19px"><span>{{ b.label }}</span><span style="display:flex;gap:2px;height:6px;border-radius:3px;background:rgb(238,240,245);overflow:hidden"><sc-for list="{{ b.segs }}" as="g"><span title="{{ g.title }}" style="flex:{{ g.n }};background:{{ g.color }}"></span></sc-for></span><span style="white-space:nowrap;font-weight:700;color:{{ b.fg }}">{{ b.text }}</span></div></sc-for>
+          <div style="display:flex;flex-wrap:wrap;gap:6px 16px"><sc-for list="{{ expiryLegend }}" as="p"><span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;line-height:16px;color:rgb(104,112,133)"><span style="width:8px;height:8px;border-radius:2px;background:{{ p.color }}"></span>{{ p.label }}</span></sc-for></div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:12px;padding:20px;border-radius:16px;box-shadow:inset 0 0 0 1px var(--color-border-muted)">
-          <div><h3 style="margin:0;font-weight:700;font-size:16px;line-height:1.2">Запас по SLA</h3><div style="font-size:12px;line-height:16px;color:var(--color-fg-muted);margin-top:4px">Сколько нормы статуса уже израсходовано, по стадиям. Оранжевые — просрочатся первыми</div></div>
-          <sc-if value="{{ slaEmpty }}"><span style="font-size:14px;line-height:20px;color:var(--color-fg-muted)">Нет процессов со сроком по SLA</span></sc-if>
-          <sc-for list="{{ slaBands }}" as="b"><div style="display:grid;grid-template-columns:110px 1fr 24px;gap:10px;align-items:center;font-size:14px;line-height:20px"><span>{{ b.label }}</span><span style="display:flex;height:10px;border-radius:999px;overflow:hidden;gap:2px;background:var(--color-bg-surface3)"><sc-for list="{{ b.segs }}" as="g"><span title="{{ g.title }}" style="flex:{{ g.n }};background:{{ g.color }}"></span></sc-for></span><span style="font-weight:500;text-align:right">{{ b.total }}</span></div></sc-for>
-          <div style="display:flex;flex-wrap:wrap;gap:6px 14px"><sc-for list="{{ slaLegend }}" as="p"><span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;line-height:16px;color:var(--color-fg-muted)"><span style="width:8px;height:8px;border-radius:999px;background:{{ p.color }}"></span>{{ p.label }}</span></sc-for></div>
+        <div style="display:flex;flex-direction:column;gap:14px;padding:24px 22px;border-radius:14px;background:#fff;box-shadow:inset 0 0 0 1px rgb(227,229,237)">
+          <div style="display:flex;flex-direction:column;gap:6px"><h3 style="margin:0;font-weight:700;font-size:18px;line-height:26px">Запас по SLA</h3><span style="font-size:12px;line-height:16px;color:rgb(104,112,133)">Сколько нормы статуса уже израсходовано, по стадиям</span></div>
+          <sc-if value="{{ slaEmpty }}"><span style="font-size:13px;line-height:19px;color:rgb(104,112,133)">Нет процессов со сроком по SLA</span></sc-if>
+          <sc-for list="{{ slaBands }}" as="b"><div style="display:grid;grid-template-columns:120px minmax(0,1fr) 28px;gap:12px;align-items:center;font-size:13px;line-height:19px"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ b.label }}</span><span style="display:flex;gap:2px;height:6px;border-radius:3px;background:rgb(238,240,245);overflow:hidden"><sc-for list="{{ b.segs }}" as="g"><span title="{{ g.title }}" style="flex:{{ g.n }};background:{{ g.color }}"></span></sc-for></span><span style="font-weight:700;text-align:right">{{ b.total }}</span></div></sc-for>
+          <div style="display:flex;flex-wrap:wrap;gap:6px 16px"><sc-for list="{{ slaLegend }}" as="p"><span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;line-height:16px;color:rgb(104,112,133)"><span style="width:8px;height:8px;border-radius:2px;background:{{ p.color }}"></span>{{ p.label }}</span></sc-for></div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:12px;padding:20px;border-radius:16px;box-shadow:inset 0 0 0 1px var(--color-border-muted)">
-          <div><h3 style="margin:0;font-weight:700;font-size:16px;line-height:1.2">Не успеем до конца лицензии</h3><div style="font-size:12px;line-height:16px;color:var(--color-fg-muted);margin-top:4px">Прогноз завершения по критическому пути позже окончания лицензии вуза на продукт</div></div>
-          <sc-if value="{{ gapEmpty }}"><span style="font-size:14px;line-height:20px;color:var(--color-success-strong)">Все процессы с лицензией успевают до её окончания</span></sc-if>
-          <sc-for list="{{ gaps }}" as="g"><button onClick="{{ g.open }}" style="display:flex;flex-direction:column;gap:6px;padding:0;border:none;background:transparent;text-align:left;cursor:pointer;font-family:var(--font-sans);color:var(--color-fg-default)"><span style="display:flex;justify-content:space-between;gap:8px;width:100%;font-size:14px;line-height:20px"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ g.title }}</span><span style="flex-shrink:0;font-weight:500;color:var(--color-error-strong)">{{ g.text }}</span></span><span style="width:100%;height:6px;border-radius:999px;background:var(--color-bg-surface3)"><span style="display:block;height:100%;width:{{ g.pct }};border-radius:999px;background:var(--color-error)"></span></span><span style="font-size:12px;line-height:16px;color:var(--color-fg-muted)">{{ g.note }}</span></button></sc-for>
+        <div style="display:flex;flex-direction:column;gap:14px;padding:24px 22px;border-radius:14px;background:#fff;box-shadow:inset 0 0 0 1px rgb(227,229,237)">
+          <div style="display:flex;flex-direction:column;gap:6px"><h3 style="margin:0;font-weight:700;font-size:18px;line-height:26px">Не успеем до конца лицензии</h3><span style="font-size:12px;line-height:16px;color:rgb(104,112,133)">Прогноз завершения по критическому пути позже окончания лицензии</span></div>
+          <sc-if value="{{ gapEmpty }}"><span style="font-size:13px;line-height:19px;color:rgb(19,119,95)">Все процессы с лицензией успевают до её окончания</span></sc-if>
+          <sc-for list="{{ gaps }}" as="g"><button onClick="{{ g.open }}" style="display:flex;flex-direction:column;gap:6px;padding:0;border:none;background:transparent;text-align:left;cursor:pointer;font-family:inherit;color:rgb(32,33,51)"><span style="display:flex;justify-content:space-between;gap:12px;width:100%;font-size:13px;line-height:19px"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700">{{ g.title }}</span><span style="flex-shrink:0;font-weight:700;color:rgb(184,48,62)">{{ g.text }}</span></span><span style="display:block;width:100%;height:6px;border-radius:3px;background:rgb(238,240,245);overflow:hidden"><span style="display:block;height:100%;width:{{ g.pct }};border-radius:3px;background:rgb(184,48,62)"></span></span><span style="font-size:12px;line-height:16px;color:rgb(104,112,133)">{{ g.note }}</span></button></sc-for>
         </div>
-        <div style="display:flex;flex-direction:column;gap:12px;padding:20px;border-radius:16px;box-shadow:inset 0 0 0 1px var(--color-border-muted)">
-          <div><h3 style="margin:0;font-weight:700;font-size:16px;line-height:1.2">Зависимость от вендора</h3><div style="font-size:12px;line-height:16px;color:var(--color-fg-muted);margin-top:4px">Доля мест вендора, лицензии на которые истекают в ближайшие 60 дней</div></div>
-          <sc-for list="{{ vendorRisk }}" as="b"><div style="display:flex;flex-direction:column;gap:4px"><div style="display:flex;justify-content:space-between;gap:8px;font-size:14px;line-height:20px"><span>{{ b.label }}</span><span style="white-space:nowrap;color:{{ b.fg }}">{{ b.text }}</span></div><span style="height:8px;border-radius:999px;background:var(--color-bg-surface3)"><span style="display:block;height:100%;width:{{ b.pct }};border-radius:999px;background:{{ b.color }}"></span></span></div></sc-for>
+        <div style="display:flex;flex-direction:column;gap:14px;padding:24px 22px;border-radius:14px;background:#fff;box-shadow:inset 0 0 0 1px rgb(227,229,237)">
+          <div style="display:flex;flex-direction:column;gap:6px"><h3 style="margin:0;font-weight:700;font-size:18px;line-height:26px">Зависимость от вендора</h3><span style="font-size:12px;line-height:16px;color:rgb(104,112,133)">Доля мест вендора, лицензии на которые истекают в ближайшие 60 дней</span></div>
+          <sc-for list="{{ vendorRisk }}" as="b"><div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;justify-content:space-between;gap:12px;font-size:13px;line-height:19px"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ b.label }}</span><span style="flex-shrink:0;white-space:nowrap;font-weight:700;color:{{ b.fg }}">{{ b.text }}</span></div><span style="display:block;height:6px;border-radius:3px;background:rgb(238,240,245);overflow:hidden"><span style="display:block;height:100%;width:{{ b.pct }};border-radius:3px;background:{{ b.color }}"></span></span></div></sc-for>
         </div>
       </div>
+      <sc-if value="{{ orphanText }}"><div role="note" style="display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:11px;background:rgb(255,245,223);font-size:13px;line-height:19px;color:rgb(152,98,11)">{{ orphanText }}</div></sc-if>
     </sc-if>
   </section>
-
-  <sc-if value="{{ showCompare }}">
-    <section style="display:flex;flex-direction:column;gap:16px">
-      <h2 style="margin:0;font-weight:700;font-size:22px;line-height:1.2">Сравнение КАМ</h2>
-      <div style="overflow-x:auto;border-radius:16px;box-shadow:inset 0 0 0 1px var(--color-border-muted)">
-        <table style="width:100%;min-width:640px;border-collapse:collapse;font-size:14px;line-height:20px">
-          <thead><tr style="background:var(--color-bg-surface2);color:var(--color-fg-soft);text-align:left"><th style="padding:12px 20px;font-weight:400">КАМ</th><th style="padding:12px;font-weight:400">Всего</th><th style="padding:12px;font-weight:400">Просрочено</th><th style="padding:12px;font-weight:400" title="Израсходовано 80–100% нормы SLA">Близко к сроку</th><th style="padding:12px;font-weight:400" title="Лицензии вузов КАМа, истекающие в ближайшие 30 дней">Лицензии ≤ 30 дн.</th><th style="padding:12px 20px;font-weight:400;width:45%">Распределение по стадиям</th></tr></thead>
-          <tbody>
-            <sc-for list="{{ compare }}" as="k">
-              <tr style="border-top:1px solid var(--color-border-muted)">
-                <td style="padding:12px 20px;font-size:16px;line-height:24px">{{ k.name }}</td>
-                <td style="padding:12px;font-weight:500">{{ k.total }}</td>
-                <td style="padding:12px;font-weight:500;color:{{ k.overColor }}">{{ k.over }}</td>
-                <td style="padding:12px;font-weight:500;color:{{ k.nearColor }}">{{ k.near }}</td>
-                <td style="padding:12px;font-weight:500;color:{{ k.licColor }}">{{ k.lic30 }}</td>
-                <td style="padding:12px 20px"><div style="display:flex;height:12px;border-radius:999px;overflow:hidden;gap:2px;background:var(--color-bg-surface3)"><sc-for list="{{ k.segs }}" as="g"><span title="{{ g.label }}: {{ g.n }}" style="flex:{{ g.n }};background:{{ g.color }}"></span></sc-for></div></td>
-              </tr>
-            </sc-for>
-          </tbody>
-        </table>
-      </div>
-      <sc-if value="{{ orphanText }}"><div role="note" style="padding:12px 16px;border-radius:12px;box-shadow:inset 0 0 0 1px var(--color-warning);font-size:14px;line-height:20px">{{ orphanText }}</div></sc-if>
-      <div style="display:flex;flex-wrap:wrap;gap:8px 16px"><sc-for list="{{ legend }}" as="p"><span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;line-height:16px;color:var(--color-fg-soft)"><span style="width:8px;height:8px;border-radius:999px;background:{{ p.color }}"></span>{{ p.label }}</span></sc-for></div>
-    </section>
-  </sc-if>
+  <div style="display:flex;align-items:center;gap:14px;min-height:54px;padding:0 18px;box-sizing:border-box;border-radius:11px;background:rgb(242,234,254)">
+    <img src="assets/icons/help--brand.svg" alt="" style="display:block;width:20px;height:20px;padding:1.667px;box-sizing:border-box;flex-shrink:0">
+    <span style="font-size:14px;line-height:20px;color:rgb(89,0,199)">Отчёт учитывает доступные вам данные и выбранные фильтры.</span>
+  </div>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;role&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;kam&quot;,&quot;rukovoditel&quot;],&quot;default&quot;:&quot;kam&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;isMobile&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;demoState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;auto&quot;,&quot;loading&quot;,&quot;empty&quot;,&quot;error&quot;],&quot;default&quot;:&quot;auto&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;onToast&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(t:object)=&gt;void&quot;}}">
 const waitCRM = () => new Promise((r) => { const t = () => (window.CRM ? r(window.CRM) : setTimeout(t, 30)); t(); });
 const COLS = [['university', 'Наименование вуза'], ['direction', 'ИТ-направление'], ['product', 'ИТ-продукт'], ['status', 'Статус работы с вузом'], ['responsible', 'Ответственный']];
 const JKEY = 'crm.reports.jobs';
-const d0 = new Date(Date.now() - 180 * 864e5).toISOString().slice(0, 10), d1 = new Date().toISOString().slice(0, 10);
+const d0 = (() => { const t = new Date(); return new Date(t.getFullYear(), t.getMonth(), 1, 12).toISOString().slice(0, 10); })(), d1 = new Date().toISOString().slice(0, 10);
 class Component extends DCLogic {
-  state = { jf: { open: false, status: 'all', format: 'all' }, f: { from: d0, to: d1, universityId: 'all', itDirectionId: 'all', itProductId: 'all', responsibleUserId: 'all' }, cols: { university: true, direction: true, product: true, status: true, responsible: true }, format: 'xlsx', jobs: [], cat: { unis: [], dirs: [], prods: [] }, ch: { status: 'loading', data: null, err: null }, rows: [], rk: { status: 'loading', rows: [], lics: [], vendors: [] } };
+  state = { jobId: null, compare: true, d: { from: d0, to: d1, universityId: 'all', itDirectionId: 'all', itProductId: 'all', responsibleUserId: 'all' }, f: { from: d0, to: d1, universityId: 'all', itDirectionId: 'all', itProductId: 'all', responsibleUserId: 'all' }, cols: { university: true, direction: true, product: true, status: true, responsible: true }, format: 'xlsx', jobs: [], cat: { unis: [], dirs: [], prods: [] }, ch: { status: 'loading', data: null, err: null }, rows: [], rk: { status: 'loading', rows: [], lics: [], vendors: [] } };
   componentDidMount() {
     try { const j = JSON.parse(localStorage.getItem(JKEY) || '[]'); this.setState({ jobs: j.filter((x) => x.status === 'SUCCESS' || x.status === 'FAILED') }); } catch (e) {}
     waitCRM().then((CRM) => { Promise.all([CRM.api.universities(), CRM.api.directions(), CRM.api.products()]).then(([unis, dirs, prods]) => this.setState({ cat: { unis, dirs, prods } })).catch(() => {}); this.loadCharts(); });
@@ -241,15 +251,15 @@ class Component extends DCLogic {
       const seats = (a) => a.reduce((n, l) => n + (l.seats || 0), 0);
       const open = list.filter((l) => !renewing.has(key(l.universityId, l.itProductId))), covered = list.filter((l) => renewing.has(key(l.universityId, l.itProductId)));
       return { label, openSeats: seats(open), openCount: open.length, segs: [
-        { n: seats(open), color: 'var(--color-error)', title: 'Без продления: ' + seats(open) + ' мест' },
-        { n: seats(covered), color: 'var(--color-neutral-muted)', title: 'Продление идёт: ' + seats(covered) + ' мест' },
-      ].filter((g) => g.n), text: list.length ? seats(open) + ' из ' + seats(list) + ' мест' : 'нет', fg: seats(open) ? 'var(--color-error-strong)' : 'var(--color-fg-muted)' };
+        { n: seats(open), color: 'rgb(184,48,62)', title: 'Без продления: ' + seats(open) + ' мест' },
+        { n: seats(covered), color: 'rgb(182,183,192)', title: 'Продление идёт: ' + seats(covered) + ' мест' },
+      ].filter((g) => g.n), text: list.length ? seats(open) + ' из ' + seats(list) + ' мест' : 'нет', fg: seats(open) ? 'rgb(184,48,62)' : 'rgb(104,112,133)' };
     });
     const at90 = expiry.slice(1);
     const openSeats90 = at90.reduce((n, b) => n + b.openSeats, 0), openLics90 = at90.reduce((n, b) => n + b.openCount, 0);
 
     // 2. Запас по SLA: доля израсходованной нормы, по стадиям.
-    const BANDS = [['< 50%', 'var(--color-success-muted)', (x) => x < 0.5], ['50–80%', 'var(--color-warning)', (x) => x >= 0.5 && x < 0.8], ['80–100%', 'var(--color-accent)', (x) => x >= 0.8 && x <= 1], ['просрочено', 'var(--color-error)', (x) => x > 1]];
+    const BANDS = [['< 50%', 'rgb(133,228,174)', (x) => x < 0.5], ['50–80%', 'rgb(255,208,138)', (x) => x >= 0.5 && x < 0.8], ['80–100%', 'rgb(255,159,10)', (x) => x >= 0.8 && x <= 1], ['просрочено', 'rgb(184,48,62)', (x) => x > 1]];
     const withSla = rows.map((r) => ({ r, sla: CRM.SLA[r.currentStatusId] })).filter((x) => x.sla).map((x) => ({ ...x, ratio: x.r.daysInCurrentStatus / x.sla }));
     const slaBands = CRM.PHASES.map((p) => {
       const list = withSla.filter((x) => x.r.currentPhase === p.key);
@@ -279,7 +289,7 @@ class Component extends DCLogic {
       const total = list.reduce((n, l) => n + (l.seats || 0), 0), soon = list.filter((l) => daysLeft(l) <= 60).reduce((n, l) => n + (l.seats || 0), 0);
       const share = total ? soon / total : 0;
       return { label: v.name, share, total, text: total ? soon + ' из ' + total + ' мест · ' + Math.round(share * 100) + '%' : 'нет действующих лицензий', pct: Math.round(share * 100) + '%',
-        color: share >= 0.5 ? 'var(--color-error)' : share > 0 ? 'var(--color-accent)' : 'var(--color-neutral-muted)', fg: share >= 0.5 ? 'var(--color-error-strong)' : 'var(--color-fg-soft)' };
+        color: share >= 0.5 ? 'rgb(184,48,62)' : share > 0 ? 'rgb(255,159,10)' : 'rgb(182,183,192)', fg: share >= 0.5 ? 'rgb(184,48,62)' : 'rgb(104,112,133)' };
     }).filter((v) => v.total).sort((a, b) => b.share - a.share);
 
     // 4. Вузы без ответственного (или ответственный деактивирован) — видно руководителю.
@@ -289,14 +299,16 @@ class Component extends DCLogic {
     const nearByKam = {}; near.forEach((x) => { nearByKam[x.r.responsibleUserId] = (nearByKam[x.r.responsibleUserId] || 0) + 1; });
 
     return { expiry, openSeats90, openLics90, slaBands, near, gapsAll, gaps, vendorRisk, orphans, lic30ByKam, nearByKam, overdue: rows.filter((r) => r.isOverdue).length,
-      legends: { expiry: [{ label: 'Без процесса продления', color: 'var(--color-error)' }, { label: 'Продление идёт', color: 'var(--color-neutral-muted)' }], sla: BANDS.map(([label, color]) => ({ label, color })) } };
+      legends: { expiry: [{ label: 'Без процесса продления', color: 'rgb(184,48,62)' }, { label: 'Продление идёт', color: 'rgb(182,183,192)' }], sla: BANDS.map(([label, color]) => ({ label, color })) } };
   }
   saveJobs(jobs) { this.setState({ jobs }); try { localStorage.setItem(JKEY, JSON.stringify(jobs.filter((j) => j.status === 'SUCCESS' || j.status === 'FAILED').slice(0, 10))); } catch (e) {} }
   patchJob(id, p) { this.saveJobs(this.state.jobs.map((j) => (j.id === id ? { ...j, ...p } : j))); }
   build(existing) {
     const CRM = window.CRM, s = this.state;
     const job = existing ? { ...existing, status: 'QUEUED', progress: 0, error: null } : { id: 'job-' + Date.now(), status: 'QUEUED', progress: 0, format: s.format, q: this.q(), cols: COLS.filter(([k]) => s.cols[k]).map(([, l]) => l), createdAt: new Date().toISOString() };
+    job.count = s.rows.length;
     this.saveJobs([job, ...s.jobs.filter((j) => j.id !== job.id)]);
+    this.setState({ jobId: job.id });
     this.timers = this.timers || [];
     const t = setInterval(() => { const cur = this.state.jobs.find((j) => j.id === job.id); if (cur && cur.status !== 'SUCCESS' && cur.status !== 'FAILED') this.patchJob(job.id, { status: 'PROCESSING', progress: Math.min(90, (cur.progress || 0) + 12) }); }, 300);
     this.timers.push(t);
@@ -307,7 +319,7 @@ class Component extends DCLogic {
         const res = await CRM.api.exportReport(job.q, job.format);
         clearInterval(t);
         this.patchJob(job.id, { status: 'SUCCESS', progress: 100, fileName: res.fileName, url: res.url, rowCount: res.rowCount });
-        this.props.onToast && this.props.onToast({ kind: 'info', title: 'Отчёт готов', text: res.fileName, actionLabel: 'Скачать', action: () => this.download(this.state.jobs.find((j) => j.id === job.id)) });
+        this.props.onToast && this.props.onToast({ kind: 'success', title: 'Отчёт готов к скачиванию', text: 'Взаимодействия · ' + job.format.toUpperCase(), actionLabel: 'Скачать', action: () => this.download(this.state.jobs.find((j) => j.id === job.id)) });
       } catch (e) {
         clearInterval(t);
         this.patchJob(job.id, { status: 'FAILED', error: { code: e.code, message: e.message } });
@@ -328,67 +340,84 @@ class Component extends DCLogic {
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([html], { type: 'application/vnd.ms-excel' })); a.download = (job.fileName || 'otchet').replace(/\.xlsx?$/, '') + '.xls'; a.click();
   }
   renderVals() {
-    const s = this.state, f = s.f, CRM = window.CRM, m = !!this.props.isMobile, isRuk = this.props.role === 'rukovoditel';
+    const s = this.state, f = s.f, d = s.d, CRM = window.CRM, m = !!this.props.isMobile, isRuk = this.props.role === 'rukovoditel';
     const opt = (list, all) => [{ value: 'all', label: all }, ...list.map((x) => ({ value: x.id, label: x.name }))];
-    const set = {}; ['universityId', 'itDirectionId', 'itProductId', 'responsibleUserId'].forEach((k) => { set[k] = (v) => this.setF({ [k]: v }); });
-    const periodError = f.from && f.to && f.from > f.to;
-    const nameOf = (list, id) => (list.find((x) => x.id === id) || {}).name;
-    const jobs = s.jobs.map((j) => {
-      const parts = [CRM ? CRM.fmtDate(j.q.from) + ' — ' + CRM.fmtDate(j.q.to) : '', nameOf(s.cat.unis, j.q.universityId), nameOf(s.cat.prods, j.q.itProductId), j.cols.length + ' колонок'].filter(Boolean);
-      return { ...j, title: 'Реестр взаимодействий · ' + j.format, params: parts.join(' · '), running: j.status === 'QUEUED' || j.status === 'PROCESSING', done: j.status === 'SUCCESS', failed: j.status === 'FAILED', pct: (j.progress || 5) + '%',
-        statusText: j.status === 'QUEUED' ? 'В очереди' : j.status === 'PROCESSING' ? 'Формируется… ' + j.progress + '%' : j.status === 'SUCCESS' ? 'Готов · ' + (j.rowCount ?? 0) + ' строк' : (j.error ? j.error.message + ' · код ' + j.error.code : 'Ошибка'),
-        download: () => this.download(j), retry: () => this.build(j) };
-    });
-    const d = s.ch.data;
-    const maxOf = (a) => Math.max(1, ...a.map((x) => x.value));
-    const statusList = d ? [...d.statusDistribution].sort((a, b) => b.value - a.value).slice(0, 8) : [];
-    const stMax = maxOf(statusList);
-    const stPhase = (label) => { const st = CRM && CRM.local.STATUSES.find((x) => x.name === label); return st ? CRM.PHASE[st.phase].color : 'var(--color-fg-soft)'; };
-    const monthsRaw = d ? d.interactionsOverTime.slice(-8) : [];
-    const moMax = maxOf(monthsRaw);
-    const licRaw = d ? [...d.licensesByProduct].sort((a, b) => b.value - a.value) : [];
-    const liMax = maxOf(licRaw);
-    const byK = {}; s.rows.forEach((r) => { (byK[r.responsibleUserName] = byK[r.responsibleUserName] || []).push(r); });
-    const rk = CRM && s.rk.status === 'ready' && s.cat.unis.length ? this.risks() : null;
-    const compare = !CRM ? [] : Object.entries(byK).map(([name, list]) => { const over = list.filter((r) => r.isOverdue).length; const kid = list[0].responsibleUserId; const near = rk ? rk.nearByKam[kid] || 0 : 0, lic30 = rk ? rk.lic30ByKam[kid] || 0 : 0; return { name, total: list.length, over, overColor: over ? 'var(--color-error-strong)' : 'var(--color-fg-muted)', near, nearColor: near ? 'var(--color-accent-strong)' : 'var(--color-fg-muted)', lic30, licColor: lic30 ? 'var(--color-warning-strong)' : 'var(--color-fg-muted)', segs: CRM.PHASES.map((p) => ({ label: p.label, color: p.color, n: list.filter((r) => r.currentPhase === p.key).length })).filter((g) => g.n) }; }).sort((a, b) => b.over - a.over || b.total - a.total);
+    const set = {}; ['universityId', 'itDirectionId', 'itProductId', 'responsibleUserId'].forEach((k) => { set[k] = (e) => this.setState({ d: { ...this.state.d, [k]: e.target.value } }); });
+    const periodError = d.from && d.to && d.from > d.to;
+    const MON = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+    const range = (q) => { if (!q.from || !q.to) return ''; const x = new Date(q.from), y = new Date(q.to); const dd = (t) => String(t.getDate()).padStart(2, '0');
+      return x.getMonth() === y.getMonth() && x.getFullYear() === y.getFullYear() ? dd(x) + '–' + dd(y) + ' ' + MON[y.getMonth()] + ' ' + y.getFullYear() : dd(x) + '.' + String(x.getMonth() + 1).padStart(2, '0') + ' — ' + dd(y) + '.' + String(y.getMonth() + 1).padStart(2, '0') + '.' + y.getFullYear(); };
+    const kams = CRM ? CRM.local.KAMS : [];
+    const byK = {}; s.rows.forEach((r) => { (byK[r.responsibleUserId] = byK[r.responsibleUserId] || { name: r.responsibleUserName, list: [] }).list.push(r); });
+    const short = (full) => { const p = String(full || '').split(/\s+/).filter(Boolean); return p.length >= 2 ? p[1] + ' ' + p[0] : full; };
+    // Процессы без ответственного (заявки из интеграции) — отдельной строкой «Не назначен», в конце списка.
+    const compare = Object.entries(byK).map(([kid, k]) => { const over = k.list.filter((r) => r.isOverdue).length; const unassigned = !kid || kid === 'null'; const nm = unassigned ? CRM.LABELS.responsible : short(k.name); return { unassigned, name: nm, initials: nm.split(' ').map((w) => w[0] || '').join('').slice(0, 2).toUpperCase(), total: k.list.length, over, bg: over ? 'rgb(255,240,241)' : 'rgb(232,246,239)', fg: over ? 'rgb(184,48,62)' : 'rgb(19,119,95)' }; }).sort((a, b) => a.unassigned - b.unassigned || b.over - a.over || b.total - a.total);
+    const n = s.rows.length;
+    const kamCount = f.responsibleUserId === 'all' ? Object.keys(byK).length : 1;
+    const word = (x) => CRM ? CRM.plural(x, 'взаимодействие', 'взаимодействия', 'взаимодействий') : '';
+    const job = s.jobs.find((j) => j.id === s.jobId);
+    const kamLabel = (q) => q.responsibleUserId ? short((kams.find((u) => u.id === q.responsibleUserId) || {}).fullName) : isRuk ? 'Все КАМ' : 'Мои вузы';
+    const jv = !job ? {} : { params: range(job.q) + ' · ' + kamLabel(job.q), chip: job.format.toUpperCase() + ' · ' + (job.rowCount ?? job.count ?? 0) + ' ' + (CRM ? CRM.plural(job.rowCount ?? job.count ?? 0, 'запись', 'записи', 'записей') : ''),
+      running: job.status === 'QUEUED' || job.status === 'PROCESSING', done: job.status === 'SUCCESS', failed: job.status === 'FAILED',
+      title: job.status === 'SUCCESS' ? 'Отчёт готов' : job.status === 'FAILED' ? 'Не удалось создать отчёт' : 'Формируем отчёт',
+      text: job.status === 'SUCCESS' ? (job.fileName || 'otchet.' + job.format) + '\n' + (job.rowCount ?? 0) + ' ' + (CRM ? CRM.plural(job.rowCount ?? 0, 'запись', 'записи', 'записей') : '') + ' · ' + job.format.toUpperCase()
+        : job.status === 'FAILED' ? 'Попробуйте ещё раз.\nВыбранные фильтры сохранены.\nКод ошибки: ' + ((job.error && job.error.code) || '—')
+        : 'Это может занять некоторое время.\nВы можете продолжить работу\nв других разделах.',
+      bar: React.createElement('span', { key: 'b', style: { position: 'absolute', top: 0, bottom: 0, width: '34%', borderRadius: 2, background: 'rgb(119,0,255)', animation: 'crmIndet 1.4s ease-in-out infinite' } }),
+      download: () => this.download(job), retry: () => this.build(job) };
     return {
-      f, set, isRuk, pad: m ? '16px' : '24px', topCols: m ? '1fr' : 'repeat(auto-fit,minmax(min(100%,400px),1fr))', twoCols: m ? '1fr' : 'repeat(auto-fill,minmax(200px,1fr))', chartCols: m ? '1fr' : 'repeat(auto-fit,minmax(min(100%,300px),1fr))',
-      setFrom: (e) => this.setF({ from: e.target.value }), setTo: (e) => this.setF({ to: e.target.value }), periodError,
-      uniOpts: opt(s.cat.unis, 'Все вузы'), dirOpts: opt(s.cat.dirs, 'Все направления'), prodOpts: opt(s.cat.prods, 'Все продукты'),
-      respOpts: [{ value: 'all', label: 'Вся команда' }, ...(CRM ? CRM.local.KAMS.map((u) => ({ value: u.id, label: u.fullName })) : [])],
-      columns: COLS.map(([k, label]) => ({ label, on: s.cols[k], toggle: (v) => this.setState({ cols: { ...this.state.cols, [k]: v } }) })),
-      formats: ['xls', 'xlsx', 'pdf'].map((x) => ({ label: x, selected: s.format === x, pick: () => this.setState({ format: x }) })),
-      cantBuild: periodError || !COLS.some(([k]) => s.cols[k]), build: () => this.build(),
-      jobs: jobs.filter((j) => (s.jf.status === 'all' || (s.jf.status === 'done' ? j.done : s.jf.status === 'failed' ? j.failed : j.running)) && (s.jf.format === 'all' || j.format === s.jf.format)),
-      noJobs: !jobs.length, hasJobs: jobs.length > 0, jfOpen: jobs.length > 0,
-      jfNone: jobs.length > 0 && !jobs.some((j) => (s.jf.status === 'all' || (s.jf.status === 'done' ? j.done : s.jf.status === 'failed' ? j.failed : j.running)) && (s.jf.format === 'all' || j.format === s.jf.format)),
-      toggleJF: () => this.setState({ jf: { ...s.jf, open: !s.jf.open } }),
-      jfLabel: 'Фильтр' + ((s.jf.status !== 'all') + (s.jf.format !== 'all') ? ' · ' + ((s.jf.status !== 'all') + (s.jf.format !== 'all')) : ''),
-      jfStatus: [['all', 'Все'], ['done', 'Готовы'], ['running', 'Формируются'], ['failed', 'С ошибкой']].map(([k, label]) => ({ label, selected: s.jf.status === k, pick: () => this.setState({ jf: { ...this.state.jf, status: k } }) })),
-      jfFormatOpts: [{ value: 'all', label: 'Любой' }, { value: 'xls', label: 'xls' }, { value: 'xlsx', label: 'xlsx' }, { value: 'pdf', label: 'pdf' }], jfFormatVal: s.jf.format,
-      setJfFormat: (v) => this.setState({ jf: { ...this.state.jf, format: v } }),
+      d, set, isRuk, periodError, periodRing: periodError ? 'rgb(184,48,62)' : 'rgb(227,229,237)',
+      paramCols: m ? '1fr' : 'minmax(0,0.95fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr)', row2Cols: m || !isRuk ? '1fr' : 'minmax(0,2fr) minmax(0,2.1fr)',
+      midCols: m || !this.showCompareOn() ? '1fr' : 'minmax(0,720fr) minmax(0,400fr)',
+      setFrom: (e) => this.setState({ d: { ...this.state.d, from: e.target.value } }), setTo: (e) => this.setState({ d: { ...this.state.d, to: e.target.value } }),
+      uniOpts: opt(s.cat.unis, 'Все вузы'), dirOpts: opt(s.cat.dirs, 'Все направления'), prodOpts: opt(d.itDirectionId === 'all' ? s.cat.prods : s.cat.prods.filter((p) => p.itDirectionId === d.itDirectionId), 'Все продукты'),
+      respOpts: [{ value: 'all', label: 'Все КАМ команды · ' + kams.length }, ...kams.map((u) => ({ value: u.id, label: u.fullName }))],
+      compareOn: s.compare, toggleCompare: () => this.setState({ compare: !s.compare }), cbBg: s.compare ? 'rgb(119,0,255)' : '#fff', cbRing: s.compare ? 'none' : 'inset 0 0 0 1px rgb(171,173,180)',
+      apply: () => { if (periodError) return; this.setState({ f: { ...this.state.d }, jobId: null }, () => this.loadCharts()); },
+      resetF: () => { const def = { from: d0, to: d1, universityId: 'all', itDirectionId: 'all', itProductId: 'all', responsibleUserId: 'all' }; this.setState({ d: def, f: def, jobId: null }, () => this.loadCharts()); },
+      showCompare: this.showCompareOn(), compare, compareEmpty: s.ch.status !== 'loading' && !compare.length, compareSub: 'По выбранным фильтрам · ' + n + ' ' + word(n),
+      formats: ['xlsx', 'xls', 'pdf'].map((x) => { const sel = s.format === x; return { label: x.toUpperCase(), selected: sel, bg: sel ? 'rgb(242,234,254)' : '#fff', ring: sel ? 'rgb(119,0,255)' : 'rgb(227,229,237)', fg: sel ? 'rgb(119,0,255)' : 'rgb(104,112,133)', pick: () => this.setState({ format: x }) }; }),
+      countText: s.ch.status === 'loading' ? 'Считаем…' : n + ' ' + word(n), scopeText: range(f) + ' · ' + (f.responsibleUserId === 'all' ? (isRuk ? kamCount + ' КАМ' : 'мои вузы') : kamLabel(f)),
+      cantBuild: periodError, build: () => this.build(),
+      showForm: !job, showJob: !!job, job: jv, backToWork: () => this.setState({ jobId: null }),
+      ...this.extraVals(m, isRuk),
+    };
+  }
+  extraVals(m, isRuk) {
+    const s = this.state, f = s.f, CRM = window.CRM, dd = s.ch.data;
+    const maxOf = (a) => Math.max(1, ...a.map((x) => x.value));
+    const statusList = dd ? [...dd.statusDistribution].sort((a, b) => b.value - a.value).slice(0, 8) : [];
+    const stMax = maxOf(statusList);
+    const stPhase = (label) => { const st = CRM && CRM.local.STATUSES.find((x) => x.name === label); return st ? CRM.PHASE[st.phase].color : 'rgb(104,112,133)'; };
+    const monthsRaw = dd ? dd.interactionsOverTime.slice(-8) : [];
+    const moMax = maxOf(monthsRaw);
+    const licRaw = dd ? [...dd.licensesByProduct].sort((a, b) => b.value - a.value) : [];
+    const liMax = maxOf(licRaw);
+    let rk = null;
+    if (CRM && s.rk.status === 'ready' && s.cat.unis.length) { if (this._rkKey !== s.rk || this._rkCat !== s.cat || this._rkF !== s.f) { this._rkKey = s.rk; this._rkCat = s.cat; this._rkF = s.f; this._rk = this.risks(); } rk = this._rk; }
+    const tone = (v, c) => v ? c : 'rgb(32,33,51)';
+    return {
+      chartCols: m ? '1fr' : 'repeat(auto-fit,minmax(min(100%,300px),1fr))', kpiCols: m ? '1fr 1fr' : 'repeat(4,minmax(0,1fr))', riskCols: m ? '1fr' : 'repeat(auto-fit,minmax(min(100%,420px),1fr))',
       chartsCaption: CRM ? CRM.fmtDate(f.from) + ' — ' + CRM.fmtDate(f.to) : '',
       chLoading: s.ch.status === 'loading', chError: s.ch.status === 'error', chErr: s.ch.err || {}, chEmpty: s.ch.status === 'empty', chReady: s.ch.status === 'ready', reloadCharts: () => this.loadCharts(),
       statusBars: statusList.map((b) => ({ ...b, pct: Math.round((b.value / stMax) * 100) + '%', color: stPhase(b.label) })),
       months: monthsRaw.map((b) => ({ value: b.value, pct: Math.max(4, Math.round((b.value / moMax) * 100)) + '%', label: new Date(b.date).toLocaleDateString('ru-RU', { month: 'short' }).replace('.', '') })),
       licBars: licRaw.map((b) => ({ ...b, pct: Math.round((b.value / liMax) * 100) + '%' })),
-      showCompare: isRuk && s.ch.status === 'ready' && compare.length > 0, compare, legend: CRM ? CRM.PHASES : [],
-      orphanText: rk && isRuk && rk.orphans.length ? 'Без ответственного КАМа: ' + rk.orphans.map((u) => u.name).join(', ') + ' — процессы и лицензии этих вузов никто не ведёт' : '',
-      rkLoading: !rk && s.rk.status !== 'error', rkReady: !!rk, kpiCols: m ? '1fr 1fr' : 'repeat(4,minmax(0,1fr))', riskCols: m ? '1fr' : 'repeat(auto-fit,minmax(min(100%,420px),1fr))',
+      rkLoading: !rk && s.rk.status !== 'error', rkReady: !!rk,
       kpis: !rk ? [] : [
-        { label: 'Мест без продления', value: rk.openSeats90, color: rk.openSeats90 ? 'var(--color-error-strong)' : 'var(--color-fg-default)', note: rk.openLics90 + ' ' + CRM.plural(rk.openLics90, 'лицензия истекает', 'лицензии истекают', 'лицензий истекают') + ' за 90 дней' },
-        { label: 'Близко к сроку SLA', value: rk.near.length, color: rk.near.length ? 'var(--color-accent-strong)' : 'var(--color-fg-default)', note: 'израсходовано 80–100% нормы' },
-        { label: 'Не успеем до конца лицензии', value: rk.gapsAll.length, color: rk.gapsAll.length ? 'var(--color-error-strong)' : 'var(--color-fg-default)', note: rk.gapsAll.length ? 'макс. разрыв ' + rk.gapsAll[0].gap + ' дн.' : 'по критическому пути' },
-        isRuk
-          ? { label: 'Вузы без ответственного', value: rk.orphans.length, color: rk.orphans.length ? 'var(--color-warning-strong)' : 'var(--color-fg-default)', note: 'или КАМ деактивирован' }
-          : { label: 'Просрочено по SLA', value: rk.overdue, color: rk.overdue ? 'var(--color-error-strong)' : 'var(--color-fg-default)', note: 'из ' + s.rk.rows.length + ' процессов' },
+        { label: 'Мест без продления', value: rk.openSeats90, color: tone(rk.openSeats90, 'rgb(184,48,62)'), note: rk.openLics90 + ' ' + CRM.plural(rk.openLics90, 'лицензия истекает', 'лицензии истекают', 'лицензий истекают') + ' за 90 дней' },
+        { label: 'Близко к сроку SLA', value: rk.near.length, color: tone(rk.near.length, 'rgb(152,98,11)'), note: 'израсходовано 80–100% нормы' },
+        { label: 'Не успеем до конца лицензии', value: rk.gapsAll.length, color: tone(rk.gapsAll.length, 'rgb(184,48,62)'), note: rk.gapsAll.length ? 'макс. разрыв ' + rk.gapsAll[0].gap + ' дн.' : 'по критическому пути' },
+        isRuk ? { label: 'Вузы без ответственного', value: rk.orphans.length, color: tone(rk.orphans.length, 'rgb(152,98,11)'), note: 'или КАМ деактивирован' }
+              : { label: 'Просрочено по SLA', value: rk.overdue, color: tone(rk.overdue, 'rgb(184,48,62)'), note: 'из ' + s.rk.rows.length + ' процессов' },
       ],
       expiry: rk ? rk.expiry : [], expiryLegend: rk ? rk.legends.expiry : [],
       slaBands: rk ? rk.slaBands : [], slaEmpty: !!rk && !rk.slaBands.length, slaLegend: rk ? rk.legends.sla : [],
-      gaps: rk ? rk.gaps : [], gapEmpty: !!rk && !rk.gaps.length,
-      vendorRisk: rk ? rk.vendorRisk : [],
+      gaps: rk ? rk.gaps : [], gapEmpty: !!rk && !rk.gaps.length, vendorRisk: rk ? rk.vendorRisk : [],
+      orphanText: rk && isRuk && rk.orphans.length ? 'Без ответственного КАМа: ' + rk.orphans.map((u) => u.name).join(', ') + ' — процессы и лицензии этих вузов никто не ведёт' : '',
     };
   }
+  showCompareOn() { return this.props.role === 'rukovoditel' && this.state.compare; }
 }
 </script>
 </body>

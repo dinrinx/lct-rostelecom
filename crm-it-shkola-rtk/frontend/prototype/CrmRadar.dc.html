@@ -44,131 +44,150 @@
   </sc-if>
 
   <sc-if value="{{ isReady }}">
-    <div style="display:grid;grid-template-columns:{{ cols }};gap:24px;align-items:start">
-
-      <section style="display:flex;flex-direction:column;gap:16px;padding:{{ cardPad }};border-radius:16px;background:var(--color-bg-surface3)">
-        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
-          <h2 style="margin:0;font-weight:700;font-size:22px;line-height:1.2">Радар лицензий</h2>
+    <section style="position:relative;overflow:hidden;border-radius:16px;background:#fff;box-shadow:inset 0 0 0 1px rgb(229,230,232);display:flex;flex-direction:column">
+      <div style="display:flex;align-items:center;gap:12px;padding:{{ headPad }}">
+        <img src="assets/icons/alert--accent.svg" alt="" style="display:block;width:24px;height:24px;flex-shrink:0">
+        <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
+          <h2 style="margin:0;font-weight:700;font-size:22px;line-height:24px;color:rgb(15,26,40)">Радар внимания</h2>
+          <span style="font-weight:300;font-size:14px;line-height:20px;color:rgb(76,81,94)">Сначала — ближайшие сроки и задержки по статусам.</span>
         </div>
-        <div style="display:grid;grid-template-columns:{{ tileCols }};gap:8px">
-          <sc-for list="{{ buckets }}" as="b" hint-placeholder-count="4">
-            <button onClick="{{ b.select }}" aria-pressed="{{ b.selected }}" style="display:flex;flex-direction:column;gap:4px;align-items:flex-start;padding:16px;border:none;border-radius:12px;background:#fff;box-shadow:{{ b.ring }};cursor:pointer;text-align:left;color:var(--color-fg-default)">
-              <span style="display:flex;align-items:center;gap:6px;font-size:14px;line-height:20px;color:var(--color-fg-soft)"><span style="width:8px;height:8px;border-radius:999px;background:{{ b.color }}"></span>{{ b.short }}</span>
-              <span style="font-weight:700;font-size:42px;line-height:1.1;color:{{ b.numColor }}">{{ b.count }}</span>
-            </button>
-          </sc-for>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:2px;background:#fff;border-radius:12px;padding:4px">
-          <sc-for list="{{ licRows }}" as="l" hint-placeholder-count="4">
-            <button onClick="{{ l.go }}" style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px;border:none;border-radius:8px;background:transparent;text-align:left;cursor:pointer;color:var(--color-fg-default)" style-hover="background:var(--color-bg-surface2)">
-              <span style="display:flex;flex-direction:column;gap:2px;min-width:0">
-                <span style="font-size:16px;line-height:24px;font-weight:500">{{ l.universityName }}</span>
-                <span style="font-size:14px;line-height:20px;color:var(--color-fg-soft)">{{ l.itProductName }} · договор {{ l.contractNumber }}</span>
-              </span>
-              <span style="display:flex;flex-direction:column;gap:2px;align-items:flex-end;flex-shrink:0">
-                <span style="font-size:14px;line-height:20px;font-weight:500;color:{{ l.fg }}">{{ l.when }}</span>
-                <span style="font-size:12px;line-height:16px;color:var(--color-fg-muted)">до {{ l.date }}</span>
-              </span>
-            </button>
-          </sc-for>
-          <sc-if value="{{ licNone }}"><div style="padding:16px 12px;font-size:14px;line-height:20px;color:var(--color-fg-muted)">В этой группе лицензий нет</div></sc-if>
-        </div>
-      </section>
-
-      <section style="display:flex;flex-direction:column;gap:16px;padding:{{ cardPad }};border-radius:16px;background:var(--color-bg-surface3)">
-        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
-          <h2 style="margin:0;font-weight:700;font-size:22px;line-height:1.2">Радар SLA</h2>
-          <span title="Взаимодействие стоит на статусе дольше нормы, заданной в шаблоне workflow" style="font-size:14px;line-height:20px;color:var(--color-fg-muted);cursor:help">Зависли дольше нормы ⓘ</span>
-        </div>
-        <div style="display:flex;align-items:baseline;gap:8px">
-          <span style="font-weight:700;font-size:42px;line-height:1.1;color:var(--color-error-strong)">{{ slaCount }}</span>
-          <span style="font-size:16px;line-height:24px;color:var(--color-fg-soft)">{{ slaWord }}</span>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:2px;background:#fff;border-radius:12px;padding:4px">
-          <sc-for list="{{ slaRows }}" as="r" hint-placeholder-count="4">
-            <button onClick="{{ r.open }}" style="display:flex;flex-direction:column;gap:6px;padding:12px;border:none;border-radius:8px;background:transparent;text-align:left;cursor:pointer;color:var(--color-fg-default)" style-hover="background:var(--color-bg-surface2)">
-              <span style="display:flex;justify-content:space-between;gap:12px;width:100%">
-                <span style="font-size:16px;line-height:24px;font-weight:500">{{ r.universityName }}</span>
-                <span style="font-size:14px;line-height:20px;font-weight:500;color:var(--color-error-strong);white-space:nowrap">{{ r.daysInStatus }} дн. · норма {{ r.slaThresholdDays }}</span>
-              </span>
-              <span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;line-height:20px;color:var(--color-fg-soft)">
-                <span style="display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:999px;background:var(--color-bg-surface3);color:var(--color-fg-default)"><span style="width:8px;height:8px;border-radius:999px;background:{{ r.phaseColor }}"></span>{{ r.currentStatusName }}</span>
-                <sc-if value="{{ r.showResp }}"><span>{{ r.responsibleUserName }}</span></sc-if>
-              </span>
-            </button>
-          </sc-for>
-          <sc-if value="{{ slaNone }}"><div style="padding:16px 12px;font-size:14px;line-height:20px;color:var(--color-fg-muted)">Все взаимодействия в пределах нормы</div></sc-if>
-        </div>
-        <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" variant="outline" size="s" on-click="{{ goOverdue }}" style="align-self:flex-start" hint-size="240px,40px">Все просроченные в реестре</x-import>
-      </section>
-    </div>
-
-    <section style="display:flex;flex-direction:column;gap:16px;padding:{{ cardPad }};border-radius:16px;box-shadow:inset 0 0 0 1px var(--color-border-muted)">
-      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
-        <h2 style="margin:0;font-weight:700;font-size:22px;line-height:1.2">Стадии CLM</h2>
-        <span style="font-size:14px;line-height:20px;color:var(--color-fg-muted)">{{ totalInteractions }} взаимодействий в работе</span>
+        <sc-if value="{{ notMobile }}"><span style="font-weight:300;font-size:12px;line-height:16px;color:rgb(76,81,94);white-space:nowrap">Обновлено в {{ updatedAt }}</span></sc-if>
+        <button onClick="{{ retry }}" aria-label="Обновить" title="Обновить" style="width:32px;height:32px;flex-shrink:0;border:none;border-radius:8px;background:transparent;box-shadow:inset 0 0 0 1px rgb(229,230,232);display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:rgb(244,244,245)"><img src="assets/icons/refresh--soft.svg" alt="" style="display:block;width:16px;height:16px;flex-shrink:0"></button>
       </div>
-      <div style="display:flex;height:12px;border-radius:999px;overflow:hidden;gap:2px;background:var(--color-bg-surface3)">
-        <sc-for list="{{ phases }}" as="p" hint-placeholder-count="7">
-          <span title="{{ p.label }}: {{ p.count }}" style="flex:{{ p.count }};background:{{ p.color }}"></span>
-        </sc-for>
-      </div>
-      <div style="display:grid;grid-template-columns:{{ phaseCols }};gap:8px">
-        <sc-for list="{{ phases }}" as="p" hint-placeholder-count="7">
-          <button onClick="{{ p.go }}" style="display:flex;flex-direction:column;gap:4px;align-items:flex-start;padding:12px;border:none;border-radius:12px;background:var(--color-bg-surface2);cursor:pointer;text-align:left;color:var(--color-fg-default)" style-hover="background:var(--color-bg-surface3)">
-            <span style="display:flex;align-items:center;gap:6px;font-size:14px;line-height:20px;color:var(--color-fg-soft)"><span style="width:8px;height:8px;border-radius:999px;background:{{ p.color }}"></span>{{ p.label }}</span>
-            <span style="display:flex;align-items:baseline;gap:6px"><span style="font-weight:700;font-size:28px;line-height:1.2">{{ p.count }}</span><sc-if value="{{ p.overdue }}"><span style="font-size:12px;line-height:16px;color:var(--color-error-strong)">{{ p.overdue }} просроч.</span></sc-if></span>
-          </button>
-        </sc-for>
-      </div>
-    </section>
-
-    <section style="display:flex;flex-direction:column;gap:16px;padding:{{ cardPad }};border-radius:16px;box-shadow:inset 0 0 0 1px var(--color-border-muted)">
-      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
-        <h2 style="margin:0;font-weight:700;font-size:22px;line-height:1.2">Вузы, требующие внимания</h2>
-        <span title="Health-score: лицензии, просрочка SLA, застой активности и неразобранные заявки" style="font-size:14px;line-height:20px;color:var(--color-fg-muted);cursor:help">Топ-5 по риску ⓘ</span>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:2px;background:#fff;border-radius:12px;padding:4px">
-        <sc-for list="{{ health }}" as="h" hint-placeholder-count="5">
-          <button onClick="{{ h.go }}" style="display:flex;flex-direction:column;gap:6px;padding:12px;border:none;border-radius:8px;background:transparent;text-align:left;cursor:pointer;color:var(--color-fg-default)" style-hover="background:var(--color-bg-surface2)">
-            <span style="display:flex;justify-content:space-between;gap:12px;width:100%">
-              <span style="font-size:16px;line-height:24px;font-weight:500">{{ h.vuzName }}</span>
-              <span style="font-size:16px;line-height:24px;font-weight:700;color:{{ h.fg }};white-space:nowrap">{{ h.score }}</span>
-            </span>
-            <span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-              <span style="display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:999px;background:var(--color-bg-surface3);color:var(--color-fg-default);font-size:14px;line-height:20px"><span style="width:8px;height:8px;border-radius:999px;background:{{ h.color }}"></span>{{ h.label }}</span>
-              <span style="font-size:14px;line-height:20px;color:var(--color-fg-soft)">{{ h.reasonsText }}</span>
-            </span>
-          </button>
-        </sc-for>
-      </div>
-      <sc-if value="{{ healthEmpty }}"><div style="padding:16px 12px;font-size:14px;line-height:20px;color:var(--color-fg-muted)">Нет вузов в зоне видимости для расчёта</div></sc-if>
-    </section>
-
-    <sc-if value="{{ isRuk }}">
-      <section style="display:flex;flex-direction:column;gap:16px;padding:{{ cardPad }};border-radius:16px;box-shadow:inset 0 0 0 1px var(--color-border-muted)">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
-          <h2 style="margin:0;font-weight:700;font-size:22px;line-height:1.2">Просрочки по КАМ</h2>
-          <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" variant="outline" size="s" on-click="{{ goTeam }}" hint-size="180px,40px">Командный радар</x-import>
+      <div style="position:absolute;left:0;top:20px;width:4px;height:48px;border-radius:0 2px 2px 0;background:rgb(254,79,19)"></div>
+      <div style="height:1px;background:rgb(229,230,232)"></div>
+      <div style="display:flex;flex-direction:{{ bodyDir }};gap:24px;padding:{{ bodyPad }}">
+        <div style="flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+            <span style="font-weight:700;font-size:16px;line-height:20px;color:rgb(15,26,40)">Сроки лицензий</span>
+            <button onClick="{{ goAllLicenses }}" style="display:flex;align-items:center;gap:8px;padding:0;border:none;background:transparent;cursor:pointer;font-family:inherit;font-size:14px;line-height:20px;color:rgb(178,56,14)">Все лицензии<img src="assets/icons/arrow-r16--accentStrong.svg" alt="" style="display:block;width:16px;height:16px;flex-shrink:0"></button>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <sc-for list="{{ windows }}" as="w" hint-placeholder-count="3">
+              <button onClick="{{ w.select }}" aria-pressed="{{ w.selected }}" style="flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:4px;padding:12px 16px;border:none;border-radius:12px;background:{{ w.bg }};box-shadow:{{ w.ring }};text-align:left;cursor:pointer;font-family:inherit">
+                <span style="display:flex;justify-content:space-between;align-items:center;width:100%;height:16px">
+                  <span style="font-size:12px;line-height:16px;color:rgb(15,26,40);white-space:nowrap">{{ w.label }}</span>
+                  <sc-if value="{{ w.selected }}"><sc-if value="{{ w.check }}"><img src="{{ w.check }}" alt="" style="display:block;width:16px;height:16px"></sc-if></sc-if>
+                </span>
+                <span style="font-weight:700;font-size:32px;line-height:44px;color:{{ w.fg }}">{{ w.count }}</span>
+              </button>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-direction:column">
+            <sc-for list="{{ licRows }}" as="l" hint-placeholder-count="3">
+              <button onClick="{{ l.go }}" style="display:flex;align-items:center;gap:12px;padding:12px 0;border:1px solid rgb(229,230,232);background:transparent;text-align:left;cursor:pointer;font-family:inherit" style-hover="background:rgb(249,249,250)">
+                <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+                  <span style="font-weight:700;font-size:14px;line-height:20px;color:rgb(15,26,40)">{{ l.universityName }}</span>
+                  <span style="font-weight:300;font-size:12px;line-height:16px;color:rgb(76,81,94)">{{ l.itProductName }}</span>
+                </span>
+                <span style="flex-shrink:0;padding:4px 8px;border-radius:4px;background:{{ l.bg }};font-size:12px;line-height:16px;color:{{ l.fg }};white-space:nowrap">{{ l.when }}</span>
+                <img src="assets/icons/chev-r16--muted.svg" alt="" style="display:block;width:16px;height:16px;flex-shrink:0">
+              </button>
+            </sc-for>
+            <sc-if value="{{ licNone }}"><div style="padding:16px 0;font-weight:300;font-size:14px;line-height:20px;color:rgb(76,81,94)">В этом окне лицензий нет</div></sc-if>
+          </div>
+          <span style="font-weight:300;font-size:11px;line-height:16px;letter-spacing:.2px;color:rgb(76,81,94)">Окна вложенные: «до 30 дней» включает ближайшие 7 дней.</span>
         </div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          <sc-for list="{{ ranking }}" as="k" hint-placeholder-count="5">
-            <div style="display:grid;grid-template-columns:minmax(140px,240px) 1fr 40px;align-items:center;gap:12px">
-              <span style="font-size:14px;line-height:20px">{{ k.name }}</span>
-              <span style="height:8px;border-radius:999px;background:var(--color-bg-surface3);overflow:hidden"><span style="display:block;height:100%;width:{{ k.pct }};background:var(--color-error);border-radius:999px"></span></span>
-              <span style="font-size:14px;line-height:20px;font-weight:500;text-align:right">{{ k.count }}</span>
+        <div style="width:{{ dividerW }};height:{{ dividerH }};background:rgb(229,230,232);flex-shrink:0;align-self:stretch"></div>
+        <div style="flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:16px">
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <div style="display:flex;align-items:center;gap:12px">
+              <span style="font-weight:700;font-size:16px;line-height:20px;color:rgb(15,26,40)">Задержки по SLA</span>
+              <sc-if value="{{ slaCount }}"><x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Badge" color="error" variant="soft" hint-size="96px,20px">{{ slaBadge }}</x-import></sc-if>
             </div>
-          </sc-for>
+            <span style="font-weight:300;font-size:14px;line-height:20px;color:rgb(76,81,94)">Статус не менялся дольше допустимого срока.</span>
+          </div>
+          <div style="display:flex;flex-direction:column">
+            <sc-for list="{{ slaRows }}" as="r" hint-placeholder-count="3">
+              <button onClick="{{ r.open }}" style="display:flex;align-items:center;gap:12px;padding:12px 0;border:1px solid rgb(229,230,232);background:transparent;text-align:left;cursor:pointer;font-family:inherit" style-hover="background:rgb(249,249,250)">
+                <span style="width:8px;height:8px;border-radius:50%;background:rgb(255,39,39);flex-shrink:0"></span>
+                <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+                  <span style="font-weight:700;font-size:14px;line-height:20px;color:rgb(15,26,40)">{{ r.universityName }}</span>
+                  <span style="font-weight:300;font-size:12px;line-height:16px;color:rgb(76,81,94)">{{ r.sub }}</span>
+                </span>
+                <span style="flex-shrink:0;font-size:12px;line-height:16px;color:rgb(179,26,27);white-space:nowrap">{{ r.over }}</span>
+                <img src="assets/icons/chev-r16--muted.svg" alt="" style="display:block;width:16px;height:16px;flex-shrink:0">
+              </button>
+            </sc-for>
+            <sc-if value="{{ slaNone }}"><div style="padding:16px 0;font-weight:300;font-size:14px;line-height:20px;color:rgb(76,81,94)">Все взаимодействия в пределах нормы</div></sc-if>
+          </div>
+          <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" variant="secondary" size="s" full-width="{{ true }}" on-click="{{ goOverdue }}" hint-size="100%,40px">Показать все просроченные</x-import>
         </div>
-      </section>
+      </div>
+    </section>
+
+    <!-- Health-score вузов (GET /dashboard/health-score): топ-5 по риску — лицензии, SLA, застой, неразобранные заявки.
+         Блок необязательный: если эндпоинт недоступен, радар работает без него. -->
+    <sc-if value="{{ showHealth }}"><section style="border-radius:16px;background:#fff;box-shadow:inset 0 0 0 1px rgb(229,230,232);display:flex;flex-direction:column;gap:12px;padding:{{ bodyPad }}">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <h2 style="margin:0;font-weight:700;font-size:22px;line-height:24px;color:rgb(15,26,40)">Вузы, требующие внимания</h2>
+          <span style="font-weight:300;font-size:14px;line-height:20px;color:rgb(76,81,94)">Топ-5 по индексу здоровья: сроки лицензий, просрочки SLA, застой и неразобранные заявки</span>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column">
+        <sc-for list="{{ health }}" as="h" hint-placeholder-count="5">
+          <button onClick="{{ h.go }}" style="display:flex;align-items:center;gap:12px;padding:12px 0;border:none;border-top:1px solid rgb(229,230,232);background:transparent;text-align:left;cursor:pointer;font-family:inherit" style-hover="background:rgb(249,249,250)">
+            <span style="width:8px;height:8px;border-radius:50%;background:{{ h.color }};flex-shrink:0"></span>
+            <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+              <span style="font-weight:700;font-size:14px;line-height:20px;color:rgb(15,26,40)">{{ h.vuzName }}</span>
+              <span style="font-weight:300;font-size:12px;line-height:16px;color:rgb(76,81,94)">{{ h.label }} · {{ h.reasonsText }}</span>
+            </span>
+            <span style="flex-shrink:0;font-weight:700;font-size:16px;line-height:20px;color:{{ h.fg }};white-space:nowrap" title="Индекс здоровья, 0–100">{{ h.score }}</span>
+            <img src="assets/icons/chev-r16--muted.svg" alt="" style="display:block;width:16px;height:16px;flex-shrink:0">
+          </button>
+        </sc-for>
+        <sc-if value="{{ healthEmpty }}"><div style="padding:16px 0;font-weight:300;font-size:14px;line-height:20px;color:rgb(76,81,94)">Нет вузов в зоне видимости для расчёта</div></sc-if>
+      </div>
+    </section></sc-if>
+
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap">
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <h2 style="margin:0;font-weight:700;font-size:22px;line-height:24px;color:rgb(15,26,40)">Взаимодействия по стадиям</h2>
+        <span style="font-weight:300;font-size:14px;line-height:20px;color:rgb(76,81,94)">{{ stagesSub }}</span>
+      </div>
+      <button onClick="{{ goRegistry }}" style="display:flex;align-items:center;gap:8px;padding:0;border:none;background:transparent;cursor:pointer;font-family:inherit;font-size:14px;line-height:20px;color:rgb(178,56,14)">Открыть реестр<img src="assets/icons/arrow-r16--accentStrong.svg" alt="" style="display:block;width:16px;height:16px;flex-shrink:0"></button>
+    </div>
+    <!-- Телефон: семь крупных карточек стадий занимали два экрана — компактный список с тем же цветом стадии -->
+    <sc-if value="{{ isMobile }}">
+      <div style="display:flex;flex-direction:column;border-radius:12px;background:#fff;box-shadow:inset 0 0 0 1px rgb(229,230,232);overflow:hidden">
+        <sc-for list="{{ phases }}" as="p" hint-placeholder-count="7">
+          <button onClick="{{ p.go }}" style="display:flex;align-items:center;gap:12px;min-height:52px;padding:0 16px;border:none;border-top:1px solid rgb(229,230,232);background:transparent;text-align:left;cursor:pointer;font-family:inherit;color:rgb(15,26,40)">
+            <span style="width:4px;height:24px;border-radius:2px;background:{{ p.color }};flex-shrink:0"></span>
+            <span style="width:20px;font-size:12px;line-height:16px;color:rgb(76,81,94);flex-shrink:0">{{ p.num }}</span>
+            <span style="flex:1;min-width:0;font-size:16px;line-height:24px">{{ p.label }}</span>
+            <span style="font-weight:700;font-size:18px;line-height:24px">{{ p.count }}</span>
+            <img src="assets/icons/chev-r16--muted.svg" alt="" style="display:block;width:16px;height:16px;flex-shrink:0">
+          </button>
+        </sc-for>
+      </div>
     </sc-if>
+    <sc-if value="{{ notMobile }}"><div style="display:grid;grid-template-columns:{{ phaseCols }};gap:12px">
+      <sc-for list="{{ phases }}" as="p" hint-placeholder-count="7">
+        <button onClick="{{ p.go }}" style="min-width:0;display:flex;flex-direction:column;gap:8px;padding:16px;border:none;border-radius:12px;background:#fff;box-shadow:inset 0 0 0 1px rgb(229,230,232);text-align:left;cursor:pointer;font-family:inherit" style-hover="box-shadow:inset 0 0 0 1px rgb(171,173,180)">
+          <span style="display:block;height:4px;border-radius:2px;background:{{ p.color }};align-self:stretch"></span>
+          <span style="font-size:12px;line-height:16px;color:rgb(76,81,94)">{{ p.num }}</span>
+          <span style="font-weight:700;font-size:32px;line-height:44px;color:rgb(15,26,40)">{{ p.count }}</span>
+          <span style="font-size:16px;line-height:24px;color:rgb(15,26,40);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%">{{ p.label }}</span>
+        </button>
+      </sc-for>
+    </div></sc-if>
+
+    <button onClick="{{ openHelp }}" style="display:flex;align-items:center;gap:12px;padding:16px 20px;border:none;border-radius:12px;background:rgb(194,153,255);text-align:left;cursor:pointer;font-family:inherit">
+      <img src="assets/icons/help--brandStrong.svg" alt="" style="display:block;width:20px;height:20px;padding:1.667px;box-sizing:border-box;flex-shrink:0">
+      <span style="flex:1;min-width:0;display:flex;flex-direction:{{ helpDir }};gap:{{ helpGap }}">
+        <span style="font-weight:700;font-size:14px;line-height:20px;color:rgb(83,0,179);white-space:nowrap">Как читать радар?</span>
+        <span style="flex:1;min-width:0;font-weight:300;font-size:14px;line-height:20px;color:rgb(76,81,94)">Проверяйте сроки лицензий и двигайте взаимодействия по статусам вовремя.</span>
+      </span>
+      <img src="assets/icons/chev-r20--brandStrong.svg" alt="" style="display:block;width:20px;height:20px;flex-shrink:0">
+    </button>
   </sc-if>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;role&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;kam&quot;,&quot;rukovoditel&quot;],&quot;default&quot;:&quot;kam&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;isMobile&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;demoState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;auto&quot;,&quot;loading&quot;,&quot;empty&quot;,&quot;error&quot;],&quot;default&quot;:&quot;auto&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;refreshKey&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;number&quot;},&quot;onOpen&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(id:string)=&gt;void&quot;},&quot;onNavigate&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(screen:string,preset?:object)=&gt;void&quot;},&quot;onToast&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(t:object)=&gt;void&quot;}}">
 const waitCRM = () => new Promise((r) => { const t = () => (window.CRM ? r(window.CRM) : setTimeout(t, 30)); t(); });
 class Component extends DCLogic {
-  state = { status: 'loading', lic: [], sla: [], rows: [], health: [], bucket: null, error: null };
+  state = { status: 'loading', lic: [], sla: [], rows: [], health: [], win: 'W7', error: null, updatedAt: '' };
   componentDidMount() { this.load(); }
   componentDidUpdate(pp) { if (pp.refreshKey !== this.props.refreshKey || pp.demoState !== this.props.demoState || pp.role !== this.props.role) this.load(); }
   async load() {
@@ -179,36 +198,43 @@ class Component extends DCLogic {
     if (forced === 'error') { await new Promise((r) => setTimeout(r, 300)); return this.setState({ status: 'error', error: { code: 'REPORTS_RADAR_UNAVAILABLE', message: 'Сервис отчётов не ответил за 1 секунду' } }); }
     if (forced === 'empty') { await new Promise((r) => setTimeout(r, 300)); return this.setState({ status: 'empty' }); }
     try {
-      const [lic, sla, rows, health] = await Promise.all([CRM.api.licenseRadar(), CRM.api.slaRadar(), CRM.api.interactions({}), CRM.api.healthScore(5)]);
+      const [lic, sla, rows, health] = await Promise.all([CRM.api.licenseRadar(), CRM.api.slaRadar(), CRM.api.interactions({}), CRM.api.healthScore(5).catch(() => null)]);
       const status = !rows.length && !lic.items.length ? 'empty' : 'ready';
-      const first = CRM.BUCKETS.find((b) => lic.items.some((i) => i.bucket === b.key));
-      this.setState({ status, lic: lic.items, sla: sla.items.sort((a, b) => b.daysInStatus / b.slaThresholdDays - a.daysInStatus / a.slaThresholdDays), rows, health, bucket: this.state.bucket || (first ? first.key : 'OVERDUE') });
+      const t = new Date();
+      this.setState({ status, health: health || [], healthOff: !health, lic: lic.items, sla: sla.items.sort((a, b) => (b.daysInStatus - b.slaThresholdDays) - (a.daysInStatus - a.slaThresholdDays)), rows, updatedAt: String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0') });
     } catch (e) { this.setState({ status: 'error', error: { code: e.code, message: e.message } }); }
   }
   renderVals() {
     const s = this.state, CRM = window.CRM, m = this.props.isMobile, isRuk = this.props.role === 'rukovoditel';
     const nav = (screen, preset) => this.props.onNavigate && this.props.onNavigate(screen, preset);
     const base = { isLoading: s.status === 'loading', isError: s.status === 'error', isEmpty: s.status === 'empty', isReady: s.status === 'ready', error: s.error || {}, retry: () => this.load(),
-      cols: m ? '1fr' : 'repeat(auto-fit,minmax(min(100%,400px),1fr))', cardPad: m ? '16px' : '24px', tileCols: m ? '1fr 1fr' : 'repeat(auto-fit,minmax(112px,1fr))', phaseCols: m ? '1fr 1fr' : 'repeat(auto-fill,minmax(150px,1fr))',
+      cols: m ? '1fr' : 'repeat(auto-fit,minmax(min(100%,400px),1fr))', phaseCols: m ? '1fr 1fr' : 'repeat(auto-fit,minmax(120px,1fr))',
+      headPad: m ? '16px' : '20px 24px', bodyPad: m ? '16px' : '20px 24px 24px', bodyDir: m ? 'column' : 'row', dividerW: m ? 'auto' : '1px', dividerH: m ? '1px' : 'auto', notMobile: !m, isMobile: !!m, helpDir: m ? 'column' : 'row', helpGap: m ? '2px' : '12px',
+      updatedAt: s.updatedAt || '', openHelp: () => this.props.onHelp && this.props.onHelp(),
       emptyTitle: isRuk ? 'У команды пока нет назначенных вузов' : 'За вами пока не закреплены вузы',
       emptyText: isRuk ? 'Назначьте КАМ на вузы в разделе «Ответственные» — радар начнёт считать лицензии и SLA автоматически.' : 'Когда руководитель назначит вам вузы, здесь появятся лицензии со сроками и взаимодействия, требующие внимания.',
       isRuk };
-    if (!CRM || s.status !== 'ready') return { ...base, buckets: [], licRows: [], slaRows: [], phases: [], ranking: [], health: [] };
-    const buckets = CRM.BUCKETS.map((b) => { const count = s.lic.filter((i) => i.bucket === b.key).length; const sel = s.bucket === b.key; return { ...b, count, selected: sel, ring: sel ? 'inset 0 0 0 2px ' + b.color : 'none', numColor: count ? b.fg : 'var(--color-fg-disabled)', select: () => this.setState({ bucket: b.key }) }; });
-    const licRows = s.lic.filter((i) => i.bucket === s.bucket).sort((a, b) => a.endDate.localeCompare(b.endDate)).map((l) => {
-      const d = CRM.daysLeft(l.endDate); const bk = CRM.BUCKETS.find((b) => b.key === l.bucket);
-      return { ...l, date: CRM.fmtDate(l.endDate), when: d < 0 ? 'истекла ' + -d + ' ' + CRM.plural(-d, 'день', 'дня', 'дней') + ' назад' : d === 0 ? 'истекает сегодня' : 'через ' + d + ' ' + CRM.plural(d, 'день', 'дня', 'дней'), fg: bk.fg, go: () => nav('registry', { universityId: l.universityId }) };
+    if (!CRM || s.status !== 'ready') return { ...base, windows: [], licRows: [], slaRows: [], phases: [], health: [] };
+    // Окна вложенные (макет 02): «до 7» — просроченные и ≤ 7 дней, «до 30» включает «до 7», «до 60» — все.
+    const WIN = [
+      { key: 'W7', label: 'До 7 дней', in: ['OVERDUE', 'DUE_IN_7_DAYS'], bg: 'rgb(255,148,147)', fg: 'rgb(179,26,27)', ring: 'rgb(255,39,39)', check: 'assets/icons/check16--errorStrong.svg' },
+      { key: 'W30', label: 'До 30 дней', in: ['OVERDUE', 'DUE_IN_7_DAYS', 'DUE_IN_30_DAYS'], bg: 'rgb(255,208,138)', fg: 'rgb(179,111,7)', ring: 'rgb(255,159,10)', check: 'assets/icons/check16--warningStrong.svg' },
+      { key: 'W60', label: 'До 60 дней', in: ['OVERDUE', 'DUE_IN_7_DAYS', 'DUE_IN_30_DAYS', 'DUE_IN_60_DAYS'], bg: 'rgb(194,153,255)', fg: 'rgb(83,0,179)', ring: 'rgb(119,0,255)', check: 'assets/icons/check16--brandStrong.svg' },
+    ];
+    const win = WIN.find((w) => w.key === s.win) || WIN[0];
+    const windows = WIN.map((w) => { const sel = w.key === win.key; return { ...w, count: s.lic.filter((i) => w.in.includes(i.bucket)).length, selected: sel, ring: sel ? 'inset 0 0 0 1.5px ' + w.ring : 'none', select: () => this.setState({ win: w.key }) }; });
+    const tone = (b) => b === 'DUE_IN_60_DAYS' ? WIN[2] : b === 'DUE_IN_30_DAYS' ? WIN[1] : WIN[0];
+    const licRows = s.lic.filter((i) => win.in.includes(i.bucket)).sort((a, b) => a.endDate.localeCompare(b.endDate)).slice(0, m ? 4 : 3).map((l) => {
+      const d = CRM.daysLeft(l.endDate); const t = tone(l.bucket);
+      return { ...l, when: d < 0 ? 'истекла' : d + ' ' + CRM.plural(d, 'день', 'дня', 'дней'), bg: t.bg, fg: t.fg, go: () => nav('registry', { universityId: l.universityId }) };
     });
-    const slaRows = s.sla.slice(0, m ? 4 : 6).map((r) => ({ ...r, phaseColor: CRM.PHASE[r.phase].color, showResp: isRuk, open: () => this.props.onOpen && this.props.onOpen(r.interactionInstanceId) }));
-    const phases = CRM.PHASES.map((p) => { const list = s.rows.filter((r) => r.currentPhase === p.key); return { ...p, count: list.length, overdue: list.filter((r) => r.isOverdue).length || null, go: () => nav('registry', { phase: p.key }) }; });
-    const by = {}; s.sla.forEach((r) => { by[r.responsibleUserName] = (by[r.responsibleUserName] || 0) + 1; });
-    const max = Math.max(1, ...Object.values(by));
-    const ranking = Object.entries(by).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([name, count]) => ({ name, count, pct: Math.round((count / max) * 100) + '%' }));
-    const health = s.health.map((h) => { const lv = CRM.HEALTH_LEVELS[h.level]; return { ...h, ...lv, reasonsText: h.reasons.length ? h.reasons.join(', ') : 'Рисков не выявлено', go: () => nav('registry', { universityId: h.vuzId }) }; });
-    return { ...base, buckets, licRows, licNone: !licRows.length, licTotal: s.lic.length, slaRows, slaNone: !s.sla.length, slaCount: s.sla.length,
-      slaWord: CRM.plural(s.sla.length, 'взаимодействие', 'взаимодействия', 'взаимодействий') + ' требуют действия', phases, totalInteractions: s.rows.length, ranking,
-      health, healthEmpty: !health.length,
-      goOverdue: () => nav('registry', { onlyOverdue: true }), goTeam: () => nav('team') };
+    const slaRows = s.sla.slice(0, 3).map((r) => { const over = r.daysInStatus - r.slaThresholdDays; return { ...r, universityName: r.universityName || 'Вуз не определён', sub: isRuk ? r.currentStatusName + ' · ' + (r.responsibleUserName || 'Не назначен') : r.currentStatusName, over: '+' + over + ' ' + CRM.plural(over, 'день', 'дня', 'дней'), open: () => this.props.onOpen && this.props.onOpen(r.interactionInstanceId) }; });
+    const phases = CRM.PHASES.map((p) => { const list = s.rows.filter((r) => r.currentPhase === p.key); return { ...p, count: list.length, go: () => nav('registry', { phase: p.key }) }; });
+    const n = s.rows.length;
+    const health = s.health.map((h) => { const lv = CRM.HEALTH_LEVELS[h.level] || CRM.HEALTH_LEVELS.green; return { ...h, ...lv, reasonsText: h.reasons.length ? h.reasons.join(', ') : 'Рисков не выявлено', go: () => nav('registry', { universityId: h.vuzId }) }; });
+    return { ...base, windows, licRows, licNone: !licRows.length, slaRows, slaNone: !s.sla.length, slaCount: s.sla.length, slaBadge: s.sla.length + ' просрочено', phases, health, healthEmpty: !health.length && !s.healthOff, showHealth: !s.healthOff,
+      stagesSub: n + ' ' + CRM.plural(n, 'взаимодействие', 'взаимодействия', 'взаимодействий') + ' в работе · ' + (isRuk ? 'вузы команды' : 'только ваши вузы'),
+      goOverdue: () => nav('registry', { onlyOverdue: true }), goRegistry: () => nav('registry'), goAllLicenses: () => nav('registry', {}) };
   }
 }
 </script>

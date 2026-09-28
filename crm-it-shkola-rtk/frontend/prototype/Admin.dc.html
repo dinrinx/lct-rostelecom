@@ -125,60 +125,94 @@ button{font-family:var(--font-sans)}
 </sc-if>
 
 <sc-if value="{{ authed }}" hint-placeholder-val="{{ false }}">
-  <div style="min-height:100vh;display:flex;flex-direction:{{ shellDir }}">
-    <aside style="display:flex;flex-direction:column;gap:{{ asideGap }};padding:{{ asidePad }};background:var(--color-bg-surface2);width:{{ asideW }};flex-shrink:0;position:{{ asidePos }};top:0;height:{{ asideH }}">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 4px 0 12px">
-        <div class="auth-logo" style="color:var(--color-fg-default)"><img src="assets/auth/logo-mark.svg" alt=""><div><b>ИТ Школа</b><small style="color:var(--color-fg-soft)">Ростелеком</small></div></div>
-        <span style="flex-shrink:0;height:24px;padding:0 10px;border-radius:999px;background:var(--color-bg-surface4);font-size:12px;line-height:24px;color:var(--color-fg-soft)">Админ</span>
+  <div style="min-height:100vh;display:flex;flex-direction:{{ shellDir }};background:rgb(249,249,250)">
+    <aside data-screen-label="Admin sidebar" style="display:flex;flex-direction:column;justify-content:space-between;gap:24px;padding:{{ asidePad }};background:#fff;border-right:1px solid rgb(229,230,232);box-sizing:border-box;width:{{ asideW }};flex-shrink:0;position:{{ asidePos }};top:0;height:{{ asideH }}">
+      <div style="display:flex;flex-direction:column;gap:{{ asideGap }}">
+        <div style="display:flex;padding:0 8px">
+          <div style="display:flex;align-items:center;gap:12px"><img src="assets/auth/logo-mark.svg" alt="" style="width:32px;height:32px;display:block"><div style="display:flex;flex-direction:column;gap:2px"><span style="font-weight:700;font-size:18px;line-height:20px;color:rgb(15,26,40)">ИТ Школа</span><span style="font-size:10px;line-height:12px;letter-spacing:.06em;text-transform:uppercase;color:rgb(76,81,94)">Ростелеком</span></div></div>
+        </div>
+        <nav style="display:flex;flex-direction:{{ navDir }};gap:4px;overflow-x:auto">
+          <sc-if value="{{ isDesktop }}"><div style="padding:0 12px 8px"><span style="display:inline-flex;align-items:center;height:24px;padding:0 8px;border-radius:4px;background:rgb(194,153,255);font-size:12px;line-height:16px;letter-spacing:.04em;text-transform:uppercase;color:rgb(83,0,179)">Админ-панель</span></div></sc-if>
+          <sc-for list="{{ nav }}" as="n" hint-placeholder-count="5">
+            <button onClick="{{ n.go }}" style="flex-shrink:0;display:flex;align-items:center;gap:12px;height:{{ n.h }};padding:12px;box-sizing:border-box;border:none;border-radius:8px;background:{{ n.bg }};text-align:left;cursor:pointer;font-family:inherit;white-space:nowrap" style-hover="background:{{ n.hoverBg }}">
+              <span style="display:block;width:20px;height:20px;flex-shrink:0;background:url({{ n.icon }}) center/20px 20px no-repeat"></span>
+              <span style="font-size:16px;line-height:{{ n.lh }};font-weight:{{ n.weight }};color:{{ n.fg }}">{{ n.label }}</span>
+            </button>
+          </sc-for>
+        </nav>
       </div>
-      <nav style="display:flex;flex-direction:{{ navDir }};gap:2px;overflow-x:auto">
-        <sc-for list="{{ nav }}" as="n" hint-placeholder-count="5">
-          <button onClick="{{ n.go }}" style="flex-shrink:0;height:44px;padding:0 12px;border:none;border-radius:12px;background:{{ n.bg }};color:var(--color-fg-default);font-size:16px;line-height:24px;font-weight:{{ n.weight }};text-align:left;cursor:pointer;white-space:nowrap">{{ n.label }}</button>
-        </sc-for>
-      </nav>
       <sc-if value="{{ isDesktop }}">
-        <div style="margin-top:auto;display:flex;align-items:center;gap:8px;padding:16px 4px 0 12px;border-top:1px solid var(--color-border-muted)">
-          <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
-            <div style="font-size:14px;line-height:20px;font-weight:500">Администратор Платформы</div>
-            <div style="font-size:12px;line-height:16px;color:var(--color-fg-muted)">Администратор</div>
-          </div>
-          <button onClick="{{ logout }}" aria-label="Выйти" title="Выйти" style="width:40px;height:40px;flex-shrink:0;border:none;border-radius:12px;background:transparent;color:var(--color-fg-soft);cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:var(--color-bg-surface4);color:var(--color-fg-default)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg></button>
+        <div style="display:flex;align-items:center;gap:12px;padding:16px;border-radius:12px;background:rgb(244,244,245)">
+          <img src="assets/icons/help--soft.svg" alt="" style="width:20px;height:20px;padding:1.667px;box-sizing:border-box;flex-shrink:0">
+          <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span style="font-weight:700;font-size:14px;line-height:20px;color:rgb(15,26,40)">Нужна помощь?</span><span style="font-weight:300;font-size:12px;line-height:16px;color:rgb(76,81,94)">Справка и инструкции</span></span>
+          <img src="assets/icons/chev-r16--muted.svg" alt="" style="display:block;width:16px;height:16px;flex-shrink:0">
         </div>
       </sc-if>
     </aside>
 
     <main style="flex:1;min-width:0;display:flex;flex-direction:column">
-      <header style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:{{ headerPad }};border-bottom:1px solid var(--color-border-muted)">
-        <h1 style="margin:0;font-weight:700;font-size:{{ titleSize }};line-height:1.2">{{ title }}</h1>
-        <span title="{{ sourceHint }}" style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:999px;background:var(--color-bg-surface3);font-size:12px;line-height:16px;color:var(--color-fg-soft);flex-shrink:0"><span style="width:8px;height:8px;border-radius:999px;background:{{ sourceColor }}"></span>{{ sourceLabel }}</span>
+      <header style="height:64px;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:{{ headerPad }};background:#fff;border-bottom:1px solid rgb(229,230,232);position:sticky;top:0;z-index:5">
+        <div style="display:flex;align-items:center;gap:8px;min-width:0;font-size:14px;line-height:20px;white-space:nowrap"><span style="color:rgb(15,26,40)">Администрирование</span><span style="color:rgb(124,128,136)">/</span><span style="color:rgb(76,81,94);overflow:hidden;text-overflow:ellipsis">{{ crumb }}</span></div>
+        <div style="display:flex;align-items:center;gap:16px;flex-shrink:0;align-self:stretch">
+          <span title="{{ sourceHint }}" style="display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 8px;border-radius:999px;background:rgb(244,244,245);font-size:12px;line-height:16px;color:rgb(76,81,94)"><span style="width:6px;height:6px;border-radius:50%;background:{{ sourceColor }}"></span>{{ sourceLabel }}</span>
+          <sc-if value="{{ isDesktop }}"><x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Tag" size="s" removable="{{ false }}" hint-size="105px,24px">Администратор</x-import></sc-if>
+          <button aria-label="Уведомления" style="width:40px;border:none;border-radius:8px;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:rgb(244,244,245)"><img src="assets/icons/bell--soft.svg" alt="" style="display:block;width:20px;height:20px;flex-shrink:0"></button>
+          <div style="position:relative;display:flex;align-items:center">
+            <button onClick="{{ toggleMenu }}" style="display:flex;align-items:center;gap:12px;height:40px;padding:0;border:none;background:transparent;cursor:pointer;font-family:inherit;text-align:left">
+              <span style="width:40px;height:40px;border-radius:999px;background:rgb(194,153,255);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;line-height:20px;color:rgb(83,0,179);flex-shrink:0">{{ initials }}</span>
+              <sc-if value="{{ isDesktop }}"><span style="display:flex;flex-direction:column"><span style="font-weight:700;font-size:14px;line-height:20px;color:rgb(15,26,40);white-space:nowrap">{{ meShort }}</span><span style="font-weight:300;font-size:12px;line-height:16px;color:rgb(76,81,94);white-space:nowrap">ИТ Школа РТК</span></span><img src="assets/icons/chev-d16--muted.svg" alt="" style="display:block;width:16px;height:16px;flex-shrink:0"></sc-if>
+            </button>
+            <sc-if value="{{ menuOpen }}"><div style="position:absolute;right:0;top:48px;min-width:200px;padding:8px;background:#fff;border-radius:12px;box-shadow:0 8px 24px rgba(15,26,41,.12),0 0 0 1px rgb(229,230,232);z-index:10"><button onClick="{{ logout }}" style="width:100%;height:40px;padding:0 12px;border:none;border-radius:8px;background:transparent;text-align:left;font-family:inherit;font-size:14px;color:rgb(15,26,40);cursor:pointer" style-hover="background:rgb(244,244,245)">Выйти</button></div></sc-if>
+          </div>
+        </div>
       </header>
-      <div style="flex:1;padding:{{ contentPad }};width:100%;max-width:1320px;display:flex;flex-direction:column;gap:16px">
+      <div style="flex:1;padding:{{ contentPad }};width:100%;box-sizing:border-box;display:flex;flex-direction:column;gap:24px">
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <h1 style="margin:0;font-weight:700;font-size:{{ titleSize }};line-height:{{ titleLh }};color:rgb(15,26,40)">{{ title }}</h1>
+          <p style="margin:0;font-weight:300;font-size:16px;line-height:24px;color:rgb(76,81,94)">{{ subtitle }}</p>
+        </div>
 
         <sc-if value="{{ isUsers }}" hint-placeholder-val="{{ true }}">
-          <div data-screen-label="08 Пользователи и роли" style="display:flex;flex-direction:column;gap:16px">
-            <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap">
-              <div style="width:100%;max-width:360px"><x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Input" label="{{ null }}" hint="{{ null }}" placeholder="Поиск по имени или почте" value="{{ q }}" on-change="{{ setQ }}" hint-size="100%,48px"></x-import></div>
-              <span style="font-size:14px;line-height:20px;color:var(--color-fg-muted)">Роли и учётные записи синхронизируются с Keycloak</span>
+          <div data-screen-label="08 Пользователи и роли" style="display:flex;flex-direction:column;gap:24px">
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:16px 20px;border-radius:12px;background:rgb(194,153,255)">
+              <img src="assets/icons/help--brandStrong.svg" alt="" style="width:20px;height:20px;padding:1.667px;box-sizing:border-box;flex-shrink:0">
+              <span style="display:flex;flex-direction:column;gap:2px"><span style="font-weight:700;font-size:14px;line-height:20px;color:rgb(83,0,179)">Роли синхронизируются с Keycloak</span><span style="font-weight:300;font-size:12px;line-height:16px;color:rgb(83,0,179)">Смена роли выполняется в Keycloak. Здесь можно проверить роль и деактивировать доступ.</span></span>
             </div>
-            <sc-if value="{{ usersLoading }}"><div style="display:flex;flex-direction:column;gap:8px"><sc-for list="{{ skeleton }}" as="k"><div style="height:64px;border-radius:12px;background:var(--color-bg-surface3);animation:crmPulse 1.2s ease-in-out infinite"></div></sc-for></div></sc-if>
-            <sc-if value="{{ usersError }}"><div role="alert" style="display:flex;flex-direction:column;gap:12px;align-items:flex-start;padding:24px;border-radius:16px;background:var(--color-bg-surface3)"><span style="font-weight:700;font-size:18px">Список пользователей не загрузился</span><span style="font-size:14px;color:var(--color-error-strong)">Код: {{ usersErr.code }}</span><x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" size="s" on-click="{{ loadUsers }}" hint-size="120px,40px">Повторить</x-import></div></sc-if>
-            <sc-if value="{{ usersEmpty }}"><div style="padding:32px;border-radius:16px;background:var(--color-bg-surface3);font-size:16px;line-height:24px;color:var(--color-fg-soft)">Никого не нашли по запросу «{{ q }}». Проверьте написание или поищите по почте.</div></sc-if>
+            <section style="display:grid;grid-template-columns:{{ uFilterCols }};gap:16px;align-items:end;padding:20px;border-radius:16px;background:#fff;box-shadow:inset 0 0 0 1px rgb(229,230,232)">
+              <label style="display:flex;flex-direction:column;gap:8px"><span style="font-size:14px;line-height:20px;color:rgb(76,81,94)">Поиск пользователя</span><input value="{{ q }}" onInput="{{ setQe }}" placeholder="Имя или email" style="height:48px;padding:0 16px;box-sizing:border-box;border:none;border-radius:12px;background:#fff;box-shadow:inset 0 0 0 1px rgb(171,173,180);font-family:inherit;font-weight:300;font-size:16px;color:rgb(15,26,40)"></label>
+              <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Select" label="Роль" hint="{{ null }}" options="{{ roleOpts }}" value="{{ roleF }}" on-change="{{ setRoleF }}" hint-size="100%,72px"></x-import>
+              <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Select" label="Статус" hint="{{ null }}" options="{{ statusOpts }}" value="{{ statusF }}" on-change="{{ setStatusF }}" hint-size="100%,72px"></x-import>
+            </section>
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+              <h2 style="margin:0;font-weight:700;font-size:16px;line-height:20px">Пользователи платформы</h2>
+              <sc-if value="{{ usersReady }}"><x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Badge" color="neutral" variant="soft" hint-size="100px,20px">{{ usersCount }}</x-import></sc-if>
+            </div>
+            <sc-if value="{{ usersLoading }}"><div style="display:flex;flex-direction:column;gap:8px"><sc-for list="{{ skeleton }}" as="k"><div style="height:64px;border-radius:12px;background:rgb(244,244,245);animation:crmPulse 1.2s ease-in-out infinite"></div></sc-for></div></sc-if>
+            <sc-if value="{{ usersError }}"><div role="alert" style="display:flex;flex-direction:column;gap:12px;align-items:flex-start;padding:24px;border-radius:16px;background:#fff;box-shadow:inset 0 0 0 1px rgb(229,230,232)"><span style="font-weight:700;font-size:18px;line-height:24px">Список пользователей не загрузился</span><span style="font-size:14px;line-height:20px;color:rgb(179,26,27)">Код: {{ usersErr.code }}</span><x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" size="s" on-click="{{ loadUsers }}" hint-size="120px,40px">Повторить</x-import></div></sc-if>
+            <sc-if value="{{ usersEmpty }}"><div style="padding:32px;border-radius:16px;background:#fff;box-shadow:inset 0 0 0 1px rgb(229,230,232);font-weight:300;font-size:16px;line-height:24px;color:rgb(76,81,94)">Никого не нашли по заданным условиям. Проверьте написание или поищите по почте.</div></sc-if>
             <sc-if value="{{ usersReady }}">
-              <div style="overflow-x:auto;border-radius:16px;box-shadow:inset 0 0 0 1px var(--color-border-muted)">
-                <table style="width:100%;min-width:760px;border-collapse:collapse;font-size:14px;line-height:20px">
-                  <thead><tr style="background:var(--color-bg-surface2);color:var(--color-fg-soft);text-align:left"><th style="padding:12px 20px;font-weight:400">Пользователь</th><th style="padding:12px;font-weight:400">Роль</th><th style="padding:12px;font-weight:400">Руководитель</th><th style="padding:12px;font-weight:400">Статус</th><th style="padding:12px 20px;font-weight:400"></th></tr></thead>
-                  <tbody>
-                    <sc-for list="{{ users }}" as="u">
-                      <tr style="border-top:1px solid var(--color-border-muted)">
-                        <td style="padding:12px 20px"><div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:16px;line-height:24px;font-weight:500;color:{{ u.nameColor }}">{{ u.fullName }}</span><span style="font-size:12px;line-height:16px;color:var(--color-fg-muted)">{{ u.email }}</span></div></td>
-                        <td style="padding:12px">{{ u.roleLabel }}</td>
-                        <td style="padding:12px;color:var(--color-fg-soft)">{{ u.manager }}</td>
-                        <td style="padding:12px"><span style="display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:999px;background:var(--color-bg-surface3)"><span style="width:8px;height:8px;border-radius:999px;background:{{ u.statusColor }}"></span>{{ u.statusLabel }}</span></td>
-                        <td style="padding:12px 20px;text-align:right"><sc-if value="{{ u.canToggle }}"><x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" variant="outline" size="s" on-click="{{ u.toggle }}" hint-size="150px,40px">{{ u.actionLabel }}</x-import></sc-if></td>
-                      </tr>
-                    </sc-for>
-                  </tbody>
-                </table>
+              <div style="overflow-x:auto;border-radius:16px;background:#fff;box-shadow:inset 0 0 0 1px rgb(229,230,232)"><div style="min-width:820px">
+                <div style="display:grid;grid-template-columns:{{ uCols }};gap:16px;align-items:center;height:44px;padding:0 16px;background:rgb(244,244,245);border-bottom:1px solid rgb(229,230,232);border-radius:16px 16px 0 0;font-size:12px;line-height:16px;color:rgb(76,81,94)"><span>Пользователь</span><span>Роль</span><span>Статус</span><span>Действие</span><span></span></div>
+                <sc-for list="{{ users }}" as="u">
+                  <div style="display:grid;grid-template-columns:{{ uCols }};gap:16px;align-items:center;min-height:64px;padding:12px 16px;box-sizing:border-box;border-bottom:1px solid rgb(229,230,232)">
+                    <span style="display:flex;align-items:center;gap:12px;min-width:0"><span style="width:32px;height:32px;border-radius:50%;background:rgb(194,153,255);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;line-height:16px;color:rgb(83,0,179);flex-shrink:0">{{ u.initials }}</span><span style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-weight:700;font-size:14px;line-height:20px;color:{{ u.nameColor }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ u.displayName }}</span><span style="font-weight:300;font-size:12px;line-height:16px;color:rgb(76,81,94);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ u.email }}</span></span></span>
+                    <span style="font-size:14px;line-height:20px">{{ u.roleLabel }}</span>
+                    <span><span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;background:{{ u.statusBg }};font-size:12px;line-height:16px;color:{{ u.statusFg }}">{{ u.statusLabel }}</span></span>
+                    <span>
+                      <sc-if value="{{ u.canToggle }}"><button onClick="{{ u.toggle }}" style="padding:0;border:none;background:transparent;cursor:pointer;font-family:inherit;font-size:14px;line-height:20px;color:{{ u.actionColor }}">{{ u.actionLabel }}</button></sc-if>
+                      <sc-if value="{{ u.actionNote }}"><span style="font-weight:300;font-size:14px;line-height:20px;color:rgb(76,81,94)">{{ u.actionNote }}</span></sc-if>
+                    </span>
+                    <span style="display:flex;justify-content:flex-end"><img src="assets/icons/chev-r16--muted.svg" alt="" style="display:block;width:16px;height:16px;flex-shrink:0"></span>
+                  </div>
+                </sc-for>
+              </div></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+                <span style="font-weight:300;font-size:14px;line-height:20px;color:rgb(76,81,94)">{{ uPageInfo }}</span>
+                <div style="display:flex;gap:8px">
+                  <button onClick="{{ uPrev }}" aria-label="Назад" style="width:36px;height:36px;border:none;border-radius:8px;background:#fff;box-shadow:inset 0 0 0 1px rgb(229,230,232);display:flex;align-items:center;justify-content:center;cursor:pointer"><img src="assets/icons/chev-l16--soft.svg" alt="" style="display:block;width:16px;height:16px;flex-shrink:0"></button>
+                  <sc-for list="{{ uPages }}" as="p"><button onClick="{{ p.go }}" style="width:36px;height:36px;border:none;border-radius:8px;background:{{ p.bg }};box-shadow:{{ p.ring }};font-family:inherit;font-weight:700;font-size:14px;line-height:20px;color:{{ p.fg }};cursor:pointer">{{ p.n }}</button></sc-for>
+                  <button onClick="{{ uNext }}" aria-label="Вперёд" style="width:36px;height:36px;border:none;border-radius:8px;background:#fff;box-shadow:inset 0 0 0 1px rgb(229,230,232);display:flex;align-items:center;justify-content:center;cursor:pointer"><img src="assets/icons/chev-r16--soft.svg" alt="" style="display:block;width:16px;height:16px;flex-shrink:0"></button>
+                </div>
               </div>
             </sc-if>
           </div>
@@ -193,14 +227,14 @@ button{font-family:var(--font-sans)}
 
         <sc-if value="{{ isVisibility }}" hint-placeholder-val="{{ false }}">
           <div data-screen-label="11 Видимость данных" style="display:flex;flex-direction:column;gap:16px">
-            <div style="padding:16px 20px;border-radius:12px;background:var(--color-bg-surface3);font-size:16px;line-height:24px;color:var(--color-fg-soft);max-width:760px;text-wrap:pretty">Правила видимости заданы на бэкенде (RBAC на уровне запросов). Экран показывает, что видит каждая роль. Настройка правил появится в следующей версии.</div>
-            <div style="overflow-x:auto;border-radius:16px;box-shadow:inset 0 0 0 1px var(--color-border-muted)">
+            <div style="padding:16px 20px;border-radius:12px;background:rgb(194,153,255);font-weight:300;font-size:14px;line-height:20px;color:rgb(83,0,179);text-wrap:pretty">Правила видимости заданы на бэкенде (RBAC на уровне запросов). Экран показывает, что видит каждая роль. Настройка правил появится в следующей версии.</div>
+            <div style="overflow-x:auto;border-radius:16px;background:#fff;box-shadow:inset 0 0 0 1px rgb(229,230,232)">
               <table style="width:100%;min-width:680px;border-collapse:collapse;font-size:14px;line-height:20px">
-                <thead><tr style="background:var(--color-bg-surface2);color:var(--color-fg-soft);text-align:left"><th style="padding:12px 20px;font-weight:400">Данные</th><th style="padding:12px;font-weight:400">КАМ</th><th style="padding:12px;font-weight:400">Руководитель</th><th style="padding:12px 20px;font-weight:400">Администратор</th></tr></thead>
+                <thead><tr style="background:rgb(244,244,245);color:rgb(76,81,94);text-align:left;font-size:12px;line-height:16px"><th style="padding:14px 16px;font-weight:400">Данные</th><th style="padding:12px;font-weight:400">КАМ</th><th style="padding:12px;font-weight:400">Руководитель</th><th style="padding:12px 20px;font-weight:400">Администратор</th></tr></thead>
                 <tbody>
                   <sc-for list="{{ rbac }}" as="r">
                     <tr style="border-top:1px solid var(--color-border-muted)">
-                      <td style="padding:12px 20px;font-size:16px;line-height:24px">{{ r.entity }}</td>
+                      <td style="padding:14px 16px;font-weight:700;font-size:14px;line-height:20px">{{ r.entity }}</td>
                       <sc-for list="{{ r.cells }}" as="c"><td style="padding:12px"><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:999px;background:{{ c.color }}"></span><span style="color:{{ c.fg }}">{{ c.text }}</span></span></td></sc-for>
                     </tr>
                   </sc-for>
@@ -218,7 +252,7 @@ button{font-family:var(--font-sans)}
             </div>
             <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">
               <sc-for list="{{ services }}" as="x" hint-placeholder-count="5">
-                <div style="display:flex;flex-direction:column;gap:8px;padding:20px;border-radius:16px;background:var(--color-bg-surface3)">
+                <div style="display:flex;flex-direction:column;gap:8px;padding:20px;border-radius:16px;background:#fff;box-shadow:inset 0 0 0 1px rgb(229,230,232)">
                   <span style="font-size:16px;line-height:24px;font-weight:500">{{ x.name }}</span>
                   <span style="display:flex;align-items:center;gap:8px;font-size:18px;line-height:26px;font-weight:700;color:{{ x.fg }}"><span style="width:12px;height:12px;border-radius:999px;background:{{ x.color }}"></span>{{ x.label }}</span>
                   <span style="font-size:12px;line-height:16px;color:var(--color-fg-muted)">{{ x.note }}</span>
@@ -229,7 +263,7 @@ button{font-family:var(--font-sans)}
               <h2 style="margin:0;font-weight:700;font-size:18px;line-height:1.2">Счётчики запросов</h2>
               <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px">
                 <sc-for list="{{ counters }}" as="c" hint-placeholder-count="4">
-                  <div style="display:flex;flex-direction:column;gap:4px;padding:16px 20px;border-radius:16px;box-shadow:inset 0 0 0 1px var(--color-border-muted)"><span style="font-size:14px;line-height:20px;color:var(--color-fg-soft)">{{ c.label }}</span><span style="font-weight:700;font-size:28px;line-height:1.2">{{ c.value }}</span></div>
+                  <div style="display:flex;flex-direction:column;gap:4px;padding:16px 20px;border-radius:16px;background:#fff;box-shadow:inset 0 0 0 1px rgb(229,230,232)"><span style="font-size:14px;line-height:20px;color:var(--color-fg-soft)">{{ c.label }}</span><span style="font-weight:700;font-size:28px;line-height:1.2">{{ c.value }}</span></div>
                 </sc-for>
               </div>
               <span style="font-size:12px;line-height:16px;color:var(--color-fg-muted)">Счётчики текущей сессии браузера. Серверные метрики появятся, когда /health начнёт их отдавать.</span>
@@ -253,14 +287,14 @@ button{font-family:var(--font-sans)}
 
     <div style="position:fixed;right:16px;bottom:24px;display:flex;flex-direction:column;gap:8px;z-index:80;max-width:calc(100% - 32px);width:380px">
       <sc-for list="{{ toasts }}" as="t">
-        <div role="status" style="display:flex;gap:12px;align-items:flex-start;padding:16px;border-radius:12px;background:var(--color-fg-default);color:#fff;animation:crmSlide 160ms ease-out">
-          <span style="width:10px;height:10px;border-radius:999px;margin-top:5px;flex-shrink:0;background:{{ t.color }}"></span>
-          <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
-            <div style="font-size:16px;line-height:24px;font-weight:500">{{ t.title }}</div>
-            <sc-if value="{{ t.text }}"><div style="font-size:14px;line-height:20px;color:var(--color-border-surface2)">{{ t.text }}</div></sc-if>
-            <sc-if value="{{ t.code }}"><div style="font-size:12px;line-height:16px;color:var(--color-border-surface2)">Код: {{ t.code }}</div></sc-if>
+        <div role="status" style="display:flex;gap:12px;align-items:flex-start;padding:16px 20px;border-radius:10px;background:{{ t.bg }};box-shadow:0 8px 24px rgba(15,26,41,.12);animation:crmSlide 160ms ease-out">
+          <span style="display:block;width:16px;height:16px;margin-top:2px;flex-shrink:0;background:url({{ t.icon }}) center/16px 16px no-repeat"></span>
+          <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
+            <div style="font-weight:700;font-size:14px;line-height:20px;color:{{ t.fg }}">{{ t.title }}</div>
+            <sc-if value="{{ t.text }}"><div style="font-size:12px;line-height:16px;color:{{ t.fg }}">{{ t.text }}</div></sc-if>
+            <sc-if value="{{ t.code }}"><div style="font-size:12px;line-height:16px;color:{{ t.fg }}">Код: {{ t.code }}</div></sc-if>
           </div>
-          <button onClick="{{ t.close }}" aria-label="Закрыть" style="border:none;background:transparent;color:#fff;cursor:pointer;padding:0;display:flex"><span class="ds-icon ds-icon-close-s" style="width:16px;height:16px"></span></button>
+          <button onClick="{{ t.close }}" aria-label="Закрыть" style="border:none;background:transparent;cursor:pointer;padding:0;display:flex"><img src="assets/icons/close18--slate.svg" alt="" style="width:18px;height:18px"></button>
         </div>
       </sc-for>
     </div>
@@ -269,14 +303,17 @@ button{font-family:var(--font-sans)}
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;dataSource&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;auto&quot;,&quot;api&quot;,&quot;demo&quot;],&quot;default&quot;:&quot;auto&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Данные&quot;},&quot;apiBase&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;http://localhost:3000&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Данные&quot;},&quot;demoState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;auto&quot;,&quot;loading&quot;,&quot;empty&quot;,&quot;error&quot;],&quot;default&quot;:&quot;auto&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Состояния экранов&quot;}}">
 const waitCRM = () => new Promise((r) => { const t = () => (window.CRM ? r(window.CRM) : setTimeout(t, 30)); t(); });
-const SECTIONS = [['users', 'Пользователи и роли'], ['catalogs', 'Каталоги и импорт'], ['workflow', 'Workflow-шаблоны'], ['visibility', 'Видимость данных'], ['health', 'Техпросмотр']];
+const SECTIONS = [['users', 'Пользователи', 'Пользователи и роли', 'Управляйте доступом к платформе. Роли пользователей поступают из Keycloak.', 'a-user'], ['catalogs', 'Каталоги', 'Каталоги и импорт', 'Вузы, ИТ-направления, продукты и вендоры. Импорт реестра из XLSX.', 'list'], ['workflow', 'Workflow-шаблоны', 'Workflow-шаблоны', 'Статусы, переходы и нормы SLA для процессов работы с вузами.', 'a-wf'], ['visibility', 'Видимость данных', 'Видимость данных', 'Какие данные видит каждая роль. Правила применяются на уровне запросов.', 'a-eye'], ['health', 'Техпросмотр', 'Техпросмотр', 'Состояние сервисов платформы и счётчики запросов.', 'a-srv']];
+const shortName = (full) => { const p = String(full || '').split(/\s+/).filter(Boolean); return p.length >= 2 ? p[1] + ' ' + p[0] : (p[0] || '—'); };
+const initialsOf = (nm) => nm.split(' ').map((w) => w[0] || '').join('').slice(0, 2).toUpperCase();
+const UPER = 5;
 const RBAC = [
   ['Вузы', 'own', 'team', 'all'], ['Взаимодействия и история', 'own', 'team', 'all'], ['Вложения к статусам', 'own', 'team', 'all'], ['Лицензии и договоры', 'own', 'team', 'all'],
   ['Отчёты и графики', 'own', 'team', 'all'], ['Назначение ответственных', 'none', 'edit', 'edit'], ['Каталоги и импорт', 'read', 'read', 'edit'], ['Workflow-шаблоны', 'none', 'none', 'edit'], ['Пользователи и роли', 'none', 'none', 'edit'],
 ];
-const CELL = { own: ['Только свои', 'var(--color-accent)'], team: ['Своя команда', 'var(--color-info)'], all: ['Все', 'var(--color-success)'], edit: ['Изменение', 'var(--color-success)'], read: ['Просмотр', 'var(--color-neutral-muted)'], none: ['Нет доступа', 'var(--color-border-surface2)'] };
+const CELL = { own: ['Только свои', 'rgb(254,79,19)'], team: ['Своя команда', 'rgb(46,124,246)'], all: ['Все', 'rgb(17,202,91)'], edit: ['Изменение', 'rgb(17,202,91)'], read: ['Просмотр', 'rgb(182,183,192)'], none: ['Нет доступа', 'rgb(229,230,232)'] };
 class Component extends DCLogic {
-  state = { authed: false, authLoading: false, section: 'users', width: window.innerWidth, source: null, stats: null, users: null, usersStatus: 'loading', usersErr: null, q: '', confirm: null, toasts: [], health: null, healthAt: null, healthErr: null };
+  state = { authed: false, authLoading: false, section: 'users', width: window.innerWidth, source: null, stats: null, users: null, usersStatus: 'loading', usersErr: null, q: '', roleF: 'all', statusF: 'all', uPage: 1, menu: false, me: null, confirm: null, toasts: [], health: null, healthAt: null, healthErr: null };
   componentDidMount() {
     this.onResize = () => this.setState({ width: window.innerWidth }); window.addEventListener('resize', this.onResize);
     waitCRM().then((CRM) => {
@@ -288,9 +325,9 @@ class Component extends DCLogic {
   }
   componentWillUnmount() { window.removeEventListener('resize', this.onResize); this.off && this.off(); clearInterval(this.hTimer); }
   componentDidUpdate(pp) { if (pp.dataSource !== this.props.dataSource || pp.apiBase !== this.props.apiBase) { window.CRM.configure({ mode: this.props.dataSource ?? 'auto', base: this.props.apiBase || 'http://localhost:3000' }); this.go(this.state.section); } if (pp.demoState !== this.props.demoState) this.go(this.state.section); }
-  enter(section) { this.setState({ authed: true, authLoading: false }); this.go(section || 'users'); }
+  enter(section) { this.setState({ authed: true, authLoading: false }); this.go(section || 'users'); window.CRM.api.me().then((me) => this.setState({ me })).catch(() => {}); }
   login = () => { this.setState({ authLoading: true }); setTimeout(() => this.enter('users'), 700); };
-  logout = () => { try { localStorage.removeItem('crm.admin.session'); } catch (e) {} clearInterval(this.hTimer); this.setState({ authed: false }); };
+  logout = () => { try { localStorage.removeItem('crm.admin.session'); } catch (e) {} clearInterval(this.hTimer); this.setState({ authed: false, menu: false }); };
   go(section) {
     try { localStorage.setItem('crm.admin.session', JSON.stringify({ section })); } catch (e) {}
     this.setState({ section }); clearInterval(this.hTimer);
@@ -311,7 +348,8 @@ class Component extends DCLogic {
   toast = (t) => {
     const tid = Date.now() + Math.random();
     const close = () => this.setState((s) => ({ toasts: s.toasts.filter((x) => x.id !== tid) }));
-    this.setState((s) => ({ toasts: [...s.toasts.slice(-2), { ...t, id: tid, close, color: t.kind === 'error' ? 'var(--color-error)' : t.kind === 'info' ? 'var(--color-accent)' : 'var(--color-success)' }] }));
+    const tone = t.kind === 'error' ? { bg: 'rgb(255,240,241)', fg: 'rgb(184,48,62)', icon: 'assets/icons/alert--red2.svg' } : t.kind === 'info' ? { bg: 'rgb(242,234,254)', fg: 'rgb(89,0,199)', icon: 'assets/icons/help--violet.svg' } : { bg: 'rgb(232,246,239)', fg: 'rgb(19,119,95)', icon: 'assets/icons/check16--green2.svg' };
+    this.setState((s) => ({ toasts: [...s.toasts.slice(-2), { ...t, id: tid, close, ...tone }] }));
     setTimeout(close, t.kind === 'error' ? 9000 : 5000);
   };
   async doConfirm() {
@@ -325,13 +363,16 @@ class Component extends DCLogic {
     const s = this.state, CRM = window.CRM, m = s.width < 768;
     const roleLabel = { KAM: 'КАМ', RUKOVODITEL: 'Руководитель', ADMINISTRATOR: 'Администратор' };
     const q = s.q.trim().toLowerCase();
-    const users = (s.users || []).filter((u) => !q || (u.fullName + ' ' + u.email).toLowerCase().includes(q)).map((u) => ({ ...u, roleLabel: roleLabel[u.role] || u.role, manager: u.managerId && CRM ? CRM.userName(u.managerId) : '—',
-      statusLabel: u.isActive ? 'Активен' : 'Деактивирован', statusColor: u.isActive ? 'var(--color-success)' : 'var(--color-fg-disabled)', nameColor: u.isActive ? 'var(--color-fg-default)' : 'var(--color-fg-muted)',
-      canToggle: u.role !== 'ADMINISTRATOR', actionLabel: u.isActive ? 'Деактивировать' : 'Активировать',
+    const meId = s.me && s.me.id;
+    const allUsers = (s.users || []).filter((u) => (!q || (u.fullName + ' ' + u.email).toLowerCase().includes(q)) && (s.roleF === 'all' || u.role === s.roleF) && (s.statusF === 'all' || (s.statusF === 'active' ? u.isActive : !u.isActive)));
+    const uPages = Math.max(1, Math.ceil(allUsers.length / UPER)), uPage = Math.min(s.uPage, uPages);
+    const users = allUsers.slice((uPage - 1) * UPER, uPage * UPER).map((u) => { const self = u.id === meId || (!meId && u.role === 'ADMINISTRATOR'); const nm = shortName(u.fullName); return { ...u, displayName: nm + (self ? ' · вы' : ''), initials: initialsOf(nm), roleLabel: roleLabel[u.role] || u.role,
+      statusLabel: u.isActive ? 'Активен' : 'Деактивирован', statusBg: u.isActive ? 'rgb(133,228,174)' : 'rgb(182,183,192)', statusFg: u.isActive ? 'rgb(9,141,64)' : 'rgb(69,75,89)', nameColor: 'rgb(15,26,40)',
+      canToggle: !self && (u.isActive || u.role !== 'ADMINISTRATOR'), actionLabel: u.isActive ? 'Деактивировать' : 'Активировать', actionColor: u.isActive ? 'rgb(179,26,27)' : 'rgb(178,56,14)', actionNote: self ? 'Ваш профиль' : '',
       toggle: () => this.setState({ confirm: { user: u, title: (u.isActive ? 'Деактивировать ' : 'Активировать ') + u.fullName + '?', cta: u.isActive ? 'Деактивировать' : 'Активировать',
-        text: u.isActive ? 'Пользователь не сможет войти через Keycloak. Вузы останутся за ним, пока руководитель их не переназначит.' : 'Пользователь снова сможет войти и увидит свои вузы.' } }) }));
+        text: u.isActive ? 'Пользователь не сможет войти через Keycloak. Вузы останутся за ним, пока руководитель их не переназначит.' : 'Пользователь снова сможет войти и увидит свои вузы.' } }) }; });
     const h = s.health, src = s.source;
-    const svc = (name, ok, note) => ({ name, note, label: ok === true ? 'Работает' : ok === false ? 'Ошибка' : 'Нет данных', color: ok === true ? 'var(--color-success)' : ok === false ? 'var(--color-error)' : 'var(--color-fg-disabled)', fg: ok === true ? 'var(--color-success-strong)' : ok === false ? 'var(--color-error-strong)' : 'var(--color-fg-muted)' });
+    const svc = (name, ok, note) => ({ name, note, label: ok === true ? 'Работает' : ok === false ? 'Ошибка' : 'Нет данных', color: ok === true ? 'rgb(17,202,91)' : ok === false ? 'rgb(255,39,39)' : 'rgb(182,183,192)', fg: ok === true ? 'rgb(9,141,64)' : ok === false ? 'rgb(179,26,27)' : 'rgb(124,128,136)' });
     const live = s.healthSrc === 'api';
     const upt = h ? Math.floor(h.uptime / 3600) + ' ч ' + Math.floor((h.uptime % 3600) / 60) + ' мин' : '—';
     const services = [
@@ -340,18 +381,29 @@ class Component extends DCLogic {
       svc('MinIO', h && h.minio ? h.minio === 'ok' : null, 'Поле minio в /health'), svc('Keycloak', h && h.keycloak ? h.keycloak === 'ok' : null, 'Поле keycloak в /health'),
     ];
     const st = s.stats || { total: 0, errors: 0, ms: 0, api: 0, fixtures: 0 };
-    const title = (SECTIONS.find(([k]) => k === s.section) || [])[1];
+    const sec = SECTIONS.find(([k]) => k === s.section) || [];
+    const title = sec[2];
+    const meShort = s.me ? shortName(s.me.fullName) : 'Администратор';
     return {
       notAuthed: !s.authed, authed: s.authed, authLoading: s.authLoading, loginLabel: s.authLoading ? 'Перенаправление…' : 'Войти через корпоративный аккаунт', login: this.login, logout: this.logout,
       isMobile: m, isDesktop: !m, shellDir: m ? 'column' : 'row', navDir: m ? 'row' : 'column',
       asideGap: m ? '12px' : '24px', asidePad: m ? '16px' : '24px 16px', asideW: m ? 'auto' : '248px', asidePos: m ? 'static' : 'sticky', asideH: m ? 'auto' : '100vh',
-      nav: SECTIONS.map(([k, label]) => ({ label, go: () => this.go(k), bg: s.section === k ? 'var(--color-bg-surface4)' : 'transparent', weight: s.section === k ? 500 : 400 })),
-      headerPad: m ? '12px 16px' : '20px 32px', contentPad: m ? '16px' : '24px 32px 48px', titleSize: m ? '20px' : '28px', title,
+      nav: SECTIONS.map(([k, label, , , icon]) => { const on = s.section === k; return { label, go: () => this.go(k), icon: 'assets/icons/' + icon + (on ? '--accent.svg' : '--soft.svg'), h: on ? '44px' : '48px', bg: on ? 'rgb(255,166,136)' : 'transparent', hoverBg: on ? 'rgb(255,166,136)' : 'rgb(244,244,245)', fg: on ? 'rgb(178,56,14)' : 'rgb(15,26,40)', weight: on ? 700 : 400, lh: on ? '20px' : '24px' }; }),
+      headerPad: m ? '12px 16px' : '12px 32px', contentPad: m ? '16px' : '32px 32px 40px', titleSize: m ? '24px' : '32px', titleLh: m ? '32px' : '44px', title, subtitle: sec[3] || '', crumb: sec[1] || '',
+      meShort, initials: initialsOf(meShort), menuOpen: s.menu, toggleMenu: () => this.setState({ menu: !s.menu }),
+      uFilterCols: m ? '1fr' : 'minmax(0,1fr) minmax(0,1fr) minmax(0,1fr)', uCols: 'minmax(260px,1.6fr) minmax(0,0.8fr) minmax(0,0.7fr) minmax(0,0.9fr) 24px',
+      setQe: (e) => this.setState({ q: e.target.value, uPage: 1 }), roleF: s.roleF, statusF: s.statusF, setRoleF: (v) => this.setState({ roleF: v, uPage: 1 }), setStatusF: (v) => this.setState({ statusF: v, uPage: 1 }),
+      roleOpts: [{ value: 'all', label: 'Все роли' }, { value: 'KAM', label: 'КАМ' }, { value: 'RUKOVODITEL', label: 'Руководитель' }, { value: 'ADMINISTRATOR', label: 'Администратор' }],
+      statusOpts: [{ value: 'all', label: 'Все статусы' }, { value: 'active', label: 'Активен' }, { value: 'inactive', label: 'Деактивирован' }],
+      usersCount: allUsers.length + ' ' + (CRM ? CRM.plural(allUsers.length, 'пользователь', 'пользователя', 'пользователей') : ''),
+      uPageInfo: allUsers.length ? ((uPage - 1) * UPER + 1) + '–' + Math.min(uPage * UPER, allUsers.length) + ' из ' + allUsers.length : '',
+      uPrev: () => this.setState({ uPage: Math.max(1, uPage - 1) }), uNext: () => this.setState({ uPage: Math.min(uPages, uPage + 1) }),
+      uPages: Array.from({ length: uPages }, (_, i) => i + 1).map((p) => ({ n: p, go: () => this.setState({ uPage: p }), bg: p === uPage ? 'rgb(255,166,136)' : '#fff', ring: p === uPage ? 'inset 0 0 0 1px rgb(254,79,19)' : 'inset 0 0 0 1px rgb(229,230,232)', fg: p === uPage ? 'rgb(178,56,14)' : 'rgb(15,26,40)' })),
       sourceLabel: src === 'api' ? 'API' : src === 'fixtures' ? 'Демо-данные' : 'Подключение…', sourceColor: src === 'api' ? 'var(--color-success)' : src === 'fixtures' ? 'var(--color-warning)' : 'var(--color-fg-disabled)', sourceHint: 'Источник данных',
       isUsers: s.section === 'users', isCatalogs: s.section === 'catalogs', isWorkflow: s.section === 'workflow', isVisibility: s.section === 'visibility', isHealth: s.section === 'health',
       demoState: this.props.demoState ?? 'auto', toast: this.toast, toasts: s.toasts,
       q: s.q, setQ: (v) => this.setState({ q: v }), users, skeleton: [1, 2, 3, 4], loadUsers: this.loadUsers,
-      usersLoading: s.usersStatus === 'loading', usersError: s.usersStatus === 'error', usersErr: s.usersErr || {}, usersReady: s.usersStatus === 'ready' && users.length > 0, usersEmpty: s.usersStatus === 'ready' && !users.length,
+      usersLoading: s.usersStatus === 'loading', usersError: s.usersStatus === 'error', usersErr: s.usersErr || {}, usersReady: s.usersStatus === 'ready' && allUsers.length > 0, usersEmpty: s.usersStatus === 'ready' && !allUsers.length,
       confirm: s.confirm, cancel: () => this.setState({ confirm: null }), doConfirm: () => this.doConfirm(),
       rbac: RBAC.map(([entity, ...c]) => ({ entity, cells: c.map((k) => ({ text: CELL[k][0], color: CELL[k][1], fg: k === 'none' ? 'var(--color-fg-muted)' : 'var(--color-fg-default)' })) })),
       services, loadHealth: this.loadHealth, healthCaption: s.healthAt ? 'Проверено в ' + s.healthAt.toLocaleTimeString('ru-RU') + ' · обновляется каждые 15 секунд' : 'Проверка…',

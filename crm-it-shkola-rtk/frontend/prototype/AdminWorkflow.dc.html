@@ -18,13 +18,13 @@
 <script src="crm-data.js"></script>
 </helmet>
 <div data-screen-label="10 Workflow-шаблоны" style="display:flex;flex-direction:column;gap:20px;font-family:var(--font-sans);color:var(--color-fg-default)">
-  <sc-if value="{{ isLoading }}" hint-placeholder-val="{{ true }}"><div style="display:flex;flex-direction:column;gap:8px"><sc-for list="{{ skeleton }}" as="k" hint-placeholder-count="6"><div style="height:88px;border-radius:12px;background:var(--color-bg-surface3);animation:crmPulse 1.2s ease-in-out infinite"></div></sc-for></div></sc-if>
-  <sc-if value="{{ isError }}"><div role="alert" style="display:flex;flex-direction:column;gap:12px;align-items:flex-start;padding:24px;border-radius:16px;background:var(--color-bg-surface3)"><span style="font-weight:700;font-size:18px">Шаблоны не загрузились</span><span style="font-size:14px;color:var(--color-error-strong)">Код: {{ error.code }}</span><x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" size="s" on-click="{{ reload }}" hint-size="120px,40px">Повторить</x-import></div></sc-if>
+  <sc-if value="{{ isLoading }}" hint-placeholder-val="{{ true }}"><div style="display:flex;flex-direction:column;gap:8px"><sc-for list="{{ skeleton }}" as="k" hint-placeholder-count="6"><div style="height:88px;border-radius:12px;background:rgb(244,244,245);animation:crmPulse 1.2s ease-in-out infinite"></div></sc-for></div></sc-if>
+  <sc-if value="{{ isError }}"><div role="alert" style="display:flex;flex-direction:column;gap:12px;align-items:flex-start;padding:24px;border-radius:16px;background:#fff;box-shadow:inset 0 0 0 1px rgb(229,230,232)"><span style="font-weight:700;font-size:18px">Шаблоны не загрузились</span><span style="font-size:14px;color:var(--color-error-strong)">Код: {{ error.code }}</span><x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" size="s" on-click="{{ reload }}" hint-size="120px,40px">Повторить</x-import></div></sc-if>
 
   <sc-if value="{{ isReady }}">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;padding:20px 24px;border-radius:16px;background:var(--color-bg-surface3)">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;padding:20px 24px;border-radius:16px;background:#fff;box-shadow:inset 0 0 0 1px rgb(229,230,232)">
       <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
-        <div style="font-weight:700;font-size:22px;line-height:1.2">{{ template.name }}</div>
+        <div style="font-weight:700;font-size:22px;line-height:24px">{{ template.name }}</div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;line-height:20px;color:var(--color-fg-soft)">
           <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Badge" color="success" variant="soft" hint-size="120px,20px">Версия {{ version.versionNumber }} · активна</x-import>
           <span>{{ versionsText }}</span>
@@ -39,8 +39,8 @@
     </div>
     <sc-if value="{{ saveError }}"><div role="alert" style="padding:12px 16px;border-radius:12px;box-shadow:inset 0 0 0 1px var(--color-error);font-size:14px;line-height:20px">Версия не сохранена: {{ saveError.message }} · <span style="color:var(--color-error-strong)">код {{ saveError.code }}</span>. Изменения остались в редакторе.</div></sc-if>
 
-    <div style="display:flex;flex-direction:column;border-radius:16px;box-shadow:inset 0 0 0 1px var(--color-border-muted)">
-      <sc-if value="{{ isDesktop }}"><div style="display:grid;grid-template-columns:40px minmax(0,1.2fr) 190px 110px minmax(0,1.6fr) 44px;gap:16px;padding:12px 20px;background:var(--color-bg-surface2);border-radius:16px 16px 0 0;font-size:14px;line-height:20px;color:var(--color-fg-soft)"><span>№</span><span>Статус</span><span>Стадия CLM</span><span title="Минимальная длительность этапа — для расчёта критического пути">Мин. срок, дн.</span><span>Разрешённые следующие статусы</span><span></span></div></sc-if>
+    <div style="display:flex;flex-direction:column;border-radius:16px;background:#fff;box-shadow:inset 0 0 0 1px rgb(229,230,232)">
+      <sc-if value="{{ isDesktop }}"><div style="display:grid;grid-template-columns:40px minmax(0,1.2fr) 190px 110px minmax(0,1.6fr) 44px;gap:16px;padding:12px 20px;background:rgb(244,244,245);border-radius:16px 16px 0 0;font-size:14px;line-height:20px;color:var(--color-fg-soft)"><span>№</span><span>Статус</span><span>Стадия CLM</span><span title="Минимальная длительность этапа — для расчёта критического пути">Мин. срок, дн.</span><span>Разрешённые следующие статусы</span><span></span></div></sc-if>
       <sc-for list="{{ rows }}" as="r" hint-placeholder-count="8">
         <div style="display:grid;grid-template-columns:{{ rowCols }};gap:12px 16px;align-items:start;padding:16px 20px;border-top:1px solid var(--color-border-muted)">
           <span style="font-weight:700;font-size:16px;line-height:48px;color:var(--color-fg-muted)">{{ r.order }}</span>
@@ -64,7 +64,7 @@
   <sc-if value="{{ confirm }}">
     <div onClick="{{ cancel }}" style="position:fixed;inset:0;background:rgba(15,26,40,.4);z-index:70"></div>
     <div role="dialog" aria-modal="true" style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(520px,calc(100% - 32px));background:#fff;border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:16px;z-index:71">
-      <div style="font-weight:700;font-size:22px;line-height:1.2">Создать версию {{ nextVersion }}?</div>
+      <div style="font-weight:700;font-size:22px;line-height:24px">Создать версию {{ nextVersion }}?</div>
       <div style="font-size:16px;line-height:24px;color:var(--color-fg-soft);text-wrap:pretty">Изменения сохранятся как новая версия шаблона. Существующие процессы ({{ activeCount }}) продолжат работать по версии {{ version.versionNumber }}. Новые взаимодействия будут создаваться по версии {{ nextVersion }}.</div>
       <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
         <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" variant="secondary" size="m" on-click="{{ cancel }}" hint-size="100px,48px">Отмена</x-import>

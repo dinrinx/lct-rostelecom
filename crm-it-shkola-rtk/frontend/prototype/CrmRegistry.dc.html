@@ -17,85 +17,108 @@
 <script src="_ds/2026-design-system-0d9e7eee-93de-4b2b-8e5e-e9ddcee24b4b/_ds_bundle.js"></script>
 <script src="crm-data.js"></script>
 </helmet>
-<div data-screen-label="03 Реестр" style="display:flex;flex-direction:column;gap:16px;font-family:var(--font-sans);color:var(--color-fg-default)">
+<div data-screen-label="03 Реестр" style="display:flex;flex-direction:column;gap:24px;font-family:var(--font-sans);color:rgb(15,26,40)">
 
   <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
     <div style="display:flex;gap:8px;align-items:center;justify-content:space-between">
       <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" variant="secondary" size="s" on-click="{{ toggleFilters }}" hint-size="140px,40px">{{ filtersBtn }}</x-import>
-      <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Switch" label="Просроченные" checked="{{ f.onlyOverdue }}" on-change="{{ setOverdue }}" hint-size="160px,24px"></x-import>
+      <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Switch" label="Просроченные" checked="{{ f.onlyOverdue }}" on-change="{{ setOverdueNow }}" hint-size="160px,24px"></x-import>
     </div>
   </sc-if>
 
   <sc-if value="{{ showFilters }}" hint-placeholder-val="{{ true }}">
-    <section style="display:flex;flex-direction:column;gap:16px;padding:{{ pad }};border-radius:16px;background:var(--color-bg-surface3)">
-      <div style="display:grid;grid-template-columns:{{ filterCols }};gap:12px">
-        <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Select" label="Период" hint="{{ null }}" options="{{ periodOpts }}" value="{{ f.period }}" on-change="{{ set.period }}" hint-size="100%,72px"></x-import>
-        <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Select" label="Вуз" hint="{{ null }}" options="{{ uniOpts }}" value="{{ f.universityId }}" on-change="{{ set.universityId }}" hint-size="100%,72px"></x-import>
-        <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Select" label="ИТ-направление" hint="{{ null }}" options="{{ dirOpts }}" value="{{ f.itDirectionId }}" on-change="{{ set.itDirectionId }}" hint-size="100%,72px"></x-import>
-        <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Select" label="ИТ-продукт" hint="{{ null }}" options="{{ prodOpts }}" value="{{ f.itProductId }}" on-change="{{ set.itProductId }}" hint-size="100%,72px"></x-import>
-        <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Select" label="Стадия" hint="{{ null }}" options="{{ phaseOpts }}" value="{{ f.phase }}" on-change="{{ set.phase }}" hint-size="100%,72px"></x-import>
-        <sc-if value="{{ isRuk }}">
-          <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Select" label="Ответственный" hint="{{ null }}" options="{{ respOpts }}" value="{{ f.responsibleUserId }}" on-change="{{ set.responsibleUserId }}" hint-size="100%,72px"></x-import>
-        </sc-if>
+    <section style="display:flex;flex-direction:column;gap:16px;padding:20px;border-radius:16px;background:#fff;box-shadow:inset 0 0 0 1px rgb(229,230,232)">
+      <div style="display:grid;grid-template-columns:{{ filterCols }};gap:16px">
+        <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Select" label="Период" hint="{{ null }}" options="{{ periodOpts }}" value="{{ d.period }}" on-change="{{ set.period }}" hint-size="100%,72px"></x-import>
+        <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Select" label="Вуз" hint="{{ null }}" options="{{ uniOpts }}" value="{{ d.universityId }}" on-change="{{ set.universityId }}" hint-size="100%,72px"></x-import>
+        <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Select" label="ИТ-направление" hint="{{ null }}" options="{{ dirOpts }}" value="{{ d.itDirectionId }}" on-change="{{ set.itDirectionId }}" hint-size="100%,72px"></x-import>
+        <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Select" label="ИТ-продукт" hint="{{ null }}" options="{{ prodOpts }}" value="{{ d.itProductId }}" on-change="{{ set.itProductId }}" hint-size="100%,72px"></x-import>
       </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
-        <sc-if value="{{ isDesktop }}"><x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Switch" label="Только просроченные" checked="{{ f.onlyOverdue }}" on-change="{{ setOverdue }}" hint-size="220px,24px"></x-import></sc-if>
-        <sc-if value="{{ hasActive }}"><x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" variant="outline" size="s" on-click="{{ reset }}" hint-size="150px,40px">Сбросить фильтры</x-import></sc-if>
+      <div style="display:grid;grid-template-columns:{{ filterCols }};gap:16px;align-items:end">
+        <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Select" label="Статус" hint="{{ null }}" options="{{ statusOpts }}" value="{{ d.statusId }}" on-change="{{ set.statusId }}" hint-size="100%,72px"></x-import>
+        <sc-if value="{{ isRuk }}">
+          <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Select" label="Ответственный" hint="{{ null }}" options="{{ respOpts }}" value="{{ d.responsibleUserId }}" on-change="{{ set.responsibleUserId }}" hint-size="100%,72px"></x-import>
+        </sc-if>
+        <div style="display:flex;align-items:center;gap:8px;padding-bottom:10px;grid-column:{{ overdueCol }}">
+          <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Switch" label="Только просроченные" checked="{{ d.onlyOverdue }}" on-change="{{ set.onlyOverdue }}" hint-size="211px,24px"></x-import>
+          <sc-if value="{{ overdueTotal }}"><x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Badge" type="counter" color="error" hint-size="20px,20px">{{ overdueTotal }}</x-import></sc-if>
+        </div>
+        <div style="display:flex;justify-content:flex-end;align-items:center;gap:12px;grid-column:{{ actionsCol }};flex-wrap:wrap">
+          <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" variant="secondary" size="s" on-click="{{ reset }}" hint-size="122px,40px">Сбросить</x-import>
+          <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" size="s" on-click="{{ apply }}" hint-size="209px,40px">Применить фильтры</x-import>
+        </div>
       </div>
     </section>
   </sc-if>
 
+  <div role="tablist" aria-label="Вид реестра" style="display:flex;gap:8px;flex-wrap:wrap">
+    <sc-for list="{{ views }}" as="v" hint-placeholder-count="3">
+      <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Tag" removable="{{ false }}" selected="{{ v.selected }}" on-click="{{ v.pick }}" hint-size="auto,32px">{{ v.label }}</x-import>
+    </sc-for>
+  </div>
+
   <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
-    <div role="tablist" aria-label="Вид реестра" style="display:flex;gap:8px;flex-wrap:wrap">
-      <sc-for list="{{ views }}" as="v" hint-placeholder-count="3">
-        <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Tag" removable="{{ false }}" selected="{{ v.selected }}" on-click="{{ v.pick }}" hint-size="auto,32px">{{ v.label }}</x-import>
-      </sc-for>
-    </div>
-    <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
-      <span style="font-size:14px;line-height:20px;color:var(--color-fg-soft)">{{ countLabel }}</span>
-      <sc-if value="{{ showSort }}"><button onClick="{{ toggleSort }}" style="border:none;background:transparent;padding:0;font-size:14px;line-height:20px;color:var(--color-fg-soft);cursor:pointer;display:flex;align-items:center;gap:4px">Сортировка: {{ sortLabel }} <span class="ds-icon ds-icon-chevron" style="width:16px;height:16px;transform:{{ sortRotate }}"></span></button></sc-if>
-    </div>
+    <span style="font-weight:700;font-size:14px;line-height:20px;color:rgb(15,26,40)">{{ countLabel }}</span>
+    <sc-if value="{{ showSort }}"><button onClick="{{ toggleSort }}" style="display:flex;align-items:center;gap:8px;padding:0;border:none;background:transparent;cursor:pointer;font-family:inherit;font-weight:300;font-size:14px;line-height:20px;color:rgb(76,81,94)"><img src="assets/icons/sort--soft.svg" alt="" style="display:block;width:16px;height:16px;flex-shrink:0">{{ sortLabel }}<img src="assets/icons/chev-d16--soft.svg" alt="" style="display:block;width:16px;height:16px;flex-shrink:0"></button></sc-if>
   </div>
 
   <sc-if value="{{ isLoading }}" hint-placeholder-val="{{ true }}">
     <div style="display:flex;flex-direction:column;gap:8px">
-      <sc-for list="{{ skeleton }}" as="k" hint-placeholder-count="6"><div style="height:64px;border-radius:12px;background:var(--color-bg-surface3);animation:crmPulse 1.2s ease-in-out infinite"></div></sc-for>
+      <sc-for list="{{ skeleton }}" as="k" hint-placeholder-count="6"><div style="height:64px;border-radius:12px;background:rgb(244,244,245);animation:crmPulse 1.2s ease-in-out infinite"></div></sc-for>
     </div>
   </sc-if>
 
   <sc-if value="{{ isError }}">
-    <div role="alert" style="display:flex;flex-direction:column;gap:12px;align-items:flex-start;padding:32px;border-radius:16px;background:var(--color-bg-surface3)">
-      <div style="font-weight:700;font-size:22px;line-height:1.2">Не удалось загрузить реестр</div>
-      <div style="font-size:16px;line-height:24px;color:var(--color-fg-soft)">{{ error.message }}. Фильтры сохранены.</div>
-      <div style="font-size:14px;line-height:20px;color:var(--color-error-strong)">Код: {{ error.code }}</div>
+    <div role="alert" style="display:flex;flex-direction:column;gap:12px;align-items:flex-start;padding:32px;border-radius:16px;background:#fff;box-shadow:inset 0 0 0 1px rgb(229,230,232)">
+      <div style="font-weight:700;font-size:22px;line-height:24px">Не удалось загрузить реестр</div>
+      <div style="font-weight:300;font-size:16px;line-height:24px;color:rgb(76,81,94)">{{ error.message }}. Фильтры сохранены.</div>
+      <div style="font-size:14px;line-height:20px;color:rgb(179,26,27)">Код: {{ error.code }}</div>
       <x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" size="m" on-click="{{ retry }}" hint-size="140px,48px">Повторить</x-import>
     </div>
   </sc-if>
 
   <sc-if value="{{ isEmpty }}">
-    <div style="display:flex;flex-direction:column;gap:12px;align-items:flex-start;padding:40px 32px;border-radius:16px;background:var(--color-bg-surface3)">
-      <div style="font-weight:700;font-size:22px;line-height:1.2">{{ emptyTitle }}</div>
-      <div style="max-width:520px;font-size:16px;line-height:24px;color:var(--color-fg-soft);text-wrap:pretty">{{ emptyText }}</div>
+    <div style="display:flex;flex-direction:column;gap:12px;align-items:flex-start;padding:40px 32px;border-radius:16px;background:#fff;box-shadow:inset 0 0 0 1px rgb(229,230,232)">
+      <div style="font-weight:700;font-size:22px;line-height:24px">{{ emptyTitle }}</div>
+      <div style="max-width:520px;font-weight:300;font-size:16px;line-height:24px;color:rgb(76,81,94);text-wrap:pretty">{{ emptyText }}</div>
       <sc-if value="{{ hasActive }}"><x-import component-from-global-scope="Ds2026DesignSystem_0d9e7e.Button" size="m" on-click="{{ reset }}" hint-size="180px,48px">Сбросить фильтры</x-import></sc-if>
     </div>
   </sc-if>
 
   <sc-if value="{{ showTable }}">
-    <div style="overflow-x:auto;border-radius:16px;box-shadow:inset 0 0 0 1px var(--color-border-muted)"><div role="table" style="display:flex;flex-direction:column;min-width:780px">
-      <div role="row" style="display:grid;grid-template-columns:{{ gridCols }};gap:16px;padding:12px 20px;background:var(--color-bg-surface2);font-size:14px;line-height:20px;color:var(--color-fg-soft)">
-        <span>Вуз</span><span>Продукт и направление</span><span>Статус</span>
-        <button onClick="{{ toggleSort }}" style="border:none;background:transparent;padding:0;text-align:left;font-family:var(--font-sans);font-size:14px;line-height:20px;color:var(--color-fg-soft);font-weight:400;cursor:pointer;display:flex;align-items:center;gap:4px">В статусе <span class="ds-icon ds-icon-chevron" style="width:16px;height:16px;transform:{{ sortRotate }}"></span></button>
-        <sc-if value="{{ isRuk }}"><span>Ответственный</span></sc-if>
-        <span>Обновлено</span>
+    <div style="overflow-x:auto;border-radius:16px;background:#fff;box-shadow:inset 0 0 0 1px rgb(229,230,232)"><div role="table" style="display:flex;flex-direction:column;min-width:1100px">
+      <div role="row" style="display:flex;align-items:center;gap:16px;height:44px;padding:0 16px;box-sizing:border-box;background:rgb(244,244,245);border:1px solid rgb(229,230,232);border-radius:16px 16px 0 0;font-size:12px;line-height:16px;color:rgb(76,81,94)">
+        <span style="width:96px;flex-shrink:0">№</span>
+        <span style="flex:1;min-width:0">Вуз</span>
+        <span style="width:168px;flex-shrink:0">ИТ-направление</span>
+        <span style="width:168px;flex-shrink:0">ИТ-продукт</span>
+        <sc-if value="{{ isRuk }}"><span style="width:168px;flex-shrink:0">Ответственный</span></sc-if>
+        <span style="width:176px;flex-shrink:0">Статус</span>
+        <span style="width:112px;flex-shrink:0">В статусе</span>
+        <span style="width:112px;flex-shrink:0">SLA</span>
+        <span style="width:24px;flex-shrink:0"></span>
       </div>
-      <sc-for list="{{ pageRows }}" as="r" hint-placeholder-count="8">
-        <button role="row" onClick="{{ r.open }}" style="display:grid;grid-template-columns:{{ gridCols }};gap:16px;align-items:center;padding:14px 20px;border:none;border-top:1px solid var(--color-border-muted);background:{{ r.bg }};text-align:left;cursor:pointer;color:var(--color-fg-default);font-family:var(--font-sans)" style-hover="background:var(--color-bg-surface2)">
-          <span style="font-size:16px;line-height:24px;font-weight:500">{{ r.universityName }}</span>
-          <span style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-size:16px;line-height:24px">{{ r.itProductName }}</span><span style="font-size:12px;line-height:16px;color:var(--color-fg-muted)">{{ r.itDirectionName }}</span></span>
-          <span style="display:inline-flex;align-items:center;gap:6px;align-self:center;justify-self:start;min-height:28px;padding:4px 10px;border-radius:14px;background:var(--color-bg-surface3);font-size:14px;line-height:20px"><span style="width:8px;height:8px;flex-shrink:0;border-radius:999px;background:{{ r.phaseColor }}"></span>{{ r.currentStatusName }}</span>
-          <span style="display:flex;flex-direction:column;gap:2px"><span style="font-size:16px;line-height:24px;font-weight:{{ r.daysWeight }};color:{{ r.daysColor }}">{{ r.daysLabel }}</span><span style="font-size:12px;line-height:16px;color:var(--color-fg-muted)">{{ r.slaText }}</span></span>
-          <sc-if value="{{ isRuk }}"><span style="font-size:14px;line-height:20px">{{ r.responsibleUserName }}</span></sc-if>
-          <span style="font-size:14px;line-height:20px;color:var(--color-fg-soft)">{{ r.updated }}</span>
+      <sc-for list="{{ pageRows }}" as="r" hint-placeholder-count="7">
+        <button role="row" onClick="{{ r.open }}" style="position:relative;display:flex;align-items:center;gap:16px;height:64px;padding:0 16px;box-sizing:border-box;border:1px solid rgb(229,230,232);background:{{ r.bg }};text-align:left;cursor:pointer;font-family:inherit;color:rgb(15,26,40)" style-hover="background:{{ r.hover }}">
+          <sc-if value="{{ r.isOverdue }}"><span style="position:absolute;left:0;top:0;width:3px;height:64px;background:rgb(255,39,39)"></span></sc-if>
+          <span style="width:96px;flex-shrink:0;font-weight:300;font-size:12px;line-height:16px;color:rgb(76,81,94)">{{ r.code }}</span>
+          <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+            <span style="font-weight:700;font-size:14px;line-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.universityName }}</span>
+            <sc-if value="{{ r.needsReview }}"><span title="Заявка из интеграции: вуз или ответственный не определены автоматически" style="align-self:flex-start;display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;background:rgb(255,245,223);color:rgb(152,98,11);font-size:11px;line-height:14px;font-weight:500;white-space:nowrap">Требует проверки</span></sc-if>
+            <sc-if value="{{ r.showRegion }}"><span style="font-weight:300;font-size:12px;line-height:16px;color:rgb(76,81,94)">{{ r.region }}</span></sc-if>
+          </span>
+          <span style="width:168px;flex-shrink:0;font-size:14px;line-height:20px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;box-sizing:border-box">{{ r.itDirectionName }}</span>
+          <span style="width:168px;flex-shrink:0;font-size:14px;line-height:20px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;box-sizing:border-box">{{ r.itProductName }}</span>
+          <sc-if value="{{ isRuk }}"><span style="width:168px;flex-shrink:0;font-size:14px;line-height:20px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;box-sizing:border-box">{{ r.responsibleUserName }}</span></sc-if>
+          <span style="width:176px;flex-shrink:0;display:flex;align-items:center">
+            <span style="display:inline-flex;align-items:center;gap:6px;max-width:168px;padding:4px 8px;box-sizing:border-box;border-radius:4px;background:{{ r.phaseBg }}"><span style="width:6px;height:6px;border-radius:50%;background:{{ r.phaseColor }};flex-shrink:0"></span><span style="font-size:12px;line-height:16px;color:rgb(15,26,40);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.currentStatusName }}</span></span>
+          </span>
+          <span style="width:112px;flex-shrink:0;font-size:14px;line-height:20px">{{ r.daysLabel }}</span>
+          <span style="width:112px;flex-shrink:0;display:flex;align-items:center;gap:4px">
+            <sc-if value="{{ r.isOverdue }}"><span style="font-size:12px;line-height:16px;color:rgb(179,26,27);white-space:nowrap">{{ r.overLabel }}</span></sc-if>
+            <sc-if value="{{ r.inTime }}"><img src="assets/icons/check16--success.svg" alt="" style="display:block;width:16px;height:16px;flex-shrink:0"><span style="font-size:12px;line-height:16px;color:rgb(76,81,94);white-space:nowrap">{{ r.slaText }}</span></sc-if>
+          </span>
+          <span style="width:24px;flex-shrink:0;display:flex;align-items:center"><img src="assets/icons/chev-r16--muted.svg" alt="" style="display:block;width:16px;height:16px;flex-shrink:0"></span>
         </button>
       </sc-for>
     </div></div>
@@ -104,10 +127,14 @@
   <sc-if value="{{ showCards }}">
     <div style="display:flex;flex-direction:column;gap:8px">
       <sc-for list="{{ pageRows }}" as="r" hint-placeholder-count="5">
-        <button onClick="{{ r.open }}" style="display:flex;flex-direction:column;gap:8px;padding:16px;border:none;border-radius:16px;background:var(--color-bg-surface3);text-align:left;cursor:pointer;color:var(--color-fg-default);font-family:var(--font-sans)">
-          <span style="display:flex;justify-content:space-between;gap:12px;width:100%"><span style="font-size:16px;line-height:24px;font-weight:500">{{ r.universityName }}</span><span style="font-size:14px;line-height:20px;font-weight:{{ r.daysWeight }};color:{{ r.daysColor }};white-space:nowrap">{{ r.daysLabel }}</span></span>
-          <span style="font-size:14px;line-height:20px;color:var(--color-fg-soft)">{{ r.itProductName }}</span>
-          <span style="display:inline-flex;align-items:center;gap:6px;align-self:flex-start;min-height:28px;padding:4px 10px;border-radius:14px;background:#fff;font-size:14px;line-height:20px"><span style="width:8px;height:8px;flex-shrink:0;border-radius:999px;background:{{ r.phaseColor }}"></span>{{ r.currentStatusName }}</span>
+        <button onClick="{{ r.open }}" style="position:relative;overflow:hidden;display:flex;flex-direction:column;gap:8px;padding:16px;border:none;border-radius:12px;background:{{ r.cardBg }};box-shadow:inset 0 0 0 1px rgb(229,230,232);text-align:left;cursor:pointer;color:rgb(15,26,40);font-family:inherit">
+          <sc-if value="{{ r.isOverdue }}"><span style="position:absolute;left:0;top:0;bottom:0;width:3px;background:rgb(255,39,39)"></span></sc-if>
+          <span style="display:flex;justify-content:space-between;gap:12px;width:100%"><span style="display:flex;flex-direction:column;gap:4px;min-width:0"><span style="font-weight:700;font-size:14px;line-height:20px">{{ r.universityName }}</span><sc-if value="{{ r.needsReview }}"><span title="Заявка из интеграции: вуз или ответственный не определены автоматически" style="align-self:flex-start;display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;background:rgb(255,245,223);color:rgb(152,98,11);font-size:11px;line-height:14px;font-weight:500;white-space:nowrap">Требует проверки</span></sc-if></span><span style="font-size:12px;line-height:16px;color:rgb(76,81,94);white-space:nowrap">{{ r.code }}</span></span>
+          <span style="font-weight:300;font-size:12px;line-height:16px;color:rgb(76,81,94)">{{ r.itDirectionName }} · {{ r.itProductName }}</span>
+          <span style="display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%">
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:4px;background:{{ r.phaseBg }}"><span style="width:6px;height:6px;border-radius:50%;background:{{ r.phaseColor }}"></span><span style="font-size:12px;line-height:16px">{{ r.currentStatusName }}</span></span>
+            <span style="font-size:12px;line-height:16px;color:{{ r.slaColor }};white-space:nowrap">{{ r.daysLabel }} · {{ r.slaShort }}</span>
+          </span>
         </button>
       </sc-for>
     </div>
@@ -122,11 +149,16 @@
 
   <sc-if value="{{ showPager }}">
     <nav aria-label="Страницы" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
-      <span style="font-size:14px;line-height:20px;color:var(--color-fg-muted)">{{ pageInfo }}</span>
-      <div style="display:flex;gap:4px">
+      <div style="display:flex;align-items:center;gap:32px">
+        <span style="font-weight:300;font-size:14px;line-height:20px;color:rgb(76,81,94)">{{ pageInfo }}</span>
+        <button onClick="{{ cyclePer }}" style="display:flex;align-items:center;gap:4px;padding:0;border:none;background:transparent;cursor:pointer;font-family:inherit;font-weight:300;font-size:14px;line-height:20px;color:rgb(76,81,94)">Строк на странице: {{ per }}<img src="assets/icons/chev-d16--soft.svg" alt="" style="display:block;width:16px;height:16px;flex-shrink:0"></button>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button onClick="{{ prev }}" aria-label="Назад" style="width:36px;height:36px;border:none;border-radius:8px;background:#fff;box-shadow:inset 0 0 0 1px rgb(229,230,232);display:flex;align-items:center;justify-content:center;cursor:pointer"><img src="assets/icons/chev-l16--soft.svg" alt="" style="display:block;width:16px;height:16px;flex-shrink:0"></button>
         <sc-for list="{{ pages }}" as="p" hint-placeholder-count="3">
-          <button onClick="{{ p.go }}" aria-current="{{ p.current }}" style="min-width:40px;height:40px;border:none;border-radius:12px;background:{{ p.bg }};color:{{ p.fg }};font-size:14px;cursor:pointer">{{ p.n }}</button>
+          <button onClick="{{ p.go }}" aria-current="{{ p.current }}" style="width:36px;height:36px;border:none;border-radius:8px;background:{{ p.bg }};box-shadow:{{ p.ring }};font-family:inherit;font-weight:700;font-size:14px;line-height:20px;color:{{ p.fg }};cursor:pointer">{{ p.n }}</button>
         </sc-for>
+        <button onClick="{{ next }}" aria-label="Вперёд" style="width:36px;height:36px;border:none;border-radius:8px;background:#fff;box-shadow:inset 0 0 0 1px rgb(229,230,232);display:flex;align-items:center;justify-content:center;cursor:pointer"><img src="assets/icons/chev-r16--soft.svg" alt="" style="display:block;width:16px;height:16px;flex-shrink:0"></button>
       </div>
     </nav>
   </sc-if>
@@ -135,15 +167,15 @@
 <script type="text/x-dc" data-dc-script data-props="{&quot;role&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;kam&quot;,&quot;rukovoditel&quot;],&quot;default&quot;:&quot;kam&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;isMobile&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;demoState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;auto&quot;,&quot;loading&quot;,&quot;empty&quot;,&quot;error&quot;],&quot;default&quot;:&quot;auto&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;refreshKey&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;number&quot;},&quot;preset&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object&quot;},&quot;onOpen&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(id:string)=&gt;void&quot;},&quot;onToast&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(t:object)=&gt;void&quot;}}">
 const waitCRM = () => new Promise((r) => { const t = () => (window.CRM ? r(window.CRM) : setTimeout(t, 30)); t(); });
 const KEY = 'crm.registry.filters';
-const DEF = { period: 'all', universityId: 'all', itDirectionId: 'all', itProductId: 'all', phase: 'all', responsibleUserId: 'all', onlyOverdue: false };
-const PER = 10;
+const DEF = { period: 'all', universityId: 'all', itDirectionId: 'all', itProductId: 'all', statusId: 'all', phase: 'all', responsibleUserId: 'all', onlyOverdue: false };
+const PERS = [7, 10, 20];
 class Component extends DCLogic {
-  state = { view: (() => { try { return localStorage.getItem('crm.registry.view') || 'table'; } catch (e) { return 'table'; } })(), f: { ...DEF }, status: 'loading', rows: [], page: 1, sortDesc: true, error: null, cat: { unis: [], dirs: [], prods: [] }, filtersOpen: false };
+  state = { view: (() => { try { return localStorage.getItem('crm.registry.view') || 'table'; } catch (e) { return 'table'; } })(), f: { ...DEF }, d: { ...DEF }, per: 7, status: 'loading', rows: [], page: 1, sortDesc: true, error: null, cat: { unis: [], dirs: [], prods: [] }, filtersOpen: false };
   componentDidMount() {
     let saved = {}; try { saved = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) {}
     const f = this.props.preset ? { ...DEF, ...this.props.preset } : { ...DEF, ...saved };
     delete f.nonce;
-    this.setState({ f }, () => { this.loadCatalogs(); this.load(); });
+    this.setState({ f, d: f }, () => { this.loadCatalogs(); this.load(); });
   }
   componentDidUpdate(pp) {
     if (this.props.preset && (!pp.preset || pp.preset.nonce !== this.props.preset.nonce)) { const f = { ...DEF, ...this.props.preset }; delete f.nonce; this.setF(f, true); return; }
@@ -156,7 +188,7 @@ class Component extends DCLogic {
   setF(patch, replace) {
     const f = replace ? patch : { ...this.state.f, ...patch };
     try { localStorage.setItem(KEY, JSON.stringify(f)); } catch (e) {}
-    this.setState({ f, page: 1 }, () => this.load());
+    this.setState({ f, d: f, page: 1 }, () => this.load());
   }
   query() {
     const f = this.state.f, q = {};
@@ -186,6 +218,7 @@ class Component extends DCLogic {
       if (req !== this.req) return;
       // Фильтр по стадии и «только просроченные» дублируем на клиенте: в query /reports/interactions нет параметра phase.
       if (this.state.f.phase !== 'all') rows = rows.filter((r) => r.currentPhase === this.state.f.phase);
+      if (this.state.f.statusId !== 'all') rows = rows.filter((r) => r.currentStatusId === this.state.f.statusId);
       if (this.state.f.onlyOverdue) rows = rows.filter((r) => r.isOverdue);
       this.setState({ status: 'ready', rows }, () => this.ensureUni());
     } catch (e) { if (req === this.req) this.setState({ status: 'error', error: { code: e.code, message: e.message } }); }
@@ -193,32 +226,42 @@ class Component extends DCLogic {
   renderVals() {
     const s = this.state, f = s.f, CRM = window.CRM, m = !!this.props.isMobile, isRuk = this.props.role === 'rukovoditel';
     const opt = (list, all) => [{ value: 'all', label: all }, ...list.map((x) => ({ value: x.id, label: x.name }))];
-    const set = {}; ['period', 'universityId', 'itDirectionId', 'itProductId', 'phase', 'responsibleUserId'].forEach((k) => { set[k] = (v) => this.setF({ [k]: v }); });
+    const set = {}; ['period', 'universityId', 'itDirectionId', 'itProductId', 'statusId', 'responsibleUserId', 'onlyOverdue'].forEach((k) => { set[k] = (v) => this.setState((x) => ({ d: { ...x.d, [k]: v } })); });
+    const PER = s.per;
+    const regionOf = {}; s.cat.unis.forEach((u) => { regionOf[u.id] = u.region || ''; });
     const activeCount = Object.keys(DEF).filter((k) => f[k] !== DEF[k]).length;
     const rows = [...s.rows].sort((a, b) => (s.sortDesc ? b.daysInCurrentStatus - a.daysInCurrentStatus : a.daysInCurrentStatus - b.daysInCurrentStatus));
     const pagesN = Math.max(1, Math.ceil(rows.length / PER));
     const page = Math.min(s.page, pagesN);
-    const pageRows = !CRM ? [] : rows.slice((page - 1) * PER, page * PER).map((r) => ({
-      ...r, phaseColor: CRM.PHASE[r.currentPhase].color, slaText: CRM.SLA[r.currentStatusId] ? 'норма ' + CRM.SLA[r.currentStatusId] + ' дн.' : 'финальный статус',
-      daysLabel: r.daysInCurrentStatus + ' ' + CRM.plural(r.daysInCurrentStatus, 'день', 'дня', 'дней'),
-      daysColor: r.isOverdue ? 'var(--color-error-strong)' : 'var(--color-fg-default)', daysWeight: r.isOverdue ? 500 : 400,
-      bg: '#fff', updated: CRM.fmtDate(r.updatedAt), open: () => this.props.onOpen && this.props.onOpen(r.interactionInstanceId),
-    }));
+    const days = (n) => n + ' ' + CRM.plural(n, 'день', 'дня', 'дней');
+    const pageRows = !CRM ? [] : rows.slice((page - 1) * PER, page * PER).map((r) => {
+      const sla = CRM.SLA[r.currentStatusId]; const over = sla ? r.daysInCurrentStatus - sla : 0;
+      return { ...r, code: 'ВЗ-' + String(r.interactionInstanceId).replace(/\D/g, '').slice(-4).padStart(4, '0'), region: regionOf[r.universityId] || '', showRegion: !r.needsReview && !!regionOf[r.universityId],
+        phaseColor: CRM.PHASE[r.currentPhase].color, phaseBg: CRM.PHASE[r.currentPhase].bg,
+        daysLabel: days(r.daysInCurrentStatus), overLabel: '+' + days(Math.max(over, 0)), inTime: !r.isOverdue && !!sla, slaText: 'В срок',
+        slaShort: r.isOverdue ? '+' + days(Math.max(over, 0)) : sla ? 'в срок' : '—', slaColor: r.isOverdue ? 'rgb(179,26,27)' : 'rgb(76,81,94)',
+        bg: r.isOverdue ? 'rgb(255,148,147)' : '#fff', cardBg: r.isOverdue ? 'rgb(255,240,241)' : '#fff', hover: r.isOverdue ? 'rgb(255,166,160)' : 'rgb(249,249,250)',
+        open: () => this.props.onOpen && this.props.onOpen(r.interactionInstanceId) };
+    });
     const ready = s.status === 'ready';
     const n = rows.length;
     return {
-      f, set, isMobile: m, isDesktop: !m, isRuk,
+      f, d: s.d, set, isMobile: m, apply: () => this.setF({ ...s.d }, true), setOverdueNow: (v) => this.setF({ onlyOverdue: v }),
+      overdueTotal: s.rows.filter((r) => r.isOverdue).length || null, overdueCol: m ? 'auto' : 'span 1', actionsCol: m ? 'auto' : (isRuk ? 'span 1' : 'span 2'),
+      statusOpts: [{ value: 'all', label: 'Все статусы' }, ...(CRM ? CRM.local.STATUSES.map((x) => ({ value: x.id, label: x.name })) : [])],
+      per: PER, cyclePer: () => this.setState({ per: PERS[(PERS.indexOf(PER) + 1) % PERS.length], page: 1 }),
+      prev: () => this.setState({ page: Math.max(1, page - 1) }), next: () => this.setState({ page: Math.min(pagesN, page + 1) }), isDesktop: !m, isRuk,
       showFilters: !m || s.filtersOpen, toggleFilters: () => this.setState({ filtersOpen: !s.filtersOpen }),
       filtersBtn: activeCount ? 'Фильтры · ' + activeCount : 'Фильтры',
-      pad: m ? '16px' : '20px', filterCols: m ? '1fr' : 'repeat(auto-fill,minmax(200px,1fr))',
+      pad: m ? '16px' : '20px', filterCols: m ? '1fr' : 'repeat(4,minmax(0,1fr))',
       periodOpts: [{ value: 'all', label: 'За всё время' }, { value: '30', label: 'Последние 30 дней' }, { value: '90', label: 'Последние 90 дней' }, { value: '365', label: 'Последний год' }],
       uniOpts: opt(s.cat.unis, 'Все вузы'), dirOpts: opt(s.cat.dirs, 'Все направления'),
       prodOpts: opt(f.itDirectionId === 'all' ? s.cat.prods : s.cat.prods.filter((p) => p.itDirectionId === f.itDirectionId), 'Все продукты'),
       phaseOpts: [{ value: 'all', label: 'Все стадии' }, ...(CRM ? CRM.PHASES.map((p) => ({ value: p.key, label: p.label })) : [])],
       respOpts: [{ value: 'all', label: 'Вся команда' }, ...(CRM ? CRM.local.KAMS.map((u) => ({ value: u.id, label: u.fullName })) : [])],
       setOverdue: (v) => this.setF({ onlyOverdue: v }), hasActive: activeCount > 0, reset: () => this.setF({ ...DEF }, true),
-      countLabel: !ready ? 'Загрузка…' : n + ' ' + (CRM ? CRM.plural(n, 'взаимодействие', 'взаимодействия', 'взаимодействий') : ''),
-      sortLabel: s.sortDesc ? 'дольше в статусе' : 'недавно сменили статус', sortRotate: s.sortDesc ? 'none' : 'rotate(180deg)',
+      countLabel: !ready ? 'Загрузка…' : 'Найдено ' + n + ' ' + (CRM ? CRM.plural(n, 'взаимодействие', 'взаимодействия', 'взаимодействий') : ''),
+      sortLabel: s.sortDesc ? 'Дольше всего без изменений' : 'Недавно изменённые', sortRotate: s.sortDesc ? 'none' : 'rotate(180deg)',
       toggleSort: () => this.setState({ sortDesc: !s.sortDesc, page: 1 }),
       isLoading: s.status === 'loading', skeleton: [1, 2, 3, 4, 5, 6], isError: s.status === 'error', error: s.error || {}, retry: () => this.load(),
       isEmpty: ready && !n, emptyTitle: activeCount ? 'Нет взаимодействий по выбранным фильтрам' : isRuk ? 'У команды пока нет взаимодействий' : 'У вас пока нет взаимодействий',
@@ -229,8 +272,8 @@ class Component extends DCLogic {
       showBoard: ready && n > 0 && s.view === 'board', showCritical: ready && n > 0 && s.view === 'critical',
       showTable: ready && n > 0 && !m && s.view === 'table', showCards: ready && n > 0 && m && s.view === 'table', pageRows,
       gridCols: isRuk ? 'minmax(0,1.3fr) minmax(0,1.3fr) minmax(0,1.5fr) 110px minmax(0,1.1fr) 100px' : 'minmax(0,1.3fr) minmax(0,1.3fr) minmax(0,1.6fr) 110px 100px',
-      showPager: ready && pagesN > 1 && s.view === 'table', pageInfo: 'Показано ' + ((page - 1) * PER + 1) + '–' + Math.min(page * PER, n) + ' из ' + n,
-      pages: Array.from({ length: pagesN }, (_, i) => ({ n: i + 1, current: i + 1 === page, bg: i + 1 === page ? 'var(--color-fg-default)' : 'var(--color-bg-surface3)', fg: i + 1 === page ? '#fff' : 'var(--color-fg-default)', go: () => { this.setState({ page: i + 1 }); window.scrollTo(0, 0); } })),
+      showPager: ready && n > 0 && s.view === 'table', pageInfo: ((page - 1) * PER + 1) + '–' + Math.min(page * PER, n) + ' из ' + n,
+      pages: (pagesN <= 7 ? Array.from({ length: pagesN }, (_, i) => i + 1) : page <= 3 ? [1, 2, 3, 4, '…', pagesN] : page >= pagesN - 2 ? [1, '…', pagesN - 3, pagesN - 2, pagesN - 1, pagesN] : [1, '…', page - 1, page, page + 1, '…', pagesN]).map((p) => ({ n: p, current: p === page, bg: p === page ? 'rgb(255,166,136)' : '#fff', ring: p === page ? 'inset 0 0 0 1px rgb(254,79,19)' : 'inset 0 0 0 1px rgb(229,230,232)', fg: p === page ? 'rgb(178,56,14)' : 'rgb(15,26,40)', go: () => { if (p !== '…') { this.setState({ page: p }); window.scrollTo(0, 0); } } })),
     };
   }
 }

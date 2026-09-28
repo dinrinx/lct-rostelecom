@@ -19,9 +19,9 @@
 </helmet>
 <div data-screen-label="03b Доска" style="display:flex;flex-direction:column;gap:12px;font-family:var(--font-sans);color:var(--color-fg-default)">
   <div style="font-size:14px;line-height:20px;color:var(--color-fg-soft)">{{ hint }}</div>
-  <div style="display:flex;gap:12px;overflow-x:auto;padding-bottom:12px;align-items:stretch">
+  <div style="display:flex;gap:12px;overflow-x:auto;padding-bottom:12px;align-items:stretch;scroll-snap-type:x mandatory;scroll-padding-left:0;-webkit-overflow-scrolling:touch">
     <sc-for list="{{ columns }}" as="c" hint-placeholder-count="5">
-      <section onDragOver="{{ c.over }}" onDragEnter="{{ c.enter }}" onDrop="{{ c.drop }}" aria-label="{{ c.name }}" style="width:{{ colW }};flex-shrink:0;display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:16px;background:{{ c.bg }};box-shadow:{{ c.ring }};min-height:420px;transition:background-color 120ms, box-shadow 120ms">
+      <section onDragOver="{{ c.over }}" onDragEnter="{{ c.enter }}" onDrop="{{ c.drop }}" aria-label="{{ c.name }}" style="width:{{ colW }};flex-shrink:0;scroll-snap-align:start;display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:16px;background:{{ c.bg }};box-shadow:{{ c.ring }};min-height:420px;transition:background-color 120ms, box-shadow 120ms">
         <header style="display:flex;flex-direction:column;gap:2px;padding:4px 4px 8px">
           <div style="display:flex;align-items:center;gap:8px">
             <span style="width:10px;height:10px;border-radius:999px;flex-shrink:0;background:{{ c.color }}"></span>
@@ -36,6 +36,7 @@
           <article draggable="{{ k.draggable }}" onDragStart="{{ k.start }}" onDragEnd="{{ k.end }}" onClick="{{ k.open }}" tabindex="0" style="display:flex;flex-direction:column;gap:6px;padding:12px;border-radius:12px;background:#fff;box-shadow:{{ k.ring }};cursor:{{ k.cursor }}">
             <span style="font-size:14px;line-height:20px;font-weight:500">{{ k.universityName }}</span>
             <span style="font-size:12px;line-height:16px;color:var(--color-fg-soft)">{{ k.itProductName }}</span>
+            <sc-if value="{{ k.needsReview }}"><span title="Заявка из интеграции: вуз или ответственный не определены автоматически" style="align-self:flex-start;display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;background:rgb(255,245,223);color:rgb(152,98,11);font-size:11px;line-height:14px;font-weight:500;white-space:nowrap">Требует проверки</span></sc-if>
             <span style="display:flex;justify-content:space-between;gap:8px;align-items:center;margin-top:2px">
               <span style="font-size:12px;line-height:16px;font-weight:{{ k.daysWeight }};color:{{ k.daysColor }}">{{ k.daysLabel }}</span>
               <sc-if value="{{ k.showResp }}"><span title="{{ k.responsibleUserName }}" style="height:24px;padding:0 8px;border-radius:999px;background:var(--color-bg-surface3);display:flex;align-items:center;font-size:11px;line-height:14px;color:var(--color-fg-soft)">{{ k.initials }}</span></sc-if>

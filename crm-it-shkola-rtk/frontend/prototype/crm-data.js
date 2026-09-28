@@ -17,13 +17,14 @@
 
   // --- справочники UI -------------------------------------------------------
   const PHASES = [
-    { key: 'INITIATION', label: 'Инициация', color: 'var(--color-fg-muted)' },
-    { key: 'NEGOTIATION', label: 'Переговоры', color: 'var(--color-info)' },
-    { key: 'CONTRACTING', label: 'Партнёрство', color: 'var(--color-brand)' },
-    { key: 'IMPLEMENTATION', label: 'Внедрение', color: 'var(--color-warning)' },
-    { key: 'ACTIVE_USE', label: 'Обучение', color: 'var(--color-success)' },
-    { key: 'RENEWAL', label: 'Сопровождение', color: 'var(--color-accent)' },
-    { key: 'TERMINATION', label: 'Завершение', color: 'var(--color-fg-default)' },
+    // Подписи и цвета — компонент «Status / Stage» из макета Figma (01 Контакт … 07 Сопровождение). Ключи — enum phase бэкенда.
+    { key: 'INITIATION', num: '01', label: 'Контакт', color: 'rgb(88,93,105)', bg: 'rgb(182,183,192)', badgeBg: 'rgb(238,240,245)', badgeFg: 'rgb(104,112,133)' },
+    { key: 'NEGOTIATION', num: '02', label: 'Квалификация', color: 'rgb(46,124,246)', bg: 'rgb(155,192,251)', badgeBg: 'rgb(236,242,255)', badgeFg: 'rgb(40,93,181)' },
+    { key: 'CONTRACTING', num: '03', label: 'Согласование', color: 'rgb(119,0,255)', bg: 'rgb(194,153,255)', badgeBg: 'rgb(242,234,254)', badgeFg: 'rgb(89,0,199)' },
+    { key: 'IMPLEMENTATION', num: '04', label: 'Договор', color: 'rgb(254,79,19)', bg: 'rgb(255,166,136)', badgeBg: 'rgb(248,234,243)', badgeFg: 'rgb(147,68,119)' },
+    { key: 'ACTIVE_USE', num: '05', label: 'Лицензия', color: 'rgb(255,159,10)', bg: 'rgb(255,208,138)', badgeBg: 'rgb(255,245,223)', badgeFg: 'rgb(152,98,11)' },
+    { key: 'RENEWAL', num: '06', label: 'Обучение', color: 'rgb(17,202,91)', bg: 'rgb(133,228,174)', badgeBg: 'rgb(232,246,239)', badgeFg: 'rgb(19,119,95)' },
+    { key: 'TERMINATION', num: '07', label: 'Сопровождение', color: 'rgb(15,26,40)', bg: 'rgb(231,231,238)', badgeBg: 'rgb(231,245,248)', badgeFg: 'rgb(29,113,132)' },
   ];
   const PHASE = Object.fromEntries(PHASES.map((p) => [p.key, p]));
   const BUCKETS = [
@@ -38,7 +39,7 @@
     green: { label: 'Всё в порядке', color: 'var(--color-success)', fg: 'var(--color-success-strong)', bg: 'var(--color-success-muted)' },
   };
   const ROLES = {
-    kam: { dto: 'KAM', label: 'КАМ', scope: 'Мои вузы' },
+    kam: { dto: 'KAM', label: 'КАМ', title: 'Менеджер по вузам', scope: 'Мои вузы' },
     rukovoditel: { dto: 'RUKOVODITEL', label: 'Руководитель', scope: 'Команда' },
     administrator: { dto: 'ADMINISTRATOR', label: 'Администратор', scope: 'Все данные' },
   };
@@ -164,7 +165,13 @@
 
   // --- helpers -----------------------------------------------------------------
   const clone = (x) => JSON.parse(JSON.stringify(x));
-  const userName = (uid) => (USERS.find((u) => u.id === uid) || {}).fullName || 'Сотрудник';
+  const userName = (uid) => (uid ? (USERS.find((u) => u.id === uid) || {}).fullName || 'Сотрудник' : LABELS.responsible);
+  // Взаимодействия из интеграции (POST /integrations/sync, needsReview=true) приходят без вуза,
+  // продукта и ответственного (null). Подставляем подписи один раз на уровне данных, чтобы
+  // ни один экран (доска, реестр, отчёты, тосты, критический путь) не показывал «null».
+  const LABELS = { university: 'Вуз не определён', product: 'Продукт не определён', direction: 'Направление не определено', responsible: 'Не назначен', needsReview: 'Требует проверки' };
+  const withLabels = (r) => ({ ...r, universityName: r.universityName || LABELS.university, itProductName: r.itProductName || LABELS.product,
+    itDirectionName: r.itDirectionName || LABELS.direction, responsibleUserName: r.responsibleUserName || LABELS.responsible, needsReview: !!r.needsReview });
   const uniById = (uid) => UNIVERSITIES.find((u) => u.id === uid);
   const bucketOf = (end) => { const d = Math.ceil((new Date(end) - NOW) / DAY); return d < 0 ? 'OVERDUE' : d <= 7 ? 'DUE_IN_7_DAYS' : d <= 30 ? 'DUE_IN_30_DAYS' : d <= 60 ? 'DUE_IN_60_DAYS' : null; };
   const scope = (role) => (x) => role === 'kam' ? x.responsibleUserId === K[0] : true;
@@ -235,6 +242,21 @@
     return { statusDistribution: Object.entries(st).map(([label, value]) => ({ label, value })), interactionsOverTime: Object.entries(months).sort().map(([date, value]) => ({ date, value })), licensesByProduct: Object.entries(lic).map(([label, value]) => ({ label, value })) };
   }
 
+  // Демо-ответ превью импорта — в той же форме, что и бэкенд (ImportPreviewResultDto).
+  const IMPORT_COLUMNS = ['Наименование организации', 'ИНН', 'Регион', 'Сайт', 'Контакт в вузе'];
+  function fxImportPreview(file, mapping) {
+    const base = { previewId: id('h0000000', 1), fileName: (file && file.name) || 'Реестр вузов.xlsx', availableColumns: IMPORT_COLUMNS, totalRows: 6, skippedRows: 0 };
+    if (!mapping) return { ...base, appliedMapping: [{ column: 'Наименование организации', field: 'universityName' }, { column: 'ИНН', field: 'inn' }, { column: 'Регион', field: 'region' }, { column: 'Сайт', field: 'website' }], isMappingSuggestion: true, rows: [], duplicateRows: 0 };
+    return { ...base, appliedMapping: mapping, isMappingSuggestion: false, duplicateRows: 3, rows: [
+      { rowNumber: 2, universityName: 'СПбГУ им. Петра Великого', match: 'DUPLICATE_FUZZY', matchedUniversityId: UNIVERSITIES[0].id, similarity: 0.82 },
+      { rowNumber: 3, universityName: 'МГТУ им. Н. Э. Баумана', match: 'DUPLICATE_EXACT', matchedUniversityId: UNIVERSITIES[1].id },
+      { rowNumber: 4, universityName: 'Уральский федеральный университет', match: 'DUPLICATE_FUZZY', matchedUniversityId: UNIVERSITIES[3].id, similarity: 0.78 },
+      { rowNumber: 5, universityName: 'Самарский университет', match: 'NEW', matchedUniversityId: null },
+      { rowNumber: 6, universityName: 'ПГНИУ', match: 'NEW', matchedUniversityId: null },
+      { rowNumber: 7, universityName: 'ВолгГТУ', match: 'NEW', matchedUniversityId: null },
+    ] };
+  }
+
   // --- транспорт -----------------------------------------------------------------
   const cfg = { base: 'http://localhost:3000', role: 'kam', mode: 'auto' };
   const stats = { total: 0, errors: 0, ms: 0, api: 0, fixtures: 0, last: null };
@@ -287,9 +309,9 @@
 
   const api = {
     me: () => call('GET', '/auth/me', { fallback: () => USERS.find((u) => u.role === ROLES[cfg.role].dto) }),
-    interactions: (q) => call('GET', '/reports/interactions', { query: q, fallback: () => fxInteractions(cfg.role, q) }),
+    interactions: (q) => call('GET', '/reports/interactions', { query: q, fallback: () => fxInteractions(cfg.role, q) }).then((rows) => (rows || []).map(withLabels)),
     licenseRadar: () => call('GET', '/dashboard/license-radar', { fallback: () => fxLicenseRadar(cfg.role) }),
-    slaRadar: () => call('GET', '/dashboard/sla-radar', { fallback: () => fxSlaRadar(cfg.role) }),
+    slaRadar: () => call('GET', '/dashboard/sla-radar', { fallback: () => fxSlaRadar(cfg.role) }).then((r) => ({ ...r, items: (r.items || []).map(withLabels) })),
     healthScore: (limit) => call('GET', '/dashboard/health-score', { query: limit ? { limit } : undefined, fallback: () => fxHealthScore(cfg.role, limit) }),
     interaction: (iid) => call('GET', '/workflow/instances/' + iid, { fallback: () => { const x = INTERACTIONS.find((i) => i.interactionInstanceId === iid); return { id: iid, universityId: x.universityId, itProductId: x.itProductId, workflowTemplateVersionId: VERSION_ID, currentStatusId: x.currentStatusId, responsibleUserId: x.responsibleUserId, createdAt: x.createdAt, updatedAt: x.updatedAt }; } }),
     history: (iid) => call('GET', '/workflow/instances/' + iid + '/history', { fallback: () => HISTORY[iid] || [] }),
@@ -319,11 +341,11 @@
     products: () => call('GET', '/catalogs/it-products', { query: PAGE_ALL, fallback: PRODUCTS }),
     vendors: () => call('GET', '/catalogs/vendors', { query: PAGE_ALL, fallback: VENDORS }),
     licenses: () => call('GET', '/catalogs/licenses', { query: PAGE_ALL, fallback: LICENSES }),
-    reassign: (uid, kamId) => call('PUT', '/catalogs/universities/' + uid + '/responsible', { body: { kamId }, fallback: () => { const u = uniById(uid); u.kamId = kamId; INTERACTIONS.filter((x) => x.universityId === uid).forEach((x) => { x.responsibleUserId = kamId; x.responsibleUserName = userName(kamId); }); return u; } }),
-    unassign: (uid) => call('PUT', '/catalogs/universities/' + uid + '/responsible', { body: { kamId: null }, fallback: () => { const u = uniById(uid); u.kamId = null; return u; } }),
+    reassign: (uid, kamId) => call('PATCH', '/catalogs/universities/' + uid + '/responsible', { body: { kamId }, fallback: () => { const u = uniById(uid); u.kamId = kamId; INTERACTIONS.filter((x) => x.universityId === uid).forEach((x) => { x.responsibleUserId = kamId; x.responsibleUserName = userName(kamId); }); return u; } }),
+    unassign: (uid) => call('PATCH', '/catalogs/universities/' + uid + '/responsible', { body: { kamId: null }, fallback: () => { const u = uniById(uid); u.kamId = null; return u; } }),
     users: () => call('GET', '/admin/users', { fallback: USERS }),
     updateUser: async (uid, dto) => {
-      const u = await call('PUT', '/admin/users/' + uid, { body: dto, fallback: () => Object.assign(USERS.find((x) => x.id === uid), dto) });
+      const u = await call('PATCH', '/admin/users/' + uid, { body: dto, fallback: () => Object.assign(USERS.find((x) => x.id === uid), dto) });
       if (lastSource === 'api' && u) { Object.assign(USERS.find((x) => x.id === u.id) || {}, u); syncKams(); }
       return u;
     },
@@ -340,15 +362,15 @@
       }
       return call('PUT', '/workflow/templates/' + tid, { fallback: () => { const n = Math.max(...VERSIONS.map((v) => v.versionNumber)) + 1; const a = activeVersion(); const arch = { ...a, id: 'local-arch-' + a.versionNumber, isActive: false, statuses: [...a.statuses], transitions: [...a.transitions] }; VERSIONS.splice(VERSIONS.indexOf(a), 0, arch); a.statuses.splice(0, a.statuses.length, ...dto.statuses.map((x) => ({ ...x, workflowTemplateVersionId: a.id }))); a.transitions = dto.transitions.map((t, i) => ({ id: 'local-tr-' + n + '-' + i, workflowTemplateVersionId: a.id, ...t })); a.versionNumber = n; return { ...clone(a), versionNumber: n }; } });
     },
-    importPreview: () => call('POST', '/catalogs/import/preview', { fallback: { previewId: id('h0000000', 1), fileName: 'Реестр лицензий.xlsx', totalRows: 30, duplicateRows: 2, rows: [
-      { rowNumber: 2, universityName: 'СПбГУ им. Петра Великого', match: 'DUPLICATE_FUZZY', matchedUniversityId: UNIVERSITIES[0].id },
-      { rowNumber: 3, universityName: 'МГТУ им. Н. Э. Баумана', match: 'DUPLICATE_EXACT', matchedUniversityId: UNIVERSITIES[1].id },
-      { rowNumber: 4, universityName: 'Уральский федеральный университет', match: 'DUPLICATE_FUZZY', matchedUniversityId: UNIVERSITIES[3].id },
-      { rowNumber: 5, universityName: 'Самарский университет', match: 'NEW', matchedUniversityId: null },
-      { rowNumber: 6, universityName: 'ПГНИУ', match: 'NEW', matchedUniversityId: null },
-      { rowNumber: 7, universityName: 'ВолгГТУ', match: 'NEW', matchedUniversityId: null },
-    ] } }),
-    importCommit: (previewId) => call('POST', '/catalogs/import/commit', { body: { previewId }, fallback: { id: id('h1000000', 1), fileName: 'Реестр лицензий.xlsx', status: 'SUCCESS', resultSummary: { created: 27, matchedExisting: 2, failed: 1 }, initiatedById: USERS[2].id, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } }),
+    // Импорт вузов из xlsx (POST /catalogs/import/preview, multipart): без mapping бэкенд возвращает
+    // заголовки файла и предложенный маппинг (isMappingSuggestion=true, rows пустой), с mapping —
+    // построчный дедуп: NEW / DUPLICATE_EXACT / DUPLICATE_FUZZY («требует проверки»).
+    importPreview: (file, mapping) => {
+      const fd = new FormData(); fd.append('file', file);
+      if (mapping) fd.append('mapping', JSON.stringify(mapping));
+      return call('POST', '/catalogs/import/preview', { form: fd, fallback: () => fxImportPreview(file, mapping) });
+    },
+    importCommit: (previewId) => call('POST', '/catalogs/import/commit', { body: { previewId }, fallback: { id: id('h1000000', 1), fileName: 'Реестр вузов.xlsx', status: 'SUCCESS', resultSummary: { created: 3, matchedExisting: 1, needsReview: 2, failed: 0 }, initiatedById: USERS[2].id, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } }),
     health: () => call('GET', '/health', { fallback: () => ({ status: 'ok', db: 'ok', redis: 'ok', minio: 'ok', keycloak: 'ok', uptime: Math.round((Date.now() - NOW) / 1000) + 5421 }) }),
   };
   function activeVersion() { return VERSIONS.find((v) => v.isActive) || VERSIONS[VERSIONS.length - 1]; }
@@ -435,7 +457,7 @@
   const CRM = {
     cfg, api, stats, ApiError, PHASES, PHASE, BUCKETS, ROLES, HEALTH_LEVELS, FILE_FORMATS, SLA, KAM_ME: K[0],
     local: { USERS, KAMS, get STATUSES() { return activeVersion().statuses; }, UNIVERSITIES, DIRECTIONS, PRODUCTS, get VERSIONS() { return VERSIONS; }, TEMPLATE, LICENSES },
-    userName, bucketOf, criticalPath, activeVersion: () => clone(activeVersion()), activeVersionId: () => activeVersion().id, statusMeta: (sid) => META[sid] || null,
+    userName, LABELS, bucketOf, criticalPath, activeVersion: () => clone(activeVersion()), activeVersionId: () => activeVersion().id, statusMeta: (sid) => META[sid] || null,
     setMinDays: (sid, n) => { META[sid] = { ...(META[sid] || { deps: [] }), minDays: Number(n) || 0 }; },
     configure(o) { const prev = cfg.base + '|' + cfg.mode; Object.assign(cfg, o); if (prev !== cfg.base + '|' + cfg.mode) return hydrate(); },
     refresh: () => hydrate(),
