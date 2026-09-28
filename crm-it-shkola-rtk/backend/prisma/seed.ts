@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { CACHE_NAMESPACES, createNamespacedCache, waitUntilCacheReady } from '../src/cache/caches';
 import { join } from 'path';
 import { PrismaClient, WorkflowPhase } from '@prisma/client';
 import ExcelJS from 'exceljs';
@@ -493,6 +494,25 @@ async function resetSeedManagedTables() {
   await prisma.user.deleteMany();
 }
 
+// Seed пишет в БД мимо API, поэтому кэш каталогов/дашборда после него устарел.
+// Redis может быть не запущен — тогда сбрасывать нечего, это не ошибка.
+async function flushCaches() {
+  for (const namespace of CACHE_NAMESPACES) {
+    const cache = createNamespacedCache(namespace, process.env.REDIS_URL ?? 'redis://localhost:6379');
+    try {
+      if (!(await waitUntilCacheReady(cache))) throw new Error('Redis недоступен');
+      await cache.clear();
+    } catch {
+      console.warn(`Кэш "${namespace}" не сброшен (Redis недоступен) — он мог остаться от прошлых данных`);
+    } finally {
+      // force=true: graceful close() ждёт очередь команд и мог бы подвесить процесс seed.
+      await Promise.all(
+        cache.stores.map((store) => (store.store as { disconnect?: (force?: boolean) => Promise<void> }).disconnect?.(true).catch(() => undefined)),
+      );
+    }
+  }
+}
+
 async function main() {
   await resetSeedManagedTables();
 
@@ -519,5 +539,8 @@ main()
     process.exitCode = 1;
   })
   .finally(async () => {
+    await flushCaches();
     await prisma.$disconnect();
+    // Клиент Redis из flushCaches держит сокет открытым — без явного выхода seed не завершается.
+    process.exit(process.exitCode ?? 0);
   });

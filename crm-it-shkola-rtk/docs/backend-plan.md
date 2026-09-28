@@ -71,6 +71,7 @@ Killer-фича — радар лицензий и SLA: дашборд, кото
 | POST | /catalogs/import/preview | Превью xlsx-импорта: маппинг полей, дедуп/фаззи-матчинг по вузу | Админ |
 | POST | /catalogs/import/commit | Подтверждение и запись результата импорта | Админ |
 | GET/POST/PUT | /workflow/templates | Список/создание/редактирование шаблонов workflow (статусы+переходы), версионирование | Админ |
+| PUT | /workflow/templates/{id}/graph | Замена графа шаблона целиком (statuses+transitions одним запросом, ссылки по id узла графа) — для экрана-редактора, без точечных CRUD-вызовов | Админ |
 | GET/PUT | /admin/users | Пользователи и их роли (актуализируется после реального Keycloak, Шаг 1.2) | Админ |
 
 ## Пошаговый план разработки бэкенда
@@ -114,6 +115,95 @@ Redis-кэш и PATCH-эндпоинты, structured logs/health/метрики,
 **№3 — после Шага 3 (28.09).** Дашборд и отчётные экраны переключаются на реальные данные.
 
 **№4 — 29.09.** Финальный сквозной прогон перед сдачей.
+
+<!-- ERROR_CODES:START (генерируется npm run docs:error-codes, не правьте руками) -->
+
+## Коды ошибок
+
+Единый формат ответа на любую ошибку: `{ "code": string, "message": string, "details"?: any }`. `message` — человекочитаемый текст на русском для отображения "как есть". `details` заполнено только у `VALIDATION_ERROR` (массив `{field, errors[]}`). Коды ниже сгруппированы по областям; `uiHint` указан там, где фронту стоит обработать код отдельно, а не просто показать `message`.
+
+| code | HTTP | Значение | UI |
+| --- | --- | --- | --- |
+| **Общие** | | | |
+| `VALIDATION_ERROR` | 400 | Тело/query не прошли проверку (class-validator) или дата/число в неверном формате | details — массив {field, errors[]} (или {field: "page"/"pageSize"/"from"/"to"} для query) — подсветить конкретное поле формы, а не только показать message |
+| `BAD_REQUEST` | 400 | Некорректный запрос без более специфичного code (fallback стандартных исключений Nest) | — |
+| `UNAUTHORIZED` | 401 | Запрос не аутентифицирован (fallback) | — |
+| `FORBIDDEN` | 403 | Доступ запрещён без более специфичного code (fallback) | — |
+| `NOT_FOUND` | 404 | Запись не найдена — общий код там, где нет отдельного ENTITY_NOT_FOUND (например, каталоги при ошибке Prisma P2025) либо несуществующий путь/метод | — |
+| `CONFLICT` | 409 | Конфликт состояния без более специфичного code (fallback) | — |
+| `FK_CONSTRAINT` | 409 | Операция нарушает внешний ключ — ссылка на несуществующую запись, либо на запись ссылаются другие данные | — |
+| `UNIQUE_CONSTRAINT` | 409 | Запись с такими значениями уникального поля уже существует (Prisma P2002) | — |
+| `PAYLOAD_TOO_LARGE` | 413 | Тело запроса/файл превышает лимит (fallback) | — |
+| `INTERNAL_ERROR` | 500 | Непредвиденная ошибка сервера. Детали — только в серверном логе, не в ответе | Показать общий "Что-то пошло не так", детали не выводить пользователю |
+| `SERVICE_UNAVAILABLE` | 503 | Зависимость недоступна без более специфичного code (fallback) | — |
+| `HTTP_ERROR` | — | Crash-fallback для статусов без записи в CODE_BY_STATUS — в норме не должен встречаться | — |
+| **Auth** | | | |
+| `AUTH_ROLE_HEADER_MISSING` | 401 | AUTH_MODE=dev, но заголовка X-Dev-Role нет | — |
+| `AUTH_ROLE_HEADER_INVALID` | 401 | X-Dev-Role содержит значение не из kam|rukovoditel|administrator | — |
+| `AUTH_TOKEN_MISSING` | 401 | AUTH_MODE=keycloak, но заголовка Authorization: Bearer нет | — |
+| `AUTH_TOKEN_INVALID` | 401 | JWT недействителен, просрочен или выдан не для этого realm/клиента | — |
+| `AUTH_TOKEN_NO_ROLE` | 401 | В claim "roles" токена нет ни одной из ожидаемых ролей | — |
+| `AUTH_FORBIDDEN_ROLE` | 403 | Роль распознана, но у неё нет доступа к этому эндпоинту (не входит в @Roles) | Скрывать/дизейблить в UI действия, недоступные текущей роли, а не полагаться только на этот ответ |
+| `AUTH_USER_NOT_PROVISIONED` | 403 | Роль KAM/RUKOVODITEL распознана, но нет строки User с таким email/X-Dev-User-Id — построчный RBAC не может посчитать зону видимости | — |
+| `AUTH_USER_UNKNOWN` | 400 | GET /auth/me: не удалось определить текущего пользователя | — |
+| `CATALOG_SCOPE_FORBIDDEN` | 403 | Действие выходит за пределы зоны видимости роли (чужой вуз/КАМ не из своей команды) | — |
+| `CURRENT_USER_REQUIRED` | 400 | Действие требует currentUserId (обычно ADMINISTRATOR без X-Dev-User-Id/подходящего email) | — |
+| **Workflow · шаблоны** | | | |
+| `WORKFLOW_TEMPLATE_NOT_FOUND` | 404 | Шаблон с таким id не существует | — |
+| `WORKFLOW_TEMPLATE_VERSION_NOT_FOUND` | 404 | Версия шаблона с таким id не существует | — |
+| `WORKFLOW_TEMPLATE_EMPTY` | 409 | Активная версия шаблона не содержит ни одного статуса — создание инстанса невозможно | — |
+| `WORKFLOW_NO_ACTIVE_TEMPLATE` | 409 | Нет ни одной активной версии шаблона workflow | — |
+| `WORKFLOW_STATUSES_REQUIRED` | 400 | В теле запроса нет ни одного статуса (statuses) | — |
+| `WORKFLOW_STATUS_ORDER_DUPLICATE` | 400 | Значения order у статусов повторяются в пределах запроса | — |
+| `WORKFLOW_STATUS_DEPENDENCY_INVALID` | 400 | dependsOnOrders ссылается на order вне statuses этого запроса или на себя | — |
+| `WORKFLOW_TRANSITION_UNKNOWN_STATUS` | 400 | Переход в теле запроса ссылается на order, которого нет среди statuses | — |
+| `WORKFLOW_GRAPH_DUPLICATE_STATUS_ID` | 400 | PUT …/graph: значения id статусов повторяются в пределах запроса | — |
+| `WORKFLOW_STATUS_PHASE_REQUIRED` | 400 | PUT …/graph: у статуса нет валидной привязки к одной из 7 макростадий (phase) | — |
+| `WORKFLOW_GRAPH_TRANSITION_UNKNOWN_STATUS` | 400 | PUT …/graph: переход ссылается на id статуса, которого нет среди statuses этого запроса | — |
+| **Workflow · инстансы** | | | |
+| `WORKFLOW_INSTANCE_NOT_FOUND` | 404 | Взаимодействие с таким id не существует | — |
+| `UNIVERSITY_NOT_FOUND` | 404 | Вуз с таким id не существует (при создании/назначении инстанса) | — |
+| `INSTANCE_RESPONSIBLE_REQUIRED` | 400 | responsibleUserId не передан, а у вуза нет University.kamId по умолчанию | — |
+| `WORKFLOW_TRANSITION_NOT_ALLOWED` | 400 | Переход из текущего статуса в запрошенный не описан WorkflowTransition этой версии шаблона | Показать конкретное сообщение с названиями статусов из ответа, а не общий текст ошибки — это ожидаемый пользовательский сценарий (например, устаревшая кнопка перехода на клиенте), не баг |
+| `WORKFLOW_STATE_CONFLICT` | 409 | Статус уже изменился между чтением карточки и отправкой перехода (двойной клик/параллельный запрос — compare-and-swap не прошёл) | Перезапросить карточку инстанса и попросить пользователя повторить действие, не ретраить автоматически с теми же данными |
+| `WORKFLOW_ATTACHMENT_NOT_FOUND` | 400 | attachmentId перехода ссылается на несуществующий файл | — |
+| `WORKFLOW_ACTOR_UNKNOWN` | 400 | Не удалось определить пользователя, выполняющего переход (нет currentUserId) | — |
+| `WORKFLOW_ASSIGNMENT_EMPTY` | 400 | PATCH …/assignment без universityId и responsibleUserId — нужно хотя бы одно | — |
+| `WORKFLOW_PATCH_EMPTY` | 400 | PATCH /workflow/instances/{id} без responsibleUserId, itProductId и note — нужно хотя бы одно | — |
+| `WORKFLOW_STATUS_VIA_TRANSITION_ONLY` | 400 | PATCH /workflow/instances/{id} попытался передать currentStatusId/toStatusId/workflowTemplateVersionId — статус меняется только через POST …/transition | Признак ошибки интеграции на фронте (не пользовательский сценарий) — использовать transition-эндпоинт для смены статуса |
+| `WORKFLOW_FIELD_NOT_PATCHABLE` | 400 | PATCH /workflow/instances/{id} содержит поле, которое этим эндпоинтом не редактируется (например universityId — для него PATCH …/assignment) | — |
+| `WORKFLOW_REASSIGN_FORBIDDEN` | 403 | Ответственного пытается сменить КАМ — это может только Руководитель (в своей команде) или Администратор | — |
+| `RESPONSIBLE_MUST_BE_KAM` | 400 | responsibleUserId/kamId ссылается на пользователя не с ролью KAM | — |
+| `KAM_NOT_FOUND` | 400 | responsibleUserId/kamId ссылается на несуществующего пользователя | — |
+| **Каталоги** | | | |
+| `IT_PRODUCT_NOT_FOUND` | 404 | ИТ-продукт с таким id не существует | — |
+| `LICENSE_INVALID_PERIOD` | 400 | startDate лицензии не раньше endDate | — |
+| `RESPONSIBLE_PERSON_WITHOUT_LINK` | 400 | У ответственного лица не указаны ни universityId, ни itProductId — оно не может быть ни к чему не привязано | — |
+| **Импорт** | | | |
+| `FILE_REQUIRED` | 400 | Нужен multipart-файл в поле "file" | — |
+| `IMPORT_EMPTY_WORKBOOK` | 400 | В xlsx-файле нет ни одного листа | — |
+| `IMPORT_MAPPING_INVALID` | 400 | Поле mapping не JSON-строка с массивом {column, field} | — |
+| `IMPORT_COLUMN_NOT_FOUND` | 400 | Колонка из mapping не найдена среди заголовков файла | — |
+| `IMPORT_NAME_MAPPING_REQUIRED` | 400 | В mapping нет колонки для обязательного поля universityName | — |
+| `IMPORT_ACTOR_UNKNOWN` | 400 | Не удалось определить пользователя, инициирующего импорт (нет currentUserId) | — |
+| `IMPORT_PREVIEW_NOT_FOUND` | 404 | previewId не найден или истёк (превью хранится ограниченное время) | — |
+| **Интеграции** | | | |
+| `COURSE_MAPPING_ALREADY_EXISTS` | 400 | POST course-mapping на курс, для которого соответствие уже есть — нужен PATCH/PUT | — |
+| `COURSE_MAPPING_NOT_FOUND` | 404 | PATCH/PUT course-mapping на курс, для которого соответствия ещё нет — нужен POST | — |
+| **Файлы** | | | |
+| `FILE_NOT_FOUND` | 404 | Файл с таким id не существует | — |
+| `FILE_ACTOR_UNKNOWN` | 400 | Не удалось определить пользователя, загружающего файл (нет currentUserId) | — |
+| `STORAGE_UNAVAILABLE` | 503 | Хранилище файлов (MinIO/S3-совместимое) недоступно | — |
+| **Отчёты** | | | |
+| `REPORT_TYPE_INVALID` | 400 | POST /reports/jobs: type не из LICENSE_RADAR|SLA_RADAR|INTERACTIONS_EXPORT | — |
+| `REPORT_QUEUE_UNAVAILABLE` | 503 | Очередь отчётов (Redis/BullMQ) недоступна | — |
+| `REPORT_JOB_NOT_FOUND` | 404 | Задание отчёта не найдено (или уже удалено по сроку хранения) | — |
+| `REPORT_JOB_FORBIDDEN` | 403 | Задание отчёта создано другим пользователем (видит автор и Администратор) | — |
+| **Пользователи** | | | |
+| `USER_NOT_FOUND` | 404 | Пользователь с таким id не существует | — |
+| `USER_MANAGER_INVALID` | 400 | managerId ссылается на самого пользователя | — |
+
+<!-- ERROR_CODES:END -->
 
 ## Правила синхронизации команды
 

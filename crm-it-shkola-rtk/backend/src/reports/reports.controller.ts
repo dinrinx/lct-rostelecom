@@ -6,6 +6,9 @@ import { ReportQueueService } from './report-queue.service';
 import { InteractionReportItemDto, InteractionsReportExportDto } from './dto/interaction-report-item.dto';
 import { ChartsResponseDto } from './dto/charts.dto';
 import { CatalogScopeInterceptor, RequestWithCatalogScope } from '../catalogs/catalog-scope.interceptor';
+import { ReadCacheInterceptor } from '../cache/read-cache.interceptor';
+import { Cacheable } from '../cache/cacheable.decorator';
+import { CHARTS_TTL_MS } from '../cache/cache-ttl';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRoleDto } from '../auth/dto/user.dto';
 
@@ -17,7 +20,7 @@ export const ANY_ROLE = [UserRoleDto.KAM, UserRoleDto.RUKOVODITEL, UserRoleDto.A
 @ApiTags('reports')
 @ApiHeader({ name: 'X-Dev-Role', required: false, example: 'kam' })
 @Roles(...ANY_ROLE)
-@UseInterceptors(CatalogScopeInterceptor)
+@UseInterceptors(ReadCacheInterceptor, CatalogScopeInterceptor)
 @Controller('reports')
 export class ReportsController {
   constructor(
@@ -61,7 +64,9 @@ export class ReportsController {
     return this.reportsService.exportInteractions(request.catalogScope!, parseFilters(query), format);
   }
 
+  // Кэшируется только charts: реестр и экспорт зависят от произвольных фильтров и порождают файлы.
   @Get('charts')
+  @Cacheable('reports', CHARTS_TTL_MS)
   @ApiOperation({ summary: 'Данные для графиков отчётного дашборда (pie/line/bar)' })
   @ApiQuery({ name: 'from', required: false, example: '2026-09-01' })
   @ApiQuery({ name: 'to', required: false, example: '2026-09-30' })

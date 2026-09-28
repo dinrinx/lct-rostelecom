@@ -202,3 +202,53 @@ describe('WorkflowService.transition', () => {
     expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 });
+
+describe('WorkflowService.updateInstance (PATCH)', () => {
+  const REST = { visibleKamIds: null, includeUnassigned: false } as CatalogScope;
+
+  it.each(['currentStatusId', 'toStatusId', 'workflowTemplateVersionId'])(
+    'не даёт сменить статус/версию через PATCH (%s) — только через transition',
+    async (field) => {
+      const prisma = createPrismaMock();
+      const service = new WorkflowService(prisma as any);
+      await expect(service.updateInstance(INSTANCE_ID, { [field]: 'x' } as any, REST)).rejects.toMatchObject({
+        response: { code: 'WORKFLOW_STATUS_VIA_TRANSITION_ONLY' },
+      });
+      expect(prisma.interactionInstance.findUnique).not.toHaveBeenCalled();
+      expect(prisma.workflowTransition.findFirst).not.toHaveBeenCalled();
+    },
+  );
+
+  it('отклоняет пустой PATCH', async () => {
+    const service = new WorkflowService(createPrismaMock() as any);
+    await expect(service.updateInstance(INSTANCE_ID, {}, REST)).rejects.toMatchObject({
+      response: { code: 'WORKFLOW_PATCH_EMPTY' },
+    });
+  });
+
+  it('КАМ не может сменить ответственного, но заметку своего взаимодействия правит', async () => {
+    const prisma: any = createPrismaMock();
+    prisma.interactionInstance.findUnique.mockResolvedValue({
+      id: INSTANCE_ID,
+      universityId: 'uni-1',
+      responsibleUserId: 'kam-1',
+      university: { kamId: 'kam-1' },
+    });
+    prisma.interactionInstance.update.mockResolvedValue({
+      id: INSTANCE_ID, universityId: 'uni-1', itProductId: null, workflowTemplateVersionId: VERSION_ID,
+      currentStatusId: CURRENT_STATUS_ID, responsibleUserId: 'kam-1', externalId: null, needsReview: false,
+      note: 'ждём ректора', createdAt: new Date(), updatedAt: new Date(),
+    });
+    const kamScope = { role: 'KAM', visibleKamIds: ['kam-1'], includeUnassigned: false } as CatalogScope;
+    const service = new WorkflowService(prisma);
+
+    await expect(service.updateInstance(INSTANCE_ID, { responsibleUserId: 'kam-2' }, kamScope)).rejects.toBeInstanceOf(ForbiddenException);
+
+    const result = await service.updateInstance(INSTANCE_ID, { note: '  ждём ректора  ' }, kamScope);
+    expect(result.note).toBe('ждём ректора');
+    expect(prisma.interactionInstance.update).toHaveBeenCalledWith({
+      where: { id: INSTANCE_ID },
+      data: { note: 'ждём ректора', needsReview: false },
+    });
+  });
+});

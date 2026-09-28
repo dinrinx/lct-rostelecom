@@ -5,6 +5,9 @@ import { SlaRadarResultDto } from './dto/sla-radar.dto';
 import { ReportsService } from './reports.service';
 import { ANY_ROLE } from './reports.controller';
 import { CatalogScopeInterceptor, RequestWithCatalogScope } from '../catalogs/catalog-scope.interceptor';
+import { ReadCacheInterceptor } from '../cache/read-cache.interceptor';
+import { Cacheable } from '../cache/cacheable.decorator';
+import { DASHBOARD_TTL_MS } from '../cache/cache-ttl';
 import { Roles } from '../auth/decorators/roles.decorator';
 
 // Killer-фича: радар лицензий и SLA. Отдельный префикс /dashboard, но живёт
@@ -13,7 +16,8 @@ import { Roles } from '../auth/decorators/roles.decorator';
 @ApiTags('dashboard')
 @ApiHeader({ name: 'X-Dev-Role', required: false, example: 'kam' })
 @Roles(...ANY_ROLE)
-@UseInterceptors(CatalogScopeInterceptor)
+@Cacheable('reports', DASHBOARD_TTL_MS)
+@UseInterceptors(ReadCacheInterceptor, CatalogScopeInterceptor)
 @Controller('dashboard')
 export class DashboardController {
   constructor(private readonly reportsService: ReportsService) {}

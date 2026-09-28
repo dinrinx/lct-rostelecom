@@ -1,7 +1,9 @@
 import 'dotenv/config';
+import { Logger } from 'nestjs-pino';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { buildErrorCodesMarkdown } from './common/error-codes';
 import { AllExceptionsFilter } from './common/all-exceptions.filter';
 import { createValidationPipe } from './common/validation';
 
@@ -31,7 +33,9 @@ function resolveCorsOrigins(): string[] {
 }
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // bufferLogs: всё, что Nest пишет при старте, уйдёт уже через pino в JSON.
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  app.useLogger(app.get(Logger));
   app.useGlobalFilters(new AllExceptionsFilter());
   app.useGlobalPipes(createValidationPipe());
 
@@ -47,6 +51,11 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('CRM ИТ Школа РТК')
     .setVersion('0.0.1')
+    .setDescription(
+      'Любая ошибка API возвращается в единой форме `{ code, message, details? }` — независимо от эндпоинта ' +
+        '(см. AllExceptionsFilter). Полный список `code`, их HTTP-статусов и рекомендаций по обработке в UI:\n\n' +
+        buildErrorCodesMarkdown(),
+    )
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document, { jsonDocumentUrl: 'api-json' });

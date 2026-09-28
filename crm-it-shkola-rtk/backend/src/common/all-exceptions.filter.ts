@@ -77,8 +77,22 @@ export class AllExceptionsFilter implements ExceptionFilter {
       return this.of(400, 'VALIDATION_ERROR', 'Некорректные данные запроса (тип или формат значения)');
     }
 
-    this.logger.error(exception instanceof Error ? (exception.stack ?? exception.message) : String(exception));
+    this.logAndHideDetails(exception);
     return this.of(HttpStatus.INTERNAL_SERVER_ERROR, 'INTERNAL_ERROR', 'Внутренняя ошибка сервера');
+  }
+
+  // Стектрейс пишем структурно (pino кладёт его в поле err.stack). Исключение —
+  // ошибки Prisma: их message содержит аргументы запроса (в них бывают
+  // ФИО/email/телефон), поэтому для них логируем только тип и код (152-ФЗ).
+  private logAndHideDetails(exception: unknown): void {
+    if (!(exception instanceof Error)) {
+      this.logger.error(String(exception));
+    } else if (exception.name.startsWith('PrismaClient')) {
+      const code = (exception as { code?: string }).code;
+      this.logger.error(`${exception.name}${code ? ` ${code}` : ''} (детали запроса скрыты)`);
+    } else {
+      this.logger.error(exception.message, exception.stack);
+    }
   }
 
   private of(status: number, code: string, message: string): { status: number; body: ErrorBody } {

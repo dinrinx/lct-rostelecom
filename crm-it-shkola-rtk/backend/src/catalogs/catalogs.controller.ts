@@ -1,26 +1,13 @@
-import {
-  BadRequestException,
-  Body,
-  Controller,
-  Delete,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Param,
-  Post,
-  Put,
-  Query,
-  Req,
-  Res,
-  UploadedFile,
-  UseInterceptors,
-} from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query, Req, Res, UploadedFile, UseInterceptors, Patch } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes, ApiHeader, ApiOkResponse, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { CatalogsService } from './catalogs.service';
 import { CatalogScopeInterceptor, RequestWithCatalogScope } from './catalog-scope.interceptor';
 import { UniversityImportService } from './import/university-import.service';
+import { ReadCacheInterceptor } from '../cache/read-cache.interceptor';
+import { Cacheable } from '../cache/cacheable.decorator';
+import { CATALOGS_TTL_MS } from '../cache/cache-ttl';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRoleDto } from '../auth/dto/user.dto';
 import { CreateVendorDto, UpdateVendorDto, VendorDto } from './dto/vendor.dto';
@@ -56,7 +43,9 @@ const ANY_ROLE = [UserRoleDto.KAM, UserRoleDto.RUKOVODITEL, UserRoleDto.ADMINIST
 // эндпоинтами вузов/лицензий/ответственных для построчной RBAC-фильтрации.
 @ApiTags('catalogs')
 @Controller('catalogs')
-@UseInterceptors(CatalogScopeInterceptor)
+// Кэш стоит первым: на попадании scope не считается. Ключ кэша включает роль и пользователя.
+@Cacheable('catalogs', CATALOGS_TTL_MS)
+@UseInterceptors(ReadCacheInterceptor, CatalogScopeInterceptor)
 export class CatalogsController {
   constructor(
     private readonly catalogsService: CatalogsService,
@@ -99,9 +88,21 @@ export class CatalogsController {
     return this.catalogsService.createVendor(dto);
   }
 
-  @Put('vendors/:id')
+  @Patch('vendors/:id')
   @Roles(UserRoleDto.ADMINISTRATOR)
   @ApiOperation({ summary: 'Обновить вендора' })
+  @ApiParam({ name: 'id' })
+  @ApiBody({ type: UpdateVendorDto })
+  @ApiOkResponse({ type: VendorDto })
+  patchUpdateVendor(@Param('id') id: string, @Body() dto: UpdateVendorDto): Promise<VendorDto> {
+    return this.catalogsService.updateVendor(id, dto);
+  }
+
+  // Оставлен для совместимости с фронтом: то же поведение, что у PATCH выше.
+  @Put('vendors/:id')
+  @Roles(UserRoleDto.ADMINISTRATOR)
+  @ApiOperation({
+    deprecated: true, summary: 'Обновить вендора' })
   @ApiParam({ name: 'id' })
   @ApiBody({ type: UpdateVendorDto })
   @ApiOkResponse({ type: VendorDto })
@@ -145,9 +146,21 @@ export class CatalogsController {
     return this.catalogsService.createItDirection(dto);
   }
 
-  @Put('it-directions/:id')
+  @Patch('it-directions/:id')
   @Roles(UserRoleDto.ADMINISTRATOR)
   @ApiOperation({ summary: 'Обновить ИТ-направление' })
+  @ApiParam({ name: 'id' })
+  @ApiBody({ type: UpdateItDirectionDto })
+  @ApiOkResponse({ type: ItDirectionDto })
+  patchUpdateItDirection(@Param('id') id: string, @Body() dto: UpdateItDirectionDto): Promise<ItDirectionDto> {
+    return this.catalogsService.updateItDirection(id, dto);
+  }
+
+  // Оставлен для совместимости с фронтом: то же поведение, что у PATCH выше.
+  @Put('it-directions/:id')
+  @Roles(UserRoleDto.ADMINISTRATOR)
+  @ApiOperation({
+    deprecated: true, summary: 'Обновить ИТ-направление' })
   @ApiParam({ name: 'id' })
   @ApiBody({ type: UpdateItDirectionDto })
   @ApiOkResponse({ type: ItDirectionDto })
@@ -195,9 +208,21 @@ export class CatalogsController {
     return this.catalogsService.createItProduct(dto);
   }
 
-  @Put('it-products/:id')
+  @Patch('it-products/:id')
   @Roles(UserRoleDto.ADMINISTRATOR)
   @ApiOperation({ summary: 'Обновить ИТ-продукт' })
+  @ApiParam({ name: 'id' })
+  @ApiBody({ type: UpdateItProductDto })
+  @ApiOkResponse({ type: ItProductDto })
+  patchUpdateItProduct(@Param('id') id: string, @Body() dto: UpdateItProductDto): Promise<ItProductDto> {
+    return this.catalogsService.updateItProduct(id, dto);
+  }
+
+  // Оставлен для совместимости с фронтом: то же поведение, что у PATCH выше.
+  @Put('it-products/:id')
+  @Roles(UserRoleDto.ADMINISTRATOR)
+  @ApiOperation({
+    deprecated: true, summary: 'Обновить ИТ-продукт' })
   @ApiParam({ name: 'id' })
   @ApiBody({ type: UpdateItProductDto })
   @ApiOkResponse({ type: ItProductDto })
@@ -256,9 +281,21 @@ export class CatalogsController {
     return this.catalogsService.createUniversity(dto);
   }
 
-  @Put('universities/:id')
+  @Patch('universities/:id')
   @Roles(UserRoleDto.ADMINISTRATOR)
   @ApiOperation({ summary: 'Обновить вуз' })
+  @ApiParam({ name: 'id' })
+  @ApiBody({ type: UpdateUniversityDto })
+  @ApiOkResponse({ type: UniversityDto })
+  patchUpdateUniversity(@Param('id') id: string, @Body() dto: UpdateUniversityDto): Promise<UniversityDto> {
+    return this.catalogsService.updateUniversity(id, dto);
+  }
+
+  // Оставлен для совместимости с фронтом: то же поведение, что у PATCH выше.
+  @Put('universities/:id')
+  @Roles(UserRoleDto.ADMINISTRATOR)
+  @ApiOperation({
+    deprecated: true, summary: 'Обновить вуз' })
   @ApiParam({ name: 'id' })
   @ApiBody({ type: UpdateUniversityDto })
   @ApiOkResponse({ type: UniversityDto })
@@ -275,9 +312,28 @@ export class CatalogsController {
     return this.catalogsService.deleteUniversity(id);
   }
 
+  @Patch('universities/:id/responsible')
+  @Roles(UserRoleDto.RUKOVODITEL, UserRoleDto.ADMINISTRATOR)
+  @ApiOperation({
+    summary:
+      'Переназначить/снять КАМа, ответственного за вуз (kamId: null — снять). Руководитель — только в своей команде и по своим вузам',
+  })
+  @ApiParam({ name: 'id' })
+  @ApiBody({ type: ReassignUniversityResponsibleDto })
+  @ApiOkResponse({ type: UniversityDto })
+  patchReassignUniversityResponsible(
+    @Req() request: RequestWithCatalogScope,
+    @Param('id') id: string,
+    @Body() dto: ReassignUniversityResponsibleDto,
+  ): Promise<UniversityDto> {
+    return this.catalogsService.reassignUniversityResponsible(id, dto.kamId, request.catalogScope!);
+  }
+
+  // Оставлен для совместимости с фронтом: то же поведение, что у PATCH выше.
   @Put('universities/:id/responsible')
   @Roles(UserRoleDto.RUKOVODITEL, UserRoleDto.ADMINISTRATOR)
   @ApiOperation({
+    deprecated: true,
     summary:
       'Переназначить/снять КАМа, ответственного за вуз (kamId: null — снять). Руководитель — только в своей команде и по своим вузам',
   })
@@ -345,9 +401,24 @@ export class CatalogsController {
     return this.catalogsService.createResponsiblePerson(dto);
   }
 
-  @Put('responsible-persons/:id')
+  @Patch('responsible-persons/:id')
   @Roles(UserRoleDto.ADMINISTRATOR)
   @ApiOperation({ summary: 'Обновить ответственного' })
+  @ApiParam({ name: 'id' })
+  @ApiBody({ type: UpdateResponsiblePersonDto })
+  @ApiOkResponse({ type: ResponsiblePersonDto })
+  patchUpdateResponsiblePerson(
+    @Param('id') id: string,
+    @Body() dto: UpdateResponsiblePersonDto,
+  ): Promise<ResponsiblePersonDto> {
+    return this.catalogsService.updateResponsiblePerson(id, dto);
+  }
+
+  // Оставлен для совместимости с фронтом: то же поведение, что у PATCH выше.
+  @Put('responsible-persons/:id')
+  @Roles(UserRoleDto.ADMINISTRATOR)
+  @ApiOperation({
+    deprecated: true, summary: 'Обновить ответственного' })
   @ApiParam({ name: 'id' })
   @ApiBody({ type: UpdateResponsiblePersonDto })
   @ApiOkResponse({ type: ResponsiblePersonDto })
@@ -417,9 +488,21 @@ export class CatalogsController {
     return this.catalogsService.createLicense(dto);
   }
 
-  @Put('licenses/:id')
+  @Patch('licenses/:id')
   @Roles(UserRoleDto.ADMINISTRATOR)
   @ApiOperation({ summary: 'Обновить лицензию/договор' })
+  @ApiParam({ name: 'id' })
+  @ApiBody({ type: UpdateLicenseDto })
+  @ApiOkResponse({ type: LicenseDto })
+  patchUpdateLicense(@Param('id') id: string, @Body() dto: UpdateLicenseDto): Promise<LicenseDto> {
+    return this.catalogsService.updateLicense(id, dto);
+  }
+
+  // Оставлен для совместимости с фронтом: то же поведение, что у PATCH выше.
+  @Put('licenses/:id')
+  @Roles(UserRoleDto.ADMINISTRATOR)
+  @ApiOperation({
+    deprecated: true, summary: 'Обновить лицензию/договор' })
   @ApiParam({ name: 'id' })
   @ApiBody({ type: UpdateLicenseDto })
   @ApiOkResponse({ type: LicenseDto })

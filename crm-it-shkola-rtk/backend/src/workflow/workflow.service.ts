@@ -8,10 +8,12 @@ import {
   WorkflowTransitionInputDto,
 } from './dto/workflow-template-write.dto';
 import { WorkflowTemplateVersionDto, WorkflowTemplateWithActiveVersionDto } from './dto/workflow-template.dto';
-import { WorkflowStatusDto } from './dto/workflow-status.dto';
+import { WorkflowPhaseDto, WorkflowStatusDto } from './dto/workflow-status.dto';
 import { CreateInteractionInstanceDto } from './dto/create-interaction-instance.dto';
 import { TransitionInteractionInstanceDto } from './dto/transition-interaction-instance.dto';
 import { AssignInteractionInstanceDto } from './dto/assign-interaction-instance.dto';
+import { GraphStatusInputDto, GraphTransitionInputDto, UpdateWorkflowGraphDto } from './dto/workflow-graph.dto';
+import { UpdateInteractionInstanceDto } from './dto/update-interaction-instance.dto';
 import { InteractionInstanceDto, StatusHistoryEntryDto } from './dto/interaction-instance.dto';
 import { UserRoleDto } from '../auth/dto/user.dto';
 import type { CatalogScope } from '../catalogs/catalog-scope.interceptor';
@@ -31,6 +33,7 @@ function toInstanceDto(instance: {
   responsibleUserId: string | null;
   externalId: string | null;
   needsReview: boolean;
+  note: string | null;
   createdAt: Date;
   updatedAt: Date;
 }): InteractionInstanceDto {
@@ -43,6 +46,7 @@ function toInstanceDto(instance: {
     responsibleUserId: instance.responsibleUserId,
     externalId: instance.externalId,
     needsReview: instance.needsReview,
+    note: instance.note,
     createdAt: instance.createdAt.toISOString(),
     updatedAt: instance.updatedAt.toISOString(),
   };
@@ -187,6 +191,40 @@ export class WorkflowService {
     });
   }
 
+  // Экран-редактор шаблона (список/форма) правит граф целиком за один запрос —
+  // без набора мелких point-CRUD вызовов на статус/переход. Как и updateTemplate,
+  // НЕ мутирует текущую версию: создаёт новую (isActive=true), старую помечает
+  // isActive=false; существующие InteractionInstance остаются на своей версии.
+  // migrateInstances здесь не поддерживается — только полная замена графа.
+  async updateTemplateGraph(id: string, dto: UpdateWorkflowGraphDto): Promise<WorkflowTemplateVersionDto> {
+    this.assertGraphValid(dto.statuses, dto.transitions);
+
+    const template = await this.prisma.workflowTemplate.findUnique({
+      where: { id },
+      include: { versions: { orderBy: { versionNumber: 'desc' }, take: 1 } },
+    });
+    if (!template) {
+      throw new NotFoundException({
+        code: 'WORKFLOW_TEMPLATE_NOT_FOUND',
+        message: `Шаблон workflow с id "${id}" не найден`,
+      });
+    }
+    const nextVersionNumber = (template.versions[0]?.versionNumber ?? 0) + 1;
+
+    return this.prisma.$transaction(async (tx) => {
+      await tx.workflowTemplateVersion.updateMany({
+        where: { workflowTemplateId: id, isActive: true },
+        data: { isActive: false },
+      });
+
+      const version = await tx.workflowTemplateVersion.create({
+        data: { workflowTemplateId: id, versionNumber: nextVersionNumber, isActive: true },
+      });
+
+      return this.createGraphStatusesAndTransitions(tx, version.id, dto.statuses, dto.transitions);
+    });
+  }
+
   async updateTemplate(id: string, dto: UpdateWorkflowTemplateDto): Promise<WorkflowTemplateVersionDto> {
     this.assertStatusesAndTransitionsValid(dto.statuses, dto.transitions);
 
@@ -292,6 +330,86 @@ export class WorkflowService {
     }
     assertUniversityOrUnassignedVisible(instance.university, scope);
     return toInstanceDto(instance);
+  }
+
+  // Точечная правка полей взаимодействия (ответственный, продукт, заметка) БЕЗ
+  // перехода по статусам. Статус здесь менять нельзя принципиально: переход
+  // обязан идти через transition(), где проверяется граф WorkflowTransition и
+  // пишется append-only история — иначе PATCH стал бы обходным путём мимо шаблона.
+  async updateInstance(
+    instanceId: string,
+    dto: UpdateInteractionInstanceDto,
+    scope: CatalogScope,
+  ): Promise<InteractionInstanceDto> {
+    const PATCHABLE = ['responsibleUserId', 'itProductId', 'note'];
+    const unknown = Object.keys(dto ?? {}).filter((key) => !PATCHABLE.includes(key));
+    if (unknown.length) {
+      const statusLike = unknown.some((key) => ['currentStatusId', 'toStatusId', 'workflowTemplateVersionId'].includes(key));
+      throw new BadRequestException({
+        code: statusLike ? 'WORKFLOW_STATUS_VIA_TRANSITION_ONLY' : 'WORKFLOW_FIELD_NOT_PATCHABLE',
+        message: statusLike
+          ? 'Статус меняется только через POST /workflow/instances/{id}/transition (там проверяется граф переходов)'
+          : `Поля не редактируются через PATCH: ${unknown.join(', ')}. Вуз — PATCH /workflow/instances/{id}/assignment`,
+      });
+    }
+    if (dto.responsibleUserId === undefined && dto.itProductId === undefined && dto.note === undefined) {
+      throw new BadRequestException({
+        code: 'WORKFLOW_PATCH_EMPTY',
+        message: `Нужно указать хотя бы одно из полей: ${PATCHABLE.join(', ')}`,
+      });
+    }
+
+    const instance = await this.prisma.interactionInstance.findUnique({
+      where: { id: instanceId },
+      include: { university: true },
+    });
+    if (!instance) {
+      throw new NotFoundException({
+        code: 'WORKFLOW_INSTANCE_NOT_FOUND',
+        message: `Взаимодействие с id "${instanceId}" не найдено`,
+      });
+    }
+    assertUniversityOrUnassignedVisible(instance.university, scope);
+
+    if (dto.responsibleUserId !== undefined) {
+      // КАМ правит заметку/продукт своих взаимодействий, но не передаёт их другому.
+      if (scope.role === UserRoleDto.KAM) {
+        throw new ForbiddenException({
+          code: 'WORKFLOW_REASSIGN_FORBIDDEN',
+          message: 'Менять ответственного может только Руководитель (в своей команде) или Администратор',
+        });
+      }
+      await assertUserHasKamRole(this.prisma, dto.responsibleUserId);
+      if (scope.role === UserRoleDto.RUKOVODITEL && !scope.visibleKamIds?.includes(dto.responsibleUserId)) {
+        throw new ForbiddenException({
+          code: 'CATALOG_SCOPE_FORBIDDEN',
+          message: 'Руководитель может назначать ответственным только КАМа из своей команды',
+        });
+      }
+    }
+
+    if (dto.itProductId) {
+      const product = await this.prisma.itProduct.findUnique({ where: { id: dto.itProductId }, select: { id: true } });
+      if (!product) {
+        throw new BadRequestException({
+          code: 'IT_PRODUCT_NOT_FOUND',
+          message: `ИТ-продукт с id "${dto.itProductId}" не найден`,
+        });
+      }
+    }
+
+    const responsibleUserId = dto.responsibleUserId ?? instance.responsibleUserId;
+    const updated = await this.prisma.interactionInstance.update({
+      where: { id: instanceId },
+      data: {
+        ...(dto.responsibleUserId !== undefined ? { responsibleUserId: dto.responsibleUserId } : {}),
+        ...(dto.itProductId !== undefined ? { itProductId: dto.itProductId } : {}),
+        ...(dto.note !== undefined ? { note: dto.note?.trim() ? dto.note.trim() : null } : {}),
+        // Тот же инвариант, что и в assignInstance: разбор закончен, когда есть и вуз, и ответственный.
+        needsReview: !(instance.universityId && responsibleUserId),
+      },
+    });
+    return toInstanceDto(updated);
   }
 
   // Закрывает гэп из integrations/sync: заявка без вуза (needsReview=true)
@@ -592,6 +710,120 @@ export class WorkflowService {
         });
       }
     }
+  }
+
+  // Валидация графа для PUT /workflow/templates/{id}/graph — ссылки по id узла
+  // (не по order, как в assertStatusesAndTransitionsValid): нет статусов без
+  // валидной макростадии (phase уже гарантирован class-validator'ом — здесь
+  // просто повторная проверка на случай прямого вызова сервиса), нет
+  // transitions/dependsOnStatusIds, ссылающихся на несуществующий id.
+  private assertGraphValid(statuses: GraphStatusInputDto[], transitions: GraphTransitionInputDto[]): void {
+    if (!statuses?.length) {
+      throw new BadRequestException({
+        code: 'WORKFLOW_STATUSES_REQUIRED',
+        message: 'Нужен хотя бы один статус (statuses)',
+      });
+    }
+
+    const ids = new Set(statuses.map((status) => status.id));
+    if (ids.size !== statuses.length) {
+      throw new BadRequestException({
+        code: 'WORKFLOW_GRAPH_DUPLICATE_STATUS_ID',
+        message: 'Значения id у статусов должны быть уникальны в пределах запроса',
+      });
+    }
+
+    for (const status of statuses) {
+      if (!Object.values(WorkflowPhaseDto).includes(status.phase)) {
+        throw new BadRequestException({
+          code: 'WORKFLOW_STATUS_PHASE_REQUIRED',
+          message: `Статус "${status.name}" не привязан к одной из 7 макростадий (phase: "${status.phase}")`,
+        });
+      }
+      for (const dependsOn of status.dependsOnStatusIds ?? []) {
+        if (!ids.has(dependsOn) || dependsOn === status.id) {
+          throw new BadRequestException({
+            code: 'WORKFLOW_STATUS_DEPENDENCY_INVALID',
+            message: `Статус "${status.name}" зависит от id "${dependsOn}", которого нет среди statuses (или ссылается сам на себя)`,
+          });
+        }
+      }
+    }
+
+    for (const transition of transitions ?? []) {
+      if (!ids.has(transition.fromStatusId) || !ids.has(transition.toStatusId)) {
+        throw new BadRequestException({
+          code: 'WORKFLOW_GRAPH_TRANSITION_UNKNOWN_STATUS',
+          message: `Переход ссылается на id, отсутствующий среди statuses ("${transition.fromStatusId}" -> "${transition.toStatusId}")`,
+        });
+      }
+    }
+  }
+
+  private async createGraphStatusesAndTransitions(
+    tx: Prisma.TransactionClient,
+    versionId: string,
+    statusInputs: GraphStatusInputDto[],
+    transitionInputs: GraphTransitionInputDto[],
+  ): Promise<WorkflowTemplateVersionDto> {
+    const dbIdByClientId = new Map<string, string>();
+    const statuses = [];
+    for (const input of statusInputs) {
+      const status = await tx.workflowStatus.create({
+        data: {
+          name: input.name,
+          phase: input.phase,
+          order: input.order,
+          slaDays: input.slaDays ?? null,
+          minDays: input.minDays ?? 0,
+          isOptional: input.isOptional ?? false,
+          workflowTemplateVersionId: versionId,
+        },
+      });
+      dbIdByClientId.set(input.id, status.id);
+      statuses.push(status);
+    }
+
+    // Зависимости — вторым проходом, когда все db-id уже есть (не по order, как
+    // в createStatusesAndTransitions, а напрямую по client-id из dependsOnStatusIds;
+    // не указано явно — прежний узел по order, та же логика для линейной цепочки).
+    const sortedByOrder = [...statusInputs].sort((a, b) => a.order - b.order);
+    for (const status of statuses) {
+      const input = statusInputs.find((candidate) => dbIdByClientId.get(candidate.id) === status.id)!;
+      const previousInput = sortedByOrder[sortedByOrder.indexOf(input) - 1];
+      const dependsOnClientIds = input.dependsOnStatusIds ?? (previousInput ? [previousInput.id] : []);
+      status.dependsOnStatusIds = dependsOnClientIds.map((clientId) => dbIdByClientId.get(clientId)!);
+      if (status.dependsOnStatusIds.length) {
+        await tx.workflowStatus.update({
+          where: { id: status.id },
+          data: { dependsOnStatusIds: status.dependsOnStatusIds },
+        });
+      }
+    }
+
+    const transitions = [];
+    for (const input of transitionInputs ?? []) {
+      const transition = await tx.workflowTransition.create({
+        data: {
+          name: input.name,
+          workflowTemplateVersionId: versionId,
+          fromStatusId: dbIdByClientId.get(input.fromStatusId)!,
+          toStatusId: dbIdByClientId.get(input.toStatusId)!,
+        },
+      });
+      transitions.push(transition);
+    }
+
+    const version = await tx.workflowTemplateVersion.findUniqueOrThrow({ where: { id: versionId } });
+
+    return {
+      id: version.id,
+      versionNumber: version.versionNumber,
+      isActive: version.isActive,
+      workflowTemplateId: version.workflowTemplateId,
+      statuses: statuses.sort((a, b) => a.order - b.order).map(toStatusDto),
+      transitions,
+    };
   }
 
   private async createStatusesAndTransitions(

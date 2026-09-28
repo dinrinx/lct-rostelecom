@@ -1,6 +1,22 @@
 {
   "openapi": "3.0.0",
   "paths": {
+    "/metrics": {
+      "get": {
+        "description": "Формат text/plain (Prometheus exposition). Без авторизации, как принято для scrape; персональных данных нет — только шаблоны маршрутов и счётчики.",
+        "operationId": "MetricsController_index",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Метрики в текстовом формате Prometheus"
+          }
+        },
+        "summary": "Метрики Prometheus: http_requests_total{method,route,status}, длительность запросов, метрики процесса",
+        "tags": [
+          "health"
+        ]
+      }
+    },
     "/catalogs/vendors": {
       "get": {
         "operationId": "CatalogsController_getVendors",
@@ -113,7 +129,47 @@
           "catalogs"
         ]
       },
+      "patch": {
+        "operationId": "CatalogsController_patchUpdateVendor",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateVendorDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Обновить вендора",
+        "tags": [
+          "catalogs"
+        ]
+      },
       "put": {
+        "deprecated": true,
         "operationId": "CatalogsController_updateVendor",
         "parameters": [
           {
@@ -258,7 +314,47 @@
       }
     },
     "/catalogs/it-directions/{id}": {
+      "patch": {
+        "operationId": "CatalogsController_patchUpdateItDirection",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateItDirectionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItDirectionDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Обновить ИТ-направление",
+        "tags": [
+          "catalogs"
+        ]
+      },
       "put": {
+        "deprecated": true,
         "operationId": "CatalogsController_updateItDirection",
         "parameters": [
           {
@@ -419,7 +515,47 @@
       }
     },
     "/catalogs/it-products/{id}": {
+      "patch": {
+        "operationId": "CatalogsController_patchUpdateItProduct",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateItProductDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItProductDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Обновить ИТ-продукт",
+        "tags": [
+          "catalogs"
+        ]
+      },
       "put": {
+        "deprecated": true,
         "operationId": "CatalogsController_updateItProduct",
         "parameters": [
           {
@@ -602,7 +738,47 @@
           "catalogs"
         ]
       },
+      "patch": {
+        "operationId": "CatalogsController_patchUpdateUniversity",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUniversityDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UniversityDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Обновить вуз",
+        "tags": [
+          "catalogs"
+        ]
+      },
       "put": {
+        "deprecated": true,
         "operationId": "CatalogsController_updateUniversity",
         "parameters": [
           {
@@ -665,7 +841,47 @@
       }
     },
     "/catalogs/universities/{id}/responsible": {
+      "patch": {
+        "operationId": "CatalogsController_patchReassignUniversityResponsible",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReassignUniversityResponsibleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UniversityDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Переназначить/снять КАМа, ответственного за вуз (kamId: null — снять). Руководитель — только в своей команде и по своим вузам",
+        "tags": [
+          "catalogs"
+        ]
+      },
       "put": {
+        "deprecated": true,
         "operationId": "CatalogsController_reassignUniversityResponsible",
         "parameters": [
           {
@@ -833,7 +1049,47 @@
           "catalogs"
         ]
       },
+      "patch": {
+        "operationId": "CatalogsController_patchUpdateResponsiblePerson",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateResponsiblePersonDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponsiblePersonDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Обновить ответственного",
+        "tags": [
+          "catalogs"
+        ]
+      },
       "put": {
+        "deprecated": true,
         "operationId": "CatalogsController_updateResponsiblePerson",
         "parameters": [
           {
@@ -1023,7 +1279,47 @@
           "catalogs"
         ]
       },
+      "patch": {
+        "operationId": "CatalogsController_patchUpdateLicense",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateLicenseDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LicenseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Обновить лицензию/договор",
+        "tags": [
+          "catalogs"
+        ]
+      },
       "put": {
+        "deprecated": true,
         "operationId": "CatalogsController_updateLicense",
         "parameters": [
           {
@@ -1306,6 +1602,58 @@
         ]
       }
     },
+    "/workflow/templates/{id}/graph": {
+      "put": {
+        "description": "Для экрана-редактора (список/форма): не набор точечных CRUD-вызовов на статус/переход, а один граф. statuses/transitions ссылаются друг на друга по полю id внутри ЭТОГО запроса (client-side ключ узла, не id в БД) — так редактору не нужно сначала создавать статусы, чтобы узнать их серверные id, а потом создавать переходы. Как и PUT /workflow/templates/{id}: НЕ мутирует текущую версию, создаёт новую (isActive=true), предыдущую помечает isActive=false; существующие InteractionInstance остаются на своей версии. migrateInstances не поддерживается — используйте PUT /workflow/templates/{id} для переноса.",
+        "operationId": "WorkflowController_updateTemplateGraph",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "b0000000-0000-4000-8000-000000000001",
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Dev-Role",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "administrator"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWorkflowGraphDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowTemplateVersionDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Заменить граф шаблона целиком (все статусы и переходы одним запросом, в одной транзакции)",
+        "tags": [
+          "workflow"
+        ]
+      }
+    },
     "/workflow/template-versions/{id}": {
       "get": {
         "operationId": "WorkflowController_getTemplateVersionById",
@@ -1461,10 +1809,111 @@
         "tags": [
           "workflow"
         ]
+      },
+      "patch": {
+        "description": "Все поля необязательны, но хотя бы одно обязательно. Статус здесь менять нельзя (400 WORKFLOW_STATUS_VIA_TRANSITION_ONLY) — только POST /workflow/instances/{id}/transition с проверкой графа переходов. Вуз — PATCH …/assignment. Ответственного меняют Руководитель (в своей команде) и Администратор; заметку и продукт — любая роль в своей зоне видимости.",
+        "operationId": "WorkflowController_updateInstance",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "b3000000-0000-4000-8000-000000000001",
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Dev-Role",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "rukovoditel"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateInteractionInstanceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InteractionInstanceDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Точечно обновить ответственного / ИТ-продукт / заметку взаимодействия (без перехода по статусам)",
+        "tags": [
+          "workflow"
+        ]
       }
     },
     "/workflow/instances/{id}/assignment": {
+      "patch": {
+        "description": "Не мутирует статус/историю — только universityId/responsibleUserId (+пересчитывает needsReview). Хотя бы одно из полей обязательно. Если передан только universityId — ответственным по умолчанию становится кАМ этого вуза (University.kamId), как и при создании инстанса вручную. Руководитель может назначать вуз/ответственного только в пределах своей команды.",
+        "operationId": "WorkflowController_patchAssignInstance",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "b3000000-0000-4000-8000-000000000001",
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Dev-Role",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "rukovoditel"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignInteractionInstanceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InteractionInstanceDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Назначить вуз и/или ответственного инстансу без них (needsReview=true из integrations/sync)",
+        "tags": [
+          "workflow"
+        ]
+      },
       "put": {
+        "deprecated": true,
         "description": "Не мутирует статус/историю — только universityId/responsibleUserId (+пересчитывает needsReview). Хотя бы одно из полей обязательно. Если передан только universityId — ответственным по умолчанию становится кАМ этого вуза (University.kamId), как и при создании инстанса вручную. Руководитель может назначать вуз/ответственного только в пределах своей команды.",
         "operationId": "WorkflowController_assignInstance",
         "parameters": [
@@ -2445,7 +2894,57 @@
       }
     },
     "/admin/users/{id}": {
+      "patch": {
+        "operationId": "AdminController_patchUpdateUser",
+        "parameters": [
+          {
+            "name": "X-Dev-Role",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "administrator"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "c0000000-0000-4000-8000-000000000001",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Изменить роль/активность/руководителя пользователя",
+        "tags": [
+          "admin"
+        ]
+      },
       "put": {
+        "deprecated": true,
         "operationId": "AdminController_updateUser",
         "parameters": [
           {
@@ -2497,6 +2996,7 @@
     },
     "/health": {
       "get": {
+        "description": "200 — все обязательные зависимости доступны; 503 — хотя бы одна недоступна (тело то же, поля db/redis/minio показывают какая).",
         "operationId": "HealthController_getHealth",
         "parameters": [],
         "responses": {
@@ -2509,9 +3009,19 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "Одна из зависимостей недоступна (status=degraded)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthDto"
+                }
+              }
+            }
           }
         },
-        "summary": "Проверка живости сервиса и соединений с Postgres/Redis",
+        "summary": "Проверка живости сервиса: по одному лёгкому пингу Postgres, Redis, MinIO (+Keycloak при AUTH_MODE=keycloak)",
         "tags": [
           "health"
         ]
@@ -2520,7 +3030,7 @@
   },
   "info": {
     "title": "CRM ИТ Школа РТК",
-    "description": "",
+    "description": "Любая ошибка API возвращается в единой форме `{ code, message, details? }` — независимо от эндпоинта (см. AllExceptionsFilter). Полный список `code`, их HTTP-статусов и рекомендаций по обработке в UI:\n\n## Коды ошибок\n\nЕдиный формат ответа на любую ошибку: `{ \"code\": string, \"message\": string, \"details\"?: any }`. `message` — человекочитаемый текст на русском для отображения \"как есть\". `details` заполнено только у `VALIDATION_ERROR` (массив `{field, errors[]}`). Коды ниже сгруппированы по областям; `uiHint` указан там, где фронту стоит обработать код отдельно, а не просто показать `message`.\n\n| code | HTTP | Значение | UI |\n| --- | --- | --- | --- |\n| **Общие** | | | |\n| `VALIDATION_ERROR` | 400 | Тело/query не прошли проверку (class-validator) или дата/число в неверном формате | details — массив {field, errors[]} (или {field: \"page\"/\"pageSize\"/\"from\"/\"to\"} для query) — подсветить конкретное поле формы, а не только показать message |\n| `BAD_REQUEST` | 400 | Некорректный запрос без более специфичного code (fallback стандартных исключений Nest) | — |\n| `UNAUTHORIZED` | 401 | Запрос не аутентифицирован (fallback) | — |\n| `FORBIDDEN` | 403 | Доступ запрещён без более специфичного code (fallback) | — |\n| `NOT_FOUND` | 404 | Запись не найдена — общий код там, где нет отдельного ENTITY_NOT_FOUND (например, каталоги при ошибке Prisma P2025) либо несуществующий путь/метод | — |\n| `CONFLICT` | 409 | Конфликт состояния без более специфичного code (fallback) | — |\n| `FK_CONSTRAINT` | 409 | Операция нарушает внешний ключ — ссылка на несуществующую запись, либо на запись ссылаются другие данные | — |\n| `UNIQUE_CONSTRAINT` | 409 | Запись с такими значениями уникального поля уже существует (Prisma P2002) | — |\n| `PAYLOAD_TOO_LARGE` | 413 | Тело запроса/файл превышает лимит (fallback) | — |\n| `INTERNAL_ERROR` | 500 | Непредвиденная ошибка сервера. Детали — только в серверном логе, не в ответе | Показать общий \"Что-то пошло не так\", детали не выводить пользователю |\n| `SERVICE_UNAVAILABLE` | 503 | Зависимость недоступна без более специфичного code (fallback) | — |\n| `HTTP_ERROR` | — | Crash-fallback для статусов без записи в CODE_BY_STATUS — в норме не должен встречаться | — |\n| **Auth** | | | |\n| `AUTH_ROLE_HEADER_MISSING` | 401 | AUTH_MODE=dev, но заголовка X-Dev-Role нет | — |\n| `AUTH_ROLE_HEADER_INVALID` | 401 | X-Dev-Role содержит значение не из kam|rukovoditel|administrator | — |\n| `AUTH_TOKEN_MISSING` | 401 | AUTH_MODE=keycloak, но заголовка Authorization: Bearer нет | — |\n| `AUTH_TOKEN_INVALID` | 401 | JWT недействителен, просрочен или выдан не для этого realm/клиента | — |\n| `AUTH_TOKEN_NO_ROLE` | 401 | В claim \"roles\" токена нет ни одной из ожидаемых ролей | — |\n| `AUTH_FORBIDDEN_ROLE` | 403 | Роль распознана, но у неё нет доступа к этому эндпоинту (не входит в @Roles) | Скрывать/дизейблить в UI действия, недоступные текущей роли, а не полагаться только на этот ответ |\n| `AUTH_USER_NOT_PROVISIONED` | 403 | Роль KAM/RUKOVODITEL распознана, но нет строки User с таким email/X-Dev-User-Id — построчный RBAC не может посчитать зону видимости | — |\n| `AUTH_USER_UNKNOWN` | 400 | GET /auth/me: не удалось определить текущего пользователя | — |\n| `CATALOG_SCOPE_FORBIDDEN` | 403 | Действие выходит за пределы зоны видимости роли (чужой вуз/КАМ не из своей команды) | — |\n| `CURRENT_USER_REQUIRED` | 400 | Действие требует currentUserId (обычно ADMINISTRATOR без X-Dev-User-Id/подходящего email) | — |\n| **Workflow · шаблоны** | | | |\n| `WORKFLOW_TEMPLATE_NOT_FOUND` | 404 | Шаблон с таким id не существует | — |\n| `WORKFLOW_TEMPLATE_VERSION_NOT_FOUND` | 404 | Версия шаблона с таким id не существует | — |\n| `WORKFLOW_TEMPLATE_EMPTY` | 409 | Активная версия шаблона не содержит ни одного статуса — создание инстанса невозможно | — |\n| `WORKFLOW_NO_ACTIVE_TEMPLATE` | 409 | Нет ни одной активной версии шаблона workflow | — |\n| `WORKFLOW_STATUSES_REQUIRED` | 400 | В теле запроса нет ни одного статуса (statuses) | — |\n| `WORKFLOW_STATUS_ORDER_DUPLICATE` | 400 | Значения order у статусов повторяются в пределах запроса | — |\n| `WORKFLOW_STATUS_DEPENDENCY_INVALID` | 400 | dependsOnOrders ссылается на order вне statuses этого запроса или на себя | — |\n| `WORKFLOW_TRANSITION_UNKNOWN_STATUS` | 400 | Переход в теле запроса ссылается на order, которого нет среди statuses | — |\n| `WORKFLOW_GRAPH_DUPLICATE_STATUS_ID` | 400 | PUT …/graph: значения id статусов повторяются в пределах запроса | — |\n| `WORKFLOW_STATUS_PHASE_REQUIRED` | 400 | PUT …/graph: у статуса нет валидной привязки к одной из 7 макростадий (phase) | — |\n| `WORKFLOW_GRAPH_TRANSITION_UNKNOWN_STATUS` | 400 | PUT …/graph: переход ссылается на id статуса, которого нет среди statuses этого запроса | — |\n| **Workflow · инстансы** | | | |\n| `WORKFLOW_INSTANCE_NOT_FOUND` | 404 | Взаимодействие с таким id не существует | — |\n| `UNIVERSITY_NOT_FOUND` | 404 | Вуз с таким id не существует (при создании/назначении инстанса) | — |\n| `INSTANCE_RESPONSIBLE_REQUIRED` | 400 | responsibleUserId не передан, а у вуза нет University.kamId по умолчанию | — |\n| `WORKFLOW_TRANSITION_NOT_ALLOWED` | 400 | Переход из текущего статуса в запрошенный не описан WorkflowTransition этой версии шаблона | Показать конкретное сообщение с названиями статусов из ответа, а не общий текст ошибки — это ожидаемый пользовательский сценарий (например, устаревшая кнопка перехода на клиенте), не баг |\n| `WORKFLOW_STATE_CONFLICT` | 409 | Статус уже изменился между чтением карточки и отправкой перехода (двойной клик/параллельный запрос — compare-and-swap не прошёл) | Перезапросить карточку инстанса и попросить пользователя повторить действие, не ретраить автоматически с теми же данными |\n| `WORKFLOW_ATTACHMENT_NOT_FOUND` | 400 | attachmentId перехода ссылается на несуществующий файл | — |\n| `WORKFLOW_ACTOR_UNKNOWN` | 400 | Не удалось определить пользователя, выполняющего переход (нет currentUserId) | — |\n| `WORKFLOW_ASSIGNMENT_EMPTY` | 400 | PATCH …/assignment без universityId и responsibleUserId — нужно хотя бы одно | — |\n| `WORKFLOW_PATCH_EMPTY` | 400 | PATCH /workflow/instances/{id} без responsibleUserId, itProductId и note — нужно хотя бы одно | — |\n| `WORKFLOW_STATUS_VIA_TRANSITION_ONLY` | 400 | PATCH /workflow/instances/{id} попытался передать currentStatusId/toStatusId/workflowTemplateVersionId — статус меняется только через POST …/transition | Признак ошибки интеграции на фронте (не пользовательский сценарий) — использовать transition-эндпоинт для смены статуса |\n| `WORKFLOW_FIELD_NOT_PATCHABLE` | 400 | PATCH /workflow/instances/{id} содержит поле, которое этим эндпоинтом не редактируется (например universityId — для него PATCH …/assignment) | — |\n| `WORKFLOW_REASSIGN_FORBIDDEN` | 403 | Ответственного пытается сменить КАМ — это может только Руководитель (в своей команде) или Администратор | — |\n| `RESPONSIBLE_MUST_BE_KAM` | 400 | responsibleUserId/kamId ссылается на пользователя не с ролью KAM | — |\n| `KAM_NOT_FOUND` | 400 | responsibleUserId/kamId ссылается на несуществующего пользователя | — |\n| **Каталоги** | | | |\n| `IT_PRODUCT_NOT_FOUND` | 404 | ИТ-продукт с таким id не существует | — |\n| `LICENSE_INVALID_PERIOD` | 400 | startDate лицензии не раньше endDate | — |\n| `RESPONSIBLE_PERSON_WITHOUT_LINK` | 400 | У ответственного лица не указаны ни universityId, ни itProductId — оно не может быть ни к чему не привязано | — |\n| **Импорт** | | | |\n| `FILE_REQUIRED` | 400 | Нужен multipart-файл в поле \"file\" | — |\n| `IMPORT_EMPTY_WORKBOOK` | 400 | В xlsx-файле нет ни одного листа | — |\n| `IMPORT_MAPPING_INVALID` | 400 | Поле mapping не JSON-строка с массивом {column, field} | — |\n| `IMPORT_COLUMN_NOT_FOUND` | 400 | Колонка из mapping не найдена среди заголовков файла | — |\n| `IMPORT_NAME_MAPPING_REQUIRED` | 400 | В mapping нет колонки для обязательного поля universityName | — |\n| `IMPORT_ACTOR_UNKNOWN` | 400 | Не удалось определить пользователя, инициирующего импорт (нет currentUserId) | — |\n| `IMPORT_PREVIEW_NOT_FOUND` | 404 | previewId не найден или истёк (превью хранится ограниченное время) | — |\n| **Интеграции** | | | |\n| `COURSE_MAPPING_ALREADY_EXISTS` | 400 | POST course-mapping на курс, для которого соответствие уже есть — нужен PATCH/PUT | — |\n| `COURSE_MAPPING_NOT_FOUND` | 404 | PATCH/PUT course-mapping на курс, для которого соответствия ещё нет — нужен POST | — |\n| **Файлы** | | | |\n| `FILE_NOT_FOUND` | 404 | Файл с таким id не существует | — |\n| `FILE_ACTOR_UNKNOWN` | 400 | Не удалось определить пользователя, загружающего файл (нет currentUserId) | — |\n| `STORAGE_UNAVAILABLE` | 503 | Хранилище файлов (MinIO/S3-совместимое) недоступно | — |\n| **Отчёты** | | | |\n| `REPORT_TYPE_INVALID` | 400 | POST /reports/jobs: type не из LICENSE_RADAR|SLA_RADAR|INTERACTIONS_EXPORT | — |\n| `REPORT_QUEUE_UNAVAILABLE` | 503 | Очередь отчётов (Redis/BullMQ) недоступна | — |\n| `REPORT_JOB_NOT_FOUND` | 404 | Задание отчёта не найдено (или уже удалено по сроку хранения) | — |\n| `REPORT_JOB_FORBIDDEN` | 403 | Задание отчёта создано другим пользователем (видит автор и Администратор) | — |\n| **Пользователи** | | | |\n| `USER_NOT_FOUND` | 404 | Пользователь с таким id не существует | — |\n| `USER_MANAGER_INVALID` | 400 | managerId ссылается на самого пользователя | — |",
     "version": "0.0.1",
     "contact": {}
   },
@@ -3724,6 +4234,117 @@
           "transitions"
         ]
       },
+      "GraphStatusInputDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "st-2",
+            "description": "Ключ узла графа в пределах этого запроса (для ссылок из transitions/dependsOnStatusIds)"
+          },
+          "name": {
+            "type": "string",
+            "example": "Согласование договора"
+          },
+          "phase": {
+            "enum": [
+              "INITIATION",
+              "NEGOTIATION",
+              "CONTRACTING",
+              "IMPLEMENTATION",
+              "ACTIVE_USE",
+              "RENEWAL",
+              "TERMINATION"
+            ],
+            "type": "string",
+            "example": "CONTRACTING",
+            "description": "Одна из 7 CLM-макростадий — обязательна для каждого статуса"
+          },
+          "order": {
+            "type": "number",
+            "example": 2,
+            "description": "Порядок на доске/в списке (не обязан совпадать с топологическим порядком графа)"
+          },
+          "slaDays": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "example": 21,
+            "description": "Норматив SLA, дней в статусе"
+          },
+          "minDays": {
+            "type": "number",
+            "minimum": 0,
+            "example": 14,
+            "description": "Минимальная длительность этапа, дней (по умолчанию 0)"
+          },
+          "isOptional": {
+            "type": "boolean",
+            "example": false,
+            "description": "Необязательный этап (по умолчанию false)"
+          },
+          "dependsOnStatusIds": {
+            "example": [
+              "st-1"
+            ],
+            "description": "id узлов ИЗ ЭТОГО ЖЕ ЗАПРОСА, после которых может начаться этап. Не указано — пусто (этап ничего не ждёт)",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "phase",
+          "order"
+        ]
+      },
+      "GraphTransitionInputDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Отправить на согласование"
+          },
+          "fromStatusId": {
+            "type": "string",
+            "example": "st-1",
+            "description": "id узла-источника из statuses этого запроса"
+          },
+          "toStatusId": {
+            "type": "string",
+            "example": "st-2",
+            "description": "id узла-назначения из statuses этого запроса"
+          }
+        },
+        "required": [
+          "fromStatusId",
+          "toStatusId"
+        ]
+      },
+      "UpdateWorkflowGraphDto": {
+        "type": "object",
+        "properties": {
+          "statuses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GraphStatusInputDto"
+            }
+          },
+          "transitions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GraphTransitionInputDto"
+            }
+          }
+        },
+        "required": [
+          "statuses",
+          "transitions"
+        ]
+      },
       "InteractionInstanceDto": {
         "type": "object",
         "properties": {
@@ -3765,6 +4386,12 @@
             "example": false,
             "description": "true — требует ручной проверки (вуз/направление не удалось определить автоматически из интеграции)"
           },
+          "note": {
+            "type": "string",
+            "nullable": true,
+            "example": "Ждём подпись ректора до конца месяца",
+            "description": "Свободная заметка к взаимодействию (PATCH /workflow/instances/{id}); не то же самое, что comment перехода в истории"
+          },
           "createdAt": {
             "type": "string",
             "example": "2026-09-01T09:00:00.000Z"
@@ -3805,6 +4432,29 @@
         "required": [
           "universityId"
         ]
+      },
+      "UpdateInteractionInstanceDto": {
+        "type": "object",
+        "properties": {
+          "responsibleUserId": {
+            "type": "string",
+            "example": "c0000000-0000-4000-8000-000000000001",
+            "description": "Новый ответственный КАМ. Только Руководитель (в своей команде) и Администратор"
+          },
+          "itProductId": {
+            "type": "string",
+            "nullable": true,
+            "example": "a3000000-0000-4000-8000-000000000001",
+            "description": "null — снять продукт"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 2000,
+            "example": "Ждём подпись ректора до конца месяца",
+            "description": "null или \"\" — очистить заметку"
+          }
+        }
       },
       "AssignInteractionInstanceDto": {
         "type": "object",

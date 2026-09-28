@@ -38,6 +38,13 @@ export class InteractionInstanceDto {
   })
   needsReview!: boolean;
 
+  @ApiPropertyOptional({
+    example: 'Ждём подпись ректора до конца месяца',
+    nullable: true,
+    description: 'Свободная заметка к взаимодействию (PATCH /workflow/instances/{id}); не то же самое, что comment перехода в истории',
+  })
+  note?: string | null;
+
   @ApiProperty({ example: '2026-09-01T09:00:00.000Z' })
   createdAt!: string;
 

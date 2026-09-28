@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Put } from '@nestjs/common';
+import { Body, Controller, Get, Param, Put, Patch } from '@nestjs/common';
 import { ApiBody, ApiHeader, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { Roles } from './decorators/roles.decorator';
 import { UpdateUserDto, UserDto, UserRoleDto } from './dto/user.dto';
@@ -22,8 +22,19 @@ export class AdminController {
     return this.authService.listUsers();
   }
 
-  @Put('users/:id')
+  @Patch('users/:id')
   @ApiOperation({ summary: 'Изменить роль/активность/руководителя пользователя' })
+  @ApiParam({ name: 'id', example: 'c0000000-0000-4000-8000-000000000001' })
+  @ApiBody({ type: UpdateUserDto })
+  @ApiOkResponse({ type: UserDto })
+  patchUpdateUser(@Param('id') id: string, @Body() dto: UpdateUserDto): Promise<UserDto> {
+    return this.authService.updateUser(id, dto);
+  }
+
+  // Оставлен для совместимости с фронтом: то же поведение, что у PATCH выше.
+  @Put('users/:id')
+  @ApiOperation({
+    deprecated: true, summary: 'Изменить роль/активность/руководителя пользователя' })
   @ApiParam({ name: 'id', example: 'c0000000-0000-4000-8000-000000000001' })
   @ApiBody({ type: UpdateUserDto })
   @ApiOkResponse({ type: UserDto })

@@ -283,6 +283,11 @@ model InteractionInstance {
   // статус-машина — тот же принцип "простые правила по датам/флагам, без ML".
   needsReview Boolean @default(false)
 
+  // Свободная заметка к взаимодействию в целом (правится через PATCH
+  // /workflow/instances/{id}). Не заменяет comment в StatusHistoryEntry —
+  // тот привязан к конкретному переходу и append-only.
+  note String?
+
   statusHistoryEntries StatusHistoryEntry[]
   fileAttachments      FileAttachment[]
 

@@ -10,13 +10,20 @@ import { HealthModule } from './health/health.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RedisModule } from './redis/redis.module';
 import { MinioModule } from './storage/minio.module';
+import { AppCacheModule } from './cache/app-cache.module';
+import { LoggerModule } from 'nestjs-pino';
+import { loggerParams } from './observability/logger.config';
+import { MetricsModule } from './observability/metrics.module';
 import { DevRoleGuard } from './auth/guards/dev-role.guard';
 
 @Module({
   imports: [
+    LoggerModule.forRoot(loggerParams),
+    MetricsModule,
     PrismaModule,
     RedisModule,
     MinioModule,
+    AppCacheModule,
     CatalogsModule,
     WorkflowModule,
     ReportsModule,
