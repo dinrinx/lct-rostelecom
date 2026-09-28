@@ -113,10 +113,21 @@ export class ReportsController {
   }
 }
 
+function parseDate(name: string, value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  if (Number.isNaN(new Date(value).getTime())) {
+    throw new BadRequestException({
+      code: 'VALIDATION_ERROR',
+      message: `Параметр "${name}" должен быть датой в формате YYYY-MM-DD (получено "${value}")`,
+    });
+  }
+  return value;
+}
+
 export function parseFilters(query: Record<string, string | undefined>): InteractionReportFilters {
   return {
-    from: query.from || undefined,
-    to: query.to || undefined,
+    from: parseDate('from', query.from),
+    to: parseDate('to', query.to),
     universityId: query.universityId || undefined,
     itDirectionId: query.itDirectionId || undefined,
     itProductId: query.itProductId || undefined,

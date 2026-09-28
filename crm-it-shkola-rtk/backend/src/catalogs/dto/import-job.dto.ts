@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export enum ImportJobStatusDto {
   PENDING = 'PENDING',
@@ -103,6 +104,8 @@ export class ImportPreviewResultDto {
 }
 
 export class CommitImportDto {
+  @IsString()
+  @IsNotEmpty()
   @ApiProperty({ example: 'h0000000-0000-4000-8000-000000000001' })
   previewId!: string;
 }

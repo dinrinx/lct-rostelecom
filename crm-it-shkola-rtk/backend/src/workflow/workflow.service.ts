@@ -487,7 +487,22 @@ export class WorkflowService {
     let historyEntry;
     try {
       historyEntry = await this.prisma.$transaction(async (tx) => {
-        const entry = await tx.statusHistoryEntry.create({
+        // Compare-and-swap: статус меняем, только если он всё ещё тот, из которого
+        // мы валидировали переход. Параллельный/двойной запрос из того же статуса
+        // ждёт блокировку строки, перечитывает условие и получает count=0 — иначе
+        // оба прошли бы проверку графа и в append-only историю попали бы дубли.
+        const swapped = await tx.interactionInstance.updateMany({
+          where: { id: instanceId, currentStatusId: instance.currentStatusId },
+          data: { currentStatusId: dto.toStatusId },
+        });
+        if (swapped.count === 0) {
+          throw new ConflictException({
+            code: 'WORKFLOW_STATE_CONFLICT',
+            message: 'Статус взаимодействия уже изменился (параллельный запрос) — обновите карточку и повторите',
+          });
+        }
+
+        return tx.statusHistoryEntry.create({
           data: {
             interactionInstanceId: instanceId,
             fromStatusId: instance.currentStatusId,
@@ -497,13 +512,6 @@ export class WorkflowService {
             changedById: actorUserId,
           },
         });
-
-        await tx.interactionInstance.update({
-          where: { id: instanceId },
-          data: { currentStatusId: dto.toStatusId },
-        });
-
-        return entry;
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {

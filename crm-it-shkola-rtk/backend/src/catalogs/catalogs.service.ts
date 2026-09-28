@@ -32,15 +32,22 @@ export interface Paginated<T> {
 
 // Пагинация одинакова для всех списков каталога: page (с 1), pageSize
 // (ограничен MAX_PAGE_SIZE, чтобы не увести один запрос в full-scan).
-function normalizePagination(page?: string, pageSize?: string) {
-  const parsedPage = Number.parseInt(page ?? '', 10);
-  const parsedPageSize = Number.parseInt(pageSize ?? '', 10);
+// Не переданный параметр -> значение по умолчанию; переданный, но не являющийся
+// положительным целым ("abc", "-1", "0", "1.5") -> 400, а не молчаливый дефолт.
+function parsePositiveInt(name: string, raw: string | undefined): number | undefined {
+  if (raw === undefined || raw === '') return undefined;
+  if (!/^[1-9]\d*$/.test(raw)) {
+    throw new BadRequestException({
+      code: 'VALIDATION_ERROR',
+      message: `Параметр "${name}" должен быть положительным целым числом (получено "${raw}")`,
+    });
+  }
+  return Number(raw);
+}
 
-  const normalizedPage = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
-  const normalizedPageSize =
-    Number.isFinite(parsedPageSize) && parsedPageSize > 0
-      ? Math.min(parsedPageSize, MAX_PAGE_SIZE)
-      : DEFAULT_PAGE_SIZE;
+function normalizePagination(page?: string, pageSize?: string) {
+  const normalizedPage = parsePositiveInt('page', page) ?? 1;
+  const normalizedPageSize = Math.min(parsePositiveInt('pageSize', pageSize) ?? DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE);
 
   return {
     skip: (normalizedPage - 1) * normalizedPageSize,

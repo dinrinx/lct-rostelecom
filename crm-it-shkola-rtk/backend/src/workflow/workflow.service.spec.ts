@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { WorkflowService } from './workflow.service';
 import type { CatalogScope } from '../catalogs/catalog-scope.interceptor';
 
@@ -10,6 +10,7 @@ function createPrismaMock() {
     interactionInstance: {
       findUnique: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
       findUniqueOrThrow: jest.fn(),
     },
     workflowTransition: {
@@ -103,7 +104,7 @@ describe('WorkflowService.transition', () => {
       }),
     );
     prisma.statusHistoryEntry.create.mockResolvedValue({ id: 'history-1' });
-    prisma.interactionInstance.update.mockResolvedValue(undefined);
+    prisma.interactionInstance.updateMany.mockResolvedValue({ count: 1 });
     prisma.interactionInstance.findUniqueOrThrow.mockResolvedValue({
       id: INSTANCE_ID,
       universityId: 'uni-1',
@@ -132,6 +133,37 @@ describe('WorkflowService.transition', () => {
         changedById: ACTOR_USER_ID,
       }),
     });
+  });
+
+  // Регресс на гонку: двойной клик/параллельные запросы из одного статуса. Второй
+  // запрос проходит проверку графа (читал устаревший currentStatusId), но
+  // compare-and-swap в транзакции не находит строку -> 409 и НЕТ записи в историю.
+  it('отклоняет параллельный переход, если статус уже изменился (409, история не дублируется)', async () => {
+    const prisma = createPrismaMock();
+    const targetStatusId = 'status-contracting';
+
+    prisma.interactionInstance.findUnique.mockResolvedValue({
+      id: INSTANCE_ID,
+      workflowTemplateVersionId: VERSION_ID,
+      currentStatusId: CURRENT_STATUS_ID,
+      university: { kamId: 'kam-1' },
+    });
+    prisma.workflowTransition.findFirst.mockResolvedValue({ id: 'transition-1' });
+    prisma.$transaction.mockImplementation(async (cb: any) =>
+      cb({ statusHistoryEntry: prisma.statusHistoryEntry, interactionInstance: prisma.interactionInstance }),
+    );
+    prisma.interactionInstance.updateMany.mockResolvedValue({ count: 0 });
+
+    const service = new WorkflowService(prisma as any);
+    await expect(
+      service.transition(INSTANCE_ID, { toStatusId: targetStatusId }, ACTOR_USER_ID, UNRESTRICTED_SCOPE),
+    ).rejects.toBeInstanceOf(ConflictException);
+
+    expect(prisma.interactionInstance.updateMany).toHaveBeenCalledWith({
+      where: { id: INSTANCE_ID, currentStatusId: CURRENT_STATUS_ID },
+      data: { currentStatusId: targetStatusId },
+    });
+    expect(prisma.statusHistoryEntry.create).not.toHaveBeenCalled();
   });
 
   // Проверка видимости — на уровне сервиса, не только в контроллере: даже если

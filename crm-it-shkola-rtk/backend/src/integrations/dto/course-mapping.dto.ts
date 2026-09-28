@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export enum CourseMappingStatusDto {
   MAPPED = 'MAPPED',
@@ -28,9 +29,13 @@ export class CourseMappingDto {
 }
 
 export class UpsertCourseMappingDto {
+  @IsString()
+  @IsNotEmpty()
   @ApiProperty({ example: 'Базис Dynamix: администрирование СУБД' })
   course!: string;
 
+  @IsString()
+  @IsNotEmpty()
   @ApiProperty({ example: 'a3000000-0000-4000-8000-000000000001' })
   itProductId!: string;
 }

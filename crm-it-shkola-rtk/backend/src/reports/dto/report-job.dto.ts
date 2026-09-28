@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsBoolean, IsDateString, IsEnum, IsIn, IsOptional, IsString } from 'class-validator';
 
 export enum ReportTypeDto {
   LICENSE_RADAR = 'LICENSE_RADAR',
@@ -18,9 +19,12 @@ export enum ReportJobStatusDto {
 // Фильтры — те же, что у GET /reports/interactions; для радаров игнорируются
 // (радары всегда считаются по всей зоне видимости роли).
 export class CreateReportJobDto {
+  @IsEnum(ReportTypeDto)
   @ApiProperty({ enum: ReportTypeDto, example: ReportTypeDto.INTERACTIONS_EXPORT })
   type!: ReportTypeDto;
 
+  @IsOptional()
+  @IsIn(['xls', 'xlsx', 'pdf'])
   @ApiPropertyOptional({
     enum: ['xls', 'xlsx', 'pdf'],
     example: 'xlsx',
@@ -28,17 +32,36 @@ export class CreateReportJobDto {
   })
   format?: 'xls' | 'xlsx' | 'pdf';
 
+  @IsOptional()
+  @IsDateString()
   @ApiPropertyOptional({ example: '2026-09-01' })
   from?: string;
 
+  @IsOptional()
+  @IsDateString()
   @ApiPropertyOptional({ example: '2026-09-30' })
   to?: string;
 
-  @ApiPropertyOptional() universityId?: string;
-  @ApiPropertyOptional() itDirectionId?: string;
-  @ApiPropertyOptional() itProductId?: string;
-  @ApiPropertyOptional() responsibleUserId?: string;
-  @ApiPropertyOptional({ type: Boolean }) onlyOverdue?: boolean;
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional()
+  universityId?: string;
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional()
+  itDirectionId?: string;
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional()
+  itProductId?: string;
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional()
+  responsibleUserId?: string;
+  @IsOptional()
+  @IsBoolean()
+  @ApiPropertyOptional({ type: Boolean })
+  onlyOverdue?: boolean;
 }
 
 export class ReportJobDto {

@@ -1,21 +1,32 @@
 import { ApiProperty, ApiPropertyOptional, OmitType, PartialType } from '@nestjs/swagger';
+import { IsNotEmpty, IsOptional, IsString, ValidateIf } from 'class-validator';
 
 export class UniversityDto {
   @ApiProperty({ example: 'a3f0c2f0-2222-4a11-9a11-000000000010' })
   id!: string;
 
+  @IsString()
+  @IsNotEmpty()
   @ApiProperty({ example: 'СПбГУ (демо)' })
   name!: string;
 
+  @IsOptional()
+  @IsString()
   @ApiPropertyOptional({ example: null, nullable: true })
   inn?: string | null;
 
+  @IsOptional()
+  @IsString()
   @ApiPropertyOptional({ example: 'демо-регион' })
   region?: string | null;
 
+  @IsOptional()
+  @IsString()
   @ApiPropertyOptional({ example: null, nullable: true })
   website?: string | null;
 
+  @IsOptional()
+  @IsString()
   @ApiPropertyOptional({ example: 'a3f0c2f0-7777-4a11-9a11-000000000060', nullable: true })
   kamId?: string | null;
 }
@@ -33,5 +44,7 @@ export class ReassignUniversityResponsibleDto {
     description: 'Новый КАМ, ответственный за вуз; null — снять ответственного',
     nullable: true,
   })
+  @ValidateIf((_dto, value) => value !== null)
+  @IsString()
   kamId!: string | null;
 }

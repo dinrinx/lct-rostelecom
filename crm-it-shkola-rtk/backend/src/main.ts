@@ -2,6 +2,8 @@ import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { AllExceptionsFilter } from './common/all-exceptions.filter';
+import { createValidationPipe } from './common/validation';
 
 // Дефолт — те же dev-порты, что уже прописаны как redirectUris в
 // infra/keycloak/realm-export.json (5173 vite, 4200 angular, 3000, 8081) —
@@ -30,6 +32,8 @@ function resolveCorsOrigins(): string[] {
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.useGlobalFilters(new AllExceptionsFilter());
+  app.useGlobalPipes(createValidationPipe());
 
   // Без этого браузер блокирует все fetch() фронта к бэкенду на другом origin —
   // preflight (OPTIONS) на X-Dev-Role/Authorization иначе даже не отвечает.

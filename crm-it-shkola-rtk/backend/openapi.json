@@ -3034,6 +3034,7 @@
           "seats": {
             "type": "number",
             "nullable": true,
+            "minimum": 0,
             "example": 50
           },
           "startDate": {
@@ -3092,6 +3093,7 @@
           "seats": {
             "type": "number",
             "nullable": true,
+            "minimum": 0,
             "example": 50
           },
           "startDate": {
@@ -3139,6 +3141,7 @@
           "seats": {
             "type": "number",
             "nullable": true,
+            "minimum": 0,
             "example": 50
           },
           "startDate": {
@@ -3597,11 +3600,13 @@
           "slaDays": {
             "type": "number",
             "nullable": true,
+            "minimum": 0,
             "example": 21,
             "description": "Норматив SLA, дней в статусе"
           },
           "minDays": {
             "type": "number",
+            "minimum": 0,
             "example": 14,
             "description": "Минимальная длительность этапа, дней (по умолчанию 0)"
           },

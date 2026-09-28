@@ -476,6 +476,8 @@ async function resetSeedManagedTables() {
   await prisma.statusHistoryEntry.deleteMany();
   await prisma.fileAttachment.deleteMany();
   await prisma.interactionInstance.deleteMany();
+  await prisma.integrationSyncRun.deleteMany();
+  await prisma.courseMapping.deleteMany();
   await prisma.workflowTransition.deleteMany();
   await prisma.workflowStatus.deleteMany();
   await prisma.workflowTemplateVersion.deleteMany();

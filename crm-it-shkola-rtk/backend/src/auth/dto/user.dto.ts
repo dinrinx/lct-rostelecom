@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsBoolean, IsEnum, IsOptional, IsString } from 'class-validator';
 
 export enum UserRoleDto {
   KAM = 'KAM',
@@ -27,12 +28,18 @@ export class UserDto {
 }
 
 export class UpdateUserDto {
+  @IsOptional()
+  @IsEnum(UserRoleDto)
   @ApiPropertyOptional({ enum: UserRoleDto, example: UserRoleDto.RUKOVODITEL })
   role?: UserRoleDto;
 
+  @IsOptional()
+  @IsBoolean()
   @ApiPropertyOptional({ example: false })
   isActive?: boolean;
 
+  @IsOptional()
+  @IsString()
   @ApiPropertyOptional({ example: 'c0000000-0000-4000-8000-000000000002', nullable: true })
   managerId?: string | null;
 }

@@ -1,27 +1,42 @@
 import { ApiProperty, ApiPropertyOptional, OmitType, PartialType } from '@nestjs/swagger';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class ResponsiblePersonDto {
   @ApiProperty({ example: 'a3f0c2f0-1111-4a11-9a11-000000000001' })
   id!: string;
 
+  @IsString()
+  @IsNotEmpty()
   @ApiProperty({ example: 'Иванов Иван Иванович' })
   fullName!: string;
 
+  @IsOptional()
+  @IsString()
   @ApiPropertyOptional({ example: 'Менеджер по работе с партнёрами' })
   position?: string | null;
 
+  @IsOptional()
+  @IsString()
   @ApiPropertyOptional({ example: 'ivanov.ii@example.ru' })
   email?: string | null;
 
+  @IsOptional()
+  @IsString()
   @ApiPropertyOptional({ example: '+7 (900) 111-22-33' })
   phone?: string | null;
 
+  @IsOptional()
+  @IsString()
   @ApiPropertyOptional({ example: 'Почта, Чат в ТГ' })
   contactMethod?: string | null;
 
+  @IsOptional()
+  @IsString()
   @ApiPropertyOptional({ example: 'a3f0c2f0-2222-4a11-9a11-000000000010' })
   universityId?: string | null;
 
+  @IsOptional()
+  @IsString()
   @ApiPropertyOptional({ example: 'a3f0c2f0-3333-4a11-9a11-000000000020' })
   itProductId?: string | null;
 }
