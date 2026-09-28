@@ -1,7 +1,8 @@
-import { Controller, Get, Req, UseInterceptors } from '@nestjs/common';
-import { ApiHeader, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Query, Req, UseInterceptors } from '@nestjs/common';
+import { ApiHeader, ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { LicenseRadarResultDto } from './dto/license-radar.dto';
 import { SlaRadarResultDto } from './dto/sla-radar.dto';
+import { HealthScoreItemDto } from './dto/health-score.dto';
 import { ReportsService } from './reports.service';
 import { ANY_ROLE } from './reports.controller';
 import { CatalogScopeInterceptor, RequestWithCatalogScope } from '../catalogs/catalog-scope.interceptor';
@@ -9,6 +10,7 @@ import { ReadCacheInterceptor } from '../cache/read-cache.interceptor';
 import { Cacheable } from '../cache/cacheable.decorator';
 import { DASHBOARD_TTL_MS } from '../cache/cache-ttl';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { parsePositiveInt } from '../common/positive-int';
 
 // Killer-фича: радар лицензий и SLA. Отдельный префикс /dashboard, но живёт
 // в модуле reports — считается по тем же данным (License, StatusHistoryEntry)
@@ -34,5 +36,21 @@ export class DashboardController {
   @ApiOkResponse({ type: SlaRadarResultDto })
   getSlaRadar(@Req() request: RequestWithCatalogScope): Promise<SlaRadarResultDto> {
     return this.reportsService.getSlaRadar(request.catalogScope!);
+  }
+
+  @Get('health-score')
+  @ApiOperation({
+    summary: 'Рейтинг здоровья вузов, видимых роли (лицензия/SLA/активность/needsReview) — худшие первые',
+    description:
+      'Считает HealthScoreService.calculateHealthScore по агрегатам, переиспользуя запросы license-radar/sla-radar ' +
+      '(без дублирования их логики выборки/RBAC). Сортировка — по score по возрастанию (0 — максимальный риск).',
+  })
+  @ApiQuery({ name: 'limit', required: false, example: 5, description: 'Топ-N худших; не передано — все вузы в зоне видимости' })
+  @ApiOkResponse({ type: HealthScoreItemDto, isArray: true })
+  getHealthScore(
+    @Req() request: RequestWithCatalogScope,
+    @Query('limit') limit?: string,
+  ): Promise<HealthScoreItemDto[]> {
+    return this.reportsService.getHealthScore(request.catalogScope!, parsePositiveInt('limit', limit));
   }
 }

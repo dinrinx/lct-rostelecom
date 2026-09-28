@@ -123,6 +123,28 @@
       </div>
     </section>
 
+    <section style="display:flex;flex-direction:column;gap:16px;padding:{{ cardPad }};border-radius:16px;box-shadow:inset 0 0 0 1px var(--color-border-muted)">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
+        <h2 style="margin:0;font-weight:700;font-size:22px;line-height:1.2">Вузы, требующие внимания</h2>
+        <span title="Health-score: лицензии, просрочка SLA, застой активности и неразобранные заявки" style="font-size:14px;line-height:20px;color:var(--color-fg-muted);cursor:help">Топ-5 по риску ⓘ</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:2px;background:#fff;border-radius:12px;padding:4px">
+        <sc-for list="{{ health }}" as="h" hint-placeholder-count="5">
+          <button onClick="{{ h.go }}" style="display:flex;flex-direction:column;gap:6px;padding:12px;border:none;border-radius:8px;background:transparent;text-align:left;cursor:pointer;color:var(--color-fg-default)" style-hover="background:var(--color-bg-surface2)">
+            <span style="display:flex;justify-content:space-between;gap:12px;width:100%">
+              <span style="font-size:16px;line-height:24px;font-weight:500">{{ h.vuzName }}</span>
+              <span style="font-size:16px;line-height:24px;font-weight:700;color:{{ h.fg }};white-space:nowrap">{{ h.score }}</span>
+            </span>
+            <span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span style="display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:999px;background:var(--color-bg-surface3);color:var(--color-fg-default);font-size:14px;line-height:20px"><span style="width:8px;height:8px;border-radius:999px;background:{{ h.color }}"></span>{{ h.label }}</span>
+              <span style="font-size:14px;line-height:20px;color:var(--color-fg-soft)">{{ h.reasonsText }}</span>
+            </span>
+          </button>
+        </sc-for>
+      </div>
+      <sc-if value="{{ healthEmpty }}"><div style="padding:16px 12px;font-size:14px;line-height:20px;color:var(--color-fg-muted)">Нет вузов в зоне видимости для расчёта</div></sc-if>
+    </section>
+
     <sc-if value="{{ isRuk }}">
       <section style="display:flex;flex-direction:column;gap:16px;padding:{{ cardPad }};border-radius:16px;box-shadow:inset 0 0 0 1px var(--color-border-muted)">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
@@ -146,7 +168,7 @@
 <script type="text/x-dc" data-dc-script data-props="{&quot;role&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;kam&quot;,&quot;rukovoditel&quot;],&quot;default&quot;:&quot;kam&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;isMobile&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;demoState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;auto&quot;,&quot;loading&quot;,&quot;empty&quot;,&quot;error&quot;],&quot;default&quot;:&quot;auto&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;refreshKey&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;number&quot;},&quot;onOpen&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(id:string)=&gt;void&quot;},&quot;onNavigate&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(screen:string,preset?:object)=&gt;void&quot;},&quot;onToast&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(t:object)=&gt;void&quot;}}">
 const waitCRM = () => new Promise((r) => { const t = () => (window.CRM ? r(window.CRM) : setTimeout(t, 30)); t(); });
 class Component extends DCLogic {
-  state = { status: 'loading', lic: [], sla: [], rows: [], bucket: null, error: null };
+  state = { status: 'loading', lic: [], sla: [], rows: [], health: [], bucket: null, error: null };
   componentDidMount() { this.load(); }
   componentDidUpdate(pp) { if (pp.refreshKey !== this.props.refreshKey || pp.demoState !== this.props.demoState || pp.role !== this.props.role) this.load(); }
   async load() {
@@ -157,10 +179,10 @@ class Component extends DCLogic {
     if (forced === 'error') { await new Promise((r) => setTimeout(r, 300)); return this.setState({ status: 'error', error: { code: 'REPORTS_RADAR_UNAVAILABLE', message: 'Сервис отчётов не ответил за 1 секунду' } }); }
     if (forced === 'empty') { await new Promise((r) => setTimeout(r, 300)); return this.setState({ status: 'empty' }); }
     try {
-      const [lic, sla, rows] = await Promise.all([CRM.api.licenseRadar(), CRM.api.slaRadar(), CRM.api.interactions({})]);
+      const [lic, sla, rows, health] = await Promise.all([CRM.api.licenseRadar(), CRM.api.slaRadar(), CRM.api.interactions({}), CRM.api.healthScore(5)]);
       const status = !rows.length && !lic.items.length ? 'empty' : 'ready';
       const first = CRM.BUCKETS.find((b) => lic.items.some((i) => i.bucket === b.key));
-      this.setState({ status, lic: lic.items, sla: sla.items.sort((a, b) => b.daysInStatus / b.slaThresholdDays - a.daysInStatus / a.slaThresholdDays), rows, bucket: this.state.bucket || (first ? first.key : 'OVERDUE') });
+      this.setState({ status, lic: lic.items, sla: sla.items.sort((a, b) => b.daysInStatus / b.slaThresholdDays - a.daysInStatus / a.slaThresholdDays), rows, health, bucket: this.state.bucket || (first ? first.key : 'OVERDUE') });
     } catch (e) { this.setState({ status: 'error', error: { code: e.code, message: e.message } }); }
   }
   renderVals() {
@@ -171,7 +193,7 @@ class Component extends DCLogic {
       emptyTitle: isRuk ? 'У команды пока нет назначенных вузов' : 'За вами пока не закреплены вузы',
       emptyText: isRuk ? 'Назначьте КАМ на вузы в разделе «Ответственные» — радар начнёт считать лицензии и SLA автоматически.' : 'Когда руководитель назначит вам вузы, здесь появятся лицензии со сроками и взаимодействия, требующие внимания.',
       isRuk };
-    if (!CRM || s.status !== 'ready') return { ...base, buckets: [], licRows: [], slaRows: [], phases: [], ranking: [] };
+    if (!CRM || s.status !== 'ready') return { ...base, buckets: [], licRows: [], slaRows: [], phases: [], ranking: [], health: [] };
     const buckets = CRM.BUCKETS.map((b) => { const count = s.lic.filter((i) => i.bucket === b.key).length; const sel = s.bucket === b.key; return { ...b, count, selected: sel, ring: sel ? 'inset 0 0 0 2px ' + b.color : 'none', numColor: count ? b.fg : 'var(--color-fg-disabled)', select: () => this.setState({ bucket: b.key }) }; });
     const licRows = s.lic.filter((i) => i.bucket === s.bucket).sort((a, b) => a.endDate.localeCompare(b.endDate)).map((l) => {
       const d = CRM.daysLeft(l.endDate); const bk = CRM.BUCKETS.find((b) => b.key === l.bucket);
@@ -182,8 +204,10 @@ class Component extends DCLogic {
     const by = {}; s.sla.forEach((r) => { by[r.responsibleUserName] = (by[r.responsibleUserName] || 0) + 1; });
     const max = Math.max(1, ...Object.values(by));
     const ranking = Object.entries(by).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([name, count]) => ({ name, count, pct: Math.round((count / max) * 100) + '%' }));
+    const health = s.health.map((h) => { const lv = CRM.HEALTH_LEVELS[h.level]; return { ...h, ...lv, reasonsText: h.reasons.length ? h.reasons.join(', ') : 'Рисков не выявлено', go: () => nav('registry', { universityId: h.vuzId }) }; });
     return { ...base, buckets, licRows, licNone: !licRows.length, licTotal: s.lic.length, slaRows, slaNone: !s.sla.length, slaCount: s.sla.length,
       slaWord: CRM.plural(s.sla.length, 'взаимодействие', 'взаимодействия', 'взаимодействий') + ' требуют действия', phases, totalInteractions: s.rows.length, ranking,
+      health, healthEmpty: !health.length,
       goOverdue: () => nav('registry', { onlyOverdue: true }), goTeam: () => nav('team') };
   }
 }

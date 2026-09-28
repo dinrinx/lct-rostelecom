@@ -11,6 +11,8 @@ import { InteractionReportItemDto, InteractionsReportExportDto } from './dto/int
 import { ChartsResponseDto } from './dto/charts.dto';
 import { LicenseRadarBucketDto, LicenseRadarResultDto } from './dto/license-radar.dto';
 import { SlaRadarResultDto } from './dto/sla-radar.dto';
+import { HealthScoreItemDto, HealthScoreLevelDto } from './dto/health-score.dto';
+import { HealthScoreService } from './health-score/health-score.service';
 import { renderInteractionsPdf } from './report-export';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -91,6 +93,7 @@ export class ReportsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly minio: MinioService,
+    private readonly healthScore: HealthScoreService,
   ) {}
 
   // Денормализованный реестр. daysInCurrentStatus считается от последней записи
@@ -269,16 +272,25 @@ export class ReportsService {
     });
   }
 
-  async getLicenseRadar(scope: CatalogScope): Promise<LicenseRadarResultDto> {
-    const now = Date.now();
-    const licenses = await this.prisma.license.findMany({
+  // Общий запрос лицензий в зоне видимости роли — переиспользуется getLicenseRadar
+  // (окно 60 дней) и getHealthScore (без окна: нужна ближайшая лицензия вуза
+  // независимо от горизонта радара, иначе уже подкрученный healthScoreConfig
+  // с yellowDays > 60 молча не сработал бы). Сортировка по endDate asc общая —
+  // и радару, и health-score нужны сначала самые срочные/просроченные.
+  private licensesInScope(scope: CatalogScope, extraWhere: Prisma.LicenseWhereInput = {}) {
+    return this.prisma.license.findMany({
       where: {
         ...(scope.visibleKamIds === null ? {} : { university: universityWhereForScope(scope) }),
-        endDate: { lte: new Date(now + LICENSE_RADAR_HORIZON_DAYS * DAY_MS) },
+        ...extraWhere,
       },
       orderBy: { endDate: 'asc' },
       include: { university: { select: { name: true } }, itProduct: { select: { name: true } } },
     });
+  }
+
+  async getLicenseRadar(scope: CatalogScope): Promise<LicenseRadarResultDto> {
+    const now = Date.now();
+    const licenses = await this.licensesInScope(scope, { endDate: { lte: new Date(now + LICENSE_RADAR_HORIZON_DAYS * DAY_MS) } });
 
     return {
       jobId: randomUUID(),
@@ -294,6 +306,89 @@ export class ReportsService {
         bucket: licenseBucket(license.endDate, now)!,
       })),
     };
+  }
+
+  // Переиспользует запросы license-radar (licensesInScope — без 60-дневного окна:
+  // health-score должна видеть реальные дни до истечения независимо от
+  // горизонта радара) и sla-radar (listInteractions + карта slaDays по статусу),
+  // не дублируя их логику построения RBAC-зоны видимости. На каждый вуз
+  // агрегируем: ближайшую по сроку лицензию, "худшее" по просрочке SLA
+  // взаимодействие (максимальный daysInCurrentStatus/slaThresholdDays),
+  // минимальный daysInCurrentStatus по всем инстансам вуза как proxy для
+  // "дней с последней активности" (в нашей схеме это одно и то же — see
+  // StatusHistoryEntry, она пишется только на переходах) и число needsReview.
+  // Инстансы без вуза (needsReview из sync, universityId=null) не относятся
+  // ни к какому конкретному вузу — не участвуют в его агрегатах.
+  async getHealthScore(scope: CatalogScope, limit?: number): Promise<HealthScoreItemDto[]> {
+    const [universities, licenses, instances] = await Promise.all([
+      this.prisma.university.findMany({
+        where: scope.visibleKamIds === null ? {} : universityWhereForScope(scope),
+        select: { id: true, name: true },
+      }),
+      this.licensesInScope(scope),
+      this.listInteractions(scope, {}),
+    ]);
+
+    const now = Date.now();
+    const nearestLicenseDaysByUniversity = new Map<string, number>();
+    for (const license of licenses) {
+      // licensesInScope отсортирован по endDate asc — первая встреченная запись
+      // на universityId и есть самая срочная (или самая просроченная) лицензия.
+      if (!nearestLicenseDaysByUniversity.has(license.universityId)) {
+        nearestLicenseDaysByUniversity.set(license.universityId, Math.floor((license.endDate.getTime() - now) / DAY_MS));
+      }
+    }
+
+    const thresholds = await this.prisma.workflowStatus.findMany({
+      where: { id: { in: [...new Set(instances.map((row) => row.currentStatusId))] } },
+      select: { id: true, slaDays: true },
+    });
+    const slaByStatus = new Map(thresholds.map((status) => [status.id, status.slaDays]));
+
+    const worstByUniversity = new Map<string, { daysInCurrentStatus: number; slaThresholdDays: number | null }>();
+    const minDaysSinceActivityByUniversity = new Map<string, number>();
+    const needsReviewCountByUniversity = new Map<string, number>();
+
+    for (const row of instances) {
+      if (!row.universityId) continue;
+      const slaThresholdDays = slaByStatus.get(row.currentStatusId) ?? null;
+      const ratio = slaThresholdDays !== null && slaThresholdDays > 0 ? row.daysInCurrentStatus / slaThresholdDays : 0;
+      const worst = worstByUniversity.get(row.universityId);
+      const worstRatio =
+        worst && worst.slaThresholdDays !== null && worst.slaThresholdDays > 0
+          ? worst.daysInCurrentStatus / worst.slaThresholdDays
+          : 0;
+      if (!worst || ratio > worstRatio) {
+        worstByUniversity.set(row.universityId, { daysInCurrentStatus: row.daysInCurrentStatus, slaThresholdDays });
+      }
+
+      const previousMin = minDaysSinceActivityByUniversity.get(row.universityId);
+      minDaysSinceActivityByUniversity.set(
+        row.universityId,
+        previousMin === undefined ? row.daysInCurrentStatus : Math.min(previousMin, row.daysInCurrentStatus),
+      );
+
+      if (row.needsReview) {
+        needsReviewCountByUniversity.set(row.universityId, (needsReviewCountByUniversity.get(row.universityId) ?? 0) + 1);
+      }
+    }
+
+    const items = universities.map((university): HealthScoreItemDto => {
+      const worst = worstByUniversity.get(university.id);
+      const { score, level, reasons } = this.healthScore.calculateHealthScore({
+        licenseDaysUntilExpiry: nearestLicenseDaysByUniversity.get(university.id) ?? null,
+        daysInCurrentStatusWithoutChange: worst?.daysInCurrentStatus ?? 0,
+        slaThresholdDays: worst?.slaThresholdDays ?? null,
+        daysSinceLastActivity: minDaysSinceActivityByUniversity.get(university.id) ?? null,
+        needsReviewCount: needsReviewCountByUniversity.get(university.id) ?? 0,
+      });
+      return { vuzId: university.id, vuzName: university.name, score, level: level as HealthScoreLevelDto, reasons };
+    });
+
+    // Худшие — первые (score по возрастанию); при равном score — стабильно по имени,
+    // чтобы порядок в топ-N не прыгал между запросами без реальных изменений данных.
+    items.sort((a, b) => a.score - b.score || a.vuzName.localeCompare(b.vuzName, 'ru'));
+    return limit !== undefined ? items.slice(0, limit) : items;
   }
 
   async getSlaRadar(scope: CatalogScope): Promise<SlaRadarResultDto> {

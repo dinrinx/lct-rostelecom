@@ -32,6 +32,11 @@
     { key: 'DUE_IN_30_DAYS', label: 'До 30 дней', short: '≤ 30 дней', color: 'var(--color-warning)', fg: 'var(--color-warning-strong)' },
     { key: 'DUE_IN_60_DAYS', label: 'До 60 дней', short: '≤ 60 дней', color: 'var(--color-neutral-muted)', fg: 'var(--color-fg-soft)' },
   ];
+  const HEALTH_LEVELS = {
+    red: { label: 'Требует внимания', color: 'var(--color-error)', fg: 'var(--color-error-strong)', bg: 'var(--color-error-muted)' },
+    yellow: { label: 'Есть риски', color: 'var(--color-warning)', fg: 'var(--color-warning-strong)', bg: 'var(--color-warning-muted)' },
+    green: { label: 'Всё в порядке', color: 'var(--color-success)', fg: 'var(--color-success-strong)', bg: 'var(--color-success-muted)' },
+  };
   const ROLES = {
     kam: { dto: 'KAM', label: 'КАМ', scope: 'Мои вузы' },
     rukovoditel: { dto: 'RUKOVODITEL', label: 'Руководитель', scope: 'Команда' },
@@ -180,6 +185,47 @@
   function fxSlaRadar(role) {
     return { generatedAt: new Date().toISOString(), items: INTERACTIONS.filter(scope(role)).filter((x) => x.isOverdue).map((x) => ({ interactionInstanceId: x.interactionInstanceId, universityId: x.universityId, universityName: x.universityName, currentStatusId: x.currentStatusId, currentStatusName: x.currentStatusName, phase: x.currentPhase, responsibleUserId: x.responsibleUserId, responsibleUserName: x.responsibleUserName, statusSince: ago(x.daysInCurrentStatus, 14), daysInStatus: x.daysInCurrentStatus, slaThresholdDays: SLA[x.currentStatusId] })) };
   }
+  // Фолбэк для GET /dashboard/health-score — та же формула, что и в
+  // backend/src/reports/health-score/health-score.service.ts (значения по
+  // умолчанию из healthScoreConfig), чтобы демо-режим не расходился с бэком.
+  const HEALTH_CFG = { licenseRed: 7, licenseYellow: 30, slaRedRatio: 2, staleDays: 30 };
+  function fxHealthLevel(licenseDays, daysInStatus, slaThreshold, staleDays, needsReviewCount) {
+    let score = 100; const reasons = [];
+    let licenseLevel = 'green';
+    if (licenseDays != null) {
+      if (licenseDays < HEALTH_CFG.licenseRed) { licenseLevel = 'red'; score -= 40; reasons.push(licenseDays < 0 ? 'Лицензия истекла ' + -licenseDays + ' дн. назад' : 'Лицензия истекает через ' + licenseDays + ' дн.'); }
+      else if (licenseDays < HEALTH_CFG.licenseYellow) { licenseLevel = 'yellow'; score -= 15; reasons.push('Лицензия истекает через ' + licenseDays + ' дн.'); }
+    }
+    let slaLevel = 'green';
+    if (slaThreshold && daysInStatus > slaThreshold) {
+      const over = daysInStatus - slaThreshold, ratio = daysInStatus / slaThreshold;
+      if (ratio > HEALTH_CFG.slaRedRatio) { slaLevel = 'red'; score -= 35; reasons.push('Критическая просрочка SLA: ' + over + ' дн. сверх норматива ' + slaThreshold + ' дн.'); }
+      else { slaLevel = 'yellow'; score -= 15; reasons.push('Просрочка SLA: ' + over + ' дн. сверх норматива ' + slaThreshold + ' дн.'); }
+    }
+    if (staleDays != null && staleDays >= HEALTH_CFG.staleDays) { score -= 15; reasons.push('Нет активности по вузу ' + staleDays + ' дн.'); }
+    if (needsReviewCount > 0) { score -= Math.min(needsReviewCount * 8, 24); reasons.push(needsReviewCount + ' ' + (needsReviewCount === 1 ? 'взаимодействие требует' : 'взаимодействий требуют') + ' проверки (needsReview)'); }
+    const level = licenseLevel === 'red' || slaLevel === 'red' ? 'red' : licenseLevel === 'yellow' || slaLevel === 'yellow' ? 'yellow' : 'green';
+    return { score: Math.max(0, Math.min(100, Math.round(score))), level, reasons };
+  }
+  function fxHealthScore(role, limit) {
+    const unis = UNIVERSITIES.filter(uniScope(role));
+    const items = unis.map((u) => {
+      const lics = LICENSES.filter((l) => l.universityId === u.id);
+      const licenseDays = lics.length ? Math.min(...lics.map((l) => Math.ceil((new Date(l.endDate) - NOW) / DAY))) : null;
+      const rows = INTERACTIONS.filter((x) => x.universityId === u.id);
+      let worst = null, staleDays = null;
+      rows.forEach((x) => {
+        const threshold = SLA[x.currentStatusId] || 0;
+        const ratio = threshold ? x.daysInCurrentStatus / threshold : 0;
+        if (!worst || ratio > worst.ratio) worst = { daysInStatus: x.daysInCurrentStatus, threshold, ratio };
+        staleDays = staleDays == null ? x.daysInCurrentStatus : Math.min(staleDays, x.daysInCurrentStatus);
+      });
+      const { score, level, reasons } = fxHealthLevel(licenseDays, worst ? worst.daysInStatus : 0, worst ? worst.threshold : null, staleDays, 0);
+      return { vuzId: u.id, vuzName: u.name, score, level, reasons };
+    });
+    items.sort((a, b) => a.score - b.score || a.vuzName.localeCompare(b.vuzName, 'ru'));
+    return limit ? items.slice(0, limit) : items;
+  }
   function fxCharts(role, q) {
     const r = fxInteractions(role, q);
     const by = (f) => { const m = {}; r.forEach((x) => { const k = f(x); m[k] = (m[k] || 0) + 1; }); return m; };
@@ -244,6 +290,7 @@
     interactions: (q) => call('GET', '/reports/interactions', { query: q, fallback: () => fxInteractions(cfg.role, q) }),
     licenseRadar: () => call('GET', '/dashboard/license-radar', { fallback: () => fxLicenseRadar(cfg.role) }),
     slaRadar: () => call('GET', '/dashboard/sla-radar', { fallback: () => fxSlaRadar(cfg.role) }),
+    healthScore: (limit) => call('GET', '/dashboard/health-score', { query: limit ? { limit } : undefined, fallback: () => fxHealthScore(cfg.role, limit) }),
     interaction: (iid) => call('GET', '/workflow/instances/' + iid, { fallback: () => { const x = INTERACTIONS.find((i) => i.interactionInstanceId === iid); return { id: iid, universityId: x.universityId, itProductId: x.itProductId, workflowTemplateVersionId: VERSION_ID, currentStatusId: x.currentStatusId, responsibleUserId: x.responsibleUserId, createdAt: x.createdAt, updatedAt: x.updatedAt }; } }),
     history: (iid) => call('GET', '/workflow/instances/' + iid + '/history', { fallback: () => HISTORY[iid] || [] }),
     templateVersion: async (vid) => {
@@ -386,7 +433,7 @@
   function userIdForRole() { return (USERS.find((u) => u.role === ROLES[cfg.role].dto) || USERS[0]).id; }
 
   const CRM = {
-    cfg, api, stats, ApiError, PHASES, PHASE, BUCKETS, ROLES, FILE_FORMATS, SLA, KAM_ME: K[0],
+    cfg, api, stats, ApiError, PHASES, PHASE, BUCKETS, ROLES, HEALTH_LEVELS, FILE_FORMATS, SLA, KAM_ME: K[0],
     local: { USERS, KAMS, get STATUSES() { return activeVersion().statuses; }, UNIVERSITIES, DIRECTIONS, PRODUCTS, get VERSIONS() { return VERSIONS; }, TEMPLATE, LICENSES },
     userName, bucketOf, criticalPath, activeVersion: () => clone(activeVersion()), activeVersionId: () => activeVersion().id, statusMeta: (sid) => META[sid] || null,
     setMinDays: (sid, n) => { META[sid] = { ...(META[sid] || { deps: [] }), minDays: Number(n) || 0 }; },

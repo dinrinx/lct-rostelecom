@@ -21,6 +21,7 @@ import {
 } from './dto/responsible-person.dto';
 import { LicenseDto, LicenseStatusDto, CreateLicenseDto, UpdateLicenseDto } from './dto/license.dto';
 import { mapPrismaWriteError } from './catalogs.errors';
+import { parsePositiveInt } from '../common/positive-int';
 
 export const DEFAULT_PAGE_SIZE = 20;
 export const MAX_PAGE_SIZE = 100;
@@ -33,18 +34,8 @@ export interface Paginated<T> {
 // Пагинация одинакова для всех списков каталога: page (с 1), pageSize
 // (ограничен MAX_PAGE_SIZE, чтобы не увести один запрос в full-scan).
 // Не переданный параметр -> значение по умолчанию; переданный, но не являющийся
-// положительным целым ("abc", "-1", "0", "1.5") -> 400, а не молчаливый дефолт.
-function parsePositiveInt(name: string, raw: string | undefined): number | undefined {
-  if (raw === undefined || raw === '') return undefined;
-  if (!/^[1-9]\d*$/.test(raw)) {
-    throw new BadRequestException({
-      code: 'VALIDATION_ERROR',
-      message: `Параметр "${name}" должен быть положительным целым числом (получено "${raw}")`,
-    });
-  }
-  return Number(raw);
-}
-
+// положительным целым ("abc", "-1", "0", "1.5") -> 400, а не молчаливый дефолт
+// (parsePositiveInt — общий с другими query-параметрами вроде ?limit=, см. common/positive-int.ts).
 function normalizePagination(page?: string, pageSize?: string) {
   const normalizedPage = parsePositiveInt('page', page) ?? 1;
   const normalizedPageSize = Math.min(parsePositiveInt('pageSize', pageSize) ?? DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE);

@@ -2452,6 +2452,52 @@
         ]
       }
     },
+    "/dashboard/health-score": {
+      "get": {
+        "description": "Считает HealthScoreService.calculateHealthScore по агрегатам, переиспользуя запросы license-radar/sla-radar (без дублирования их логики выборки/RBAC). Сортировка — по score по возрастанию (0 — максимальный риск).",
+        "operationId": "DashboardController_getHealthScore",
+        "parameters": [
+          {
+            "name": "X-Dev-Role",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "kam"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Топ-N худших; не передано — все вузы в зоне видимости",
+            "schema": {
+              "example": 5,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HealthScoreItemDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Рейтинг здоровья вузов, видимых роли (лицензия/SLA/активность/needsReview) — худшие первые",
+        "tags": [
+          "dashboard"
+        ]
+      }
+    },
     "/files": {
       "get": {
         "operationId": "FilesController_getFiles",
@@ -5053,6 +5099,50 @@
         "required": [
           "generatedAt",
           "items"
+        ]
+      },
+      "HealthScoreItemDto": {
+        "type": "object",
+        "properties": {
+          "vuzId": {
+            "type": "string",
+            "example": "a5000000-0000-4000-8000-000000000001"
+          },
+          "vuzName": {
+            "type": "string",
+            "example": "СПбГУ"
+          },
+          "score": {
+            "type": "number",
+            "example": 42,
+            "description": "0 (максимальный риск) .. 100 (всё в порядке)"
+          },
+          "level": {
+            "enum": [
+              "red",
+              "yellow",
+              "green"
+            ],
+            "type": "string",
+            "example": "yellow"
+          },
+          "reasons": {
+            "example": [
+              "Лицензия истекает через 5 дн."
+            ],
+            "description": "Заранее заготовленные шаблонные причины срабатывания (не текст от ИИ), в порядке проверки условий",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "vuzId",
+          "vuzName",
+          "score",
+          "level",
+          "reasons"
         ]
       },
       "FileAttachmentDto": {
