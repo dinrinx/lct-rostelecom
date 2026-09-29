@@ -103,6 +103,36 @@ export class ReportQueueService implements OnModuleInit, OnModuleDestroy {
   }
 
   async getStatus(jobId: string, scope: CatalogScope): Promise<ReportJobDto> {
+    // Файл содержит данные в зоне видимости заказчика — чужие задания не отдаём
+    // (Администратор видит все); проверка внутри getJobOrThrow.
+    const job = await this.getJobOrThrow(jobId, scope);
+    const state = await job.getState();
+    const status =
+      state === 'completed'
+        ? ReportJobStatusDto.SUCCESS
+        : state === 'failed'
+          ? ReportJobStatusDto.FAILED
+          : state === 'active'
+            ? ReportJobStatusDto.PROCESSING
+            : ReportJobStatusDto.QUEUED;
+
+    const dto = this.toDto(job, status);
+    if (status === ReportJobStatusDto.SUCCESS && job.returnvalue) {
+      // Ссылка на сам backend, не presigned-URL на хранилище (см.
+      // MinioService.getObjectStream) — GET .../download стримит содержимое.
+      dto.resultUrl = `/reports/export-status/${jobId}/download`;
+      dto.fileName = job.returnvalue.fileName;
+      dto.rowCount = job.returnvalue.rowCount;
+    }
+    if (status === ReportJobStatusDto.FAILED) {
+      dto.error = job.failedReason ?? 'Неизвестная ошибка';
+    }
+    return dto;
+  }
+
+  // Общая с getStatus() проверка авторизации (автор задания или Администратор) —
+  // вынесена, чтобы её не продублировать между статусом и стримом файла.
+  private async getJobOrThrow(jobId: string, scope: CatalogScope): Promise<Job<ReportJobData, GeneratedReportFile>> {
     let job: Job<ReportJobData, GeneratedReportFile> | undefined;
     try {
       job = await this.queue.getJob(jobId);
@@ -118,35 +148,30 @@ export class ReportQueueService implements OnModuleInit, OnModuleDestroy {
         message: `Задание отчёта "${jobId}" не найдено (или уже удалено по сроку хранения)`,
       });
     }
-    // Файл содержит данные в зоне видимости заказчика — чужие задания не отдаём
-    // (Администратор видит все).
     if (scope.role !== UserRoleDto.ADMINISTRATOR && job.data.requestedById !== (scope.currentUserId ?? '')) {
       throw new ForbiddenException({
         code: 'REPORT_JOB_FORBIDDEN',
         message: 'Это задание отчёта создано другим пользователем',
       });
     }
+    return job;
+  }
 
+  async streamResult(
+    jobId: string,
+    scope: CatalogScope,
+  ): Promise<{ stream: NodeJS.ReadableStream; size: number; fileName: string; mimeType: string }> {
+    const job = await this.getJobOrThrow(jobId, scope);
     const state = await job.getState();
-    const status =
-      state === 'completed'
-        ? ReportJobStatusDto.SUCCESS
-        : state === 'failed'
-          ? ReportJobStatusDto.FAILED
-          : state === 'active'
-            ? ReportJobStatusDto.PROCESSING
-            : ReportJobStatusDto.QUEUED;
-
-    const dto = this.toDto(job, status);
-    if (status === ReportJobStatusDto.SUCCESS && job.returnvalue) {
-      dto.resultUrl = await this.reports.presignExport(job.returnvalue.storageKey, job.returnvalue.fileName);
-      dto.fileName = job.returnvalue.fileName;
-      dto.rowCount = job.returnvalue.rowCount;
+    if (state !== 'completed' || !job.returnvalue) {
+      throw new NotFoundException({
+        code: 'REPORT_JOB_NOT_READY',
+        message: `Задание отчёта "${jobId}" ещё не готово (или завершилось ошибкой)`,
+      });
     }
-    if (status === ReportJobStatusDto.FAILED) {
-      dto.error = job.failedReason ?? 'Неизвестная ошибка';
-    }
-    return dto;
+    const { storageKey, fileName, mimeType } = job.returnvalue;
+    const { stream, size } = await this.reports.streamExport(storageKey);
+    return { stream, size, fileName, mimeType };
   }
 
   private toDto(job: Job<ReportJobData, GeneratedReportFile>, status: ReportJobStatusDto): ReportJobDto {

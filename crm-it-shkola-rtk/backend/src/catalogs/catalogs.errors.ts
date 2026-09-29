@@ -1,7 +1,7 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 
-// Единая схема ошибок { code, message } (см. CLAUDE.md) поверх стандартных
+// Единая схема ошибок { code, message } поверх стандартных
 // кодов Prisma: P2025 — запись не найдена, P2003 — нарушение внешнего ключа
 // (используется и при update/delete по несуществующему id, и при ссылке на
 // несуществующую связанную сущность).

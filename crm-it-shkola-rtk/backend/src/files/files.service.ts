@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
+import type { Readable } from 'stream';
 import { PrismaService } from '../prisma/prisma.service';
 import { MinioService } from '../storage/minio.service';
 import { FileAttachmentDto, FileDownloadUrlDto } from './dto/file-attachment.dto';
@@ -89,19 +90,23 @@ export class FilesService {
     return toFileAttachmentDto(file);
   }
 
-  // Отдаём только presigned-ссылку — содержимое файла через backend не
-  // проксируется, клиент качает напрямую из MinIO.
+  // Ссылка — относительный путь на сам backend (/files/{id}/content), не
+  // presigned-URL на хранилище: presigned-ссылка подписана на внутренний
+  // Docker-хост Garage и не открывается из браузера. Контент отдаёт
+  // streamFile() ниже, backend читает объект из Garage и стримит его сам.
   async getDownloadUrl(id: string): Promise<FileDownloadUrlDto> {
     const file = await this.findOrThrow(id);
-    const url = await this.withStorage(() =>
-      this.minio.presignedDownloadUrl(file.storageKey, DOWNLOAD_URL_EXPIRY_SECONDS, file.fileName),
-    );
-
     return {
       fileId: file.id,
-      url,
+      url: `/files/${file.id}/content`,
       expiresAt: new Date(Date.now() + DOWNLOAD_URL_EXPIRY_SECONDS * 1000).toISOString(),
     };
+  }
+
+  async streamFile(id: string): Promise<{ stream: Readable; size: number; fileName: string; mimeType: string }> {
+    const file = await this.findOrThrow(id);
+    const { stream, size } = await this.withStorage(() => this.minio.getObjectStream(file.storageKey));
+    return { stream, size, fileName: file.fileName, mimeType: file.mimeType };
   }
 
   // MinIO может быть недоступен (не поднят контейнер, сеть). Не даём

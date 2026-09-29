@@ -205,7 +205,7 @@ class Component extends DCLogic {
     waitCRM().then((CRM) => { Promise.all([CRM.api.universities(), CRM.api.directions(), CRM.api.products()]).then(([unis, dirs, prods]) => this.setState({ cat: { unis, dirs, prods } })).catch(() => {}); this.loadCharts(); });
   }
   componentDidUpdate(pp) { if (pp.demoState !== this.props.demoState) this.loadCharts(); }
-  componentWillUnmount() { (this.timers || []).forEach(clearInterval); }
+  componentWillUnmount() { (this.timers || []).forEach(clearTimeout); }
   q() { const f = this.state.f, q = { from: f.from, to: f.to }; ['universityId', 'itDirectionId', 'itProductId', 'responsibleUserId'].forEach((k) => { if (f[k] !== 'all') q[k] = f[k]; }); return q; }
   setF(p) { this.setState({ f: { ...this.state.f, ...p } }, () => { clearTimeout(this.deb); this.deb = setTimeout(() => this.loadCharts(), 250); }); }
   async loadCharts() {
@@ -303,35 +303,54 @@ class Component extends DCLogic {
   }
   saveJobs(jobs) { this.setState({ jobs }); try { localStorage.setItem(JKEY, JSON.stringify(jobs.filter((j) => j.status === 'SUCCESS' || j.status === 'FAILED').slice(0, 10))); } catch (e) {} }
   patchJob(id, p) { this.saveJobs(this.state.jobs.map((j) => (j.id === id ? { ...j, ...p } : j))); }
+  // Реальная очередь: POST /reports/jobs ставит задание, GET /reports/export-status/{id}
+  // опрашивается до SUCCESS/FAILED — как и требует ТЗ ("отчёты асинхронно, не блокирующим
+  // запросом"). Раньше здесь был фейковый прогресс-бар поверх синхронного exportReport().
   build(existing) {
     const CRM = window.CRM, s = this.state;
-    const job = existing ? { ...existing, status: 'QUEUED', progress: 0, error: null } : { id: 'job-' + Date.now(), status: 'QUEUED', progress: 0, format: s.format, q: this.q(), cols: COLS.filter(([k]) => s.cols[k]).map(([, l]) => l), createdAt: new Date().toISOString() };
+    const job = existing ? { ...existing, status: 'QUEUED', error: null } : { id: 'job-' + Date.now(), status: 'QUEUED', format: s.format, q: this.q(), cols: COLS.filter(([k]) => s.cols[k]).map(([, l]) => l), createdAt: new Date().toISOString() };
     job.count = s.rows.length;
     this.saveJobs([job, ...s.jobs.filter((j) => j.id !== job.id)]);
     this.setState({ jobId: job.id });
-    this.timers = this.timers || [];
-    const t = setInterval(() => { const cur = this.state.jobs.find((j) => j.id === job.id); if (cur && cur.status !== 'SUCCESS' && cur.status !== 'FAILED') this.patchJob(job.id, { status: 'PROCESSING', progress: Math.min(90, (cur.progress || 0) + 12) }); }, 300);
-    this.timers.push(t);
     const willFail = this.props.demoState === 'error';
-    setTimeout(async () => {
+    (async () => {
       try {
         if (willFail) CRM.failNext('REPORT_GENERATION_FAILED', 'Отчёт не сформирован: превышено время генерации', 500);
-        const res = await CRM.api.exportReport(job.q, job.format);
-        clearInterval(t);
-        this.patchJob(job.id, { status: 'SUCCESS', progress: 100, fileName: res.fileName, url: res.url, rowCount: res.rowCount });
-        this.props.onToast && this.props.onToast({ kind: 'success', title: 'Отчёт готов к скачиванию', text: 'Взаимодействия · ' + job.format.toUpperCase(), actionLabel: 'Скачать', action: () => this.download(this.state.jobs.find((j) => j.id === job.id)) });
+        const created = await CRM.api.createJob('INTERACTIONS_EXPORT', { format: job.format, ...job.q });
+        this.patchJob(job.id, { serverJobId: created.id, status: created.status });
+        this.pollJob(job.id, created.id);
       } catch (e) {
-        clearInterval(t);
         this.patchJob(job.id, { status: 'FAILED', error: { code: e.code, message: e.message } });
         this.props.onToast && this.props.onToast({ kind: 'error', title: 'Отчёт не сформирован', text: e.message, code: e.code });
       }
-    }, 2200);
+    })();
+  }
+  pollJob(localId, serverJobId) {
+    const CRM = window.CRM;
+    this.timers = this.timers || [];
+    const tick = async () => {
+      let st;
+      try { st = await CRM.api.exportStatus(serverJobId); }
+      catch (e) { this.patchJob(localId, { status: 'FAILED', error: { code: e.code, message: e.message } }); return; }
+      if (st.status === 'SUCCESS') {
+        this.patchJob(localId, { status: 'SUCCESS', fileName: st.fileName, url: st.resultUrl, rowCount: st.rowCount });
+        const job = this.state.jobs.find((j) => j.id === localId);
+        this.props.onToast && this.props.onToast({ kind: 'success', title: 'Отчёт готов к скачиванию', text: 'Взаимодействия · ' + job.format.toUpperCase(), actionLabel: 'Скачать', action: () => this.download(this.state.jobs.find((j) => j.id === localId)) });
+      } else if (st.status === 'FAILED') {
+        this.patchJob(localId, { status: 'FAILED', error: { code: 'REPORT_GENERATION_FAILED', message: st.error || 'Отчёт не сформирован' } });
+        this.props.onToast && this.props.onToast({ kind: 'error', title: 'Отчёт не сформирован', text: st.error || '', code: 'REPORT_GENERATION_FAILED' });
+      } else {
+        this.patchJob(localId, { status: st.status });
+        this.timers.push(setTimeout(tick, 1000));
+      }
+    };
+    tick();
   }
   async download(job) {
     if (!job) return;
-    if (job.url && job.url !== '#' && !/minio\.internal/.test(job.url)) { window.open(job.url, '_blank'); return; }
-    // Демо: выгружаем таблицу, которую Excel открывает как .xls; реальный файл формирует бэкенд.
     const CRM = window.CRM;
+    if (job.url && job.url !== '#') { await CRM.api.saveAs(job.url, job.fileName); return; }
+    // Демо: выгружаем таблицу, которую Excel открывает как .xls; реальный файл формирует бэкенд.
     if (job.format === 'pdf') { this.props.onToast && this.props.onToast({ kind: 'info', title: 'PDF формирует бэкенд', text: 'В демо-режиме доступна выгрузка xls/xlsx' }); return; }
     const rows = await CRM.api.interactions(job.q);
     const map = { 'Наименование вуза': 'universityName', 'ИТ-направление': 'itDirectionName', 'ИТ-продукт': 'itProductName', 'Статус работы с вузом': 'currentStatusName', 'Ответственный': 'responsibleUserName' };

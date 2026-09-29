@@ -126,7 +126,11 @@ class Component extends DCLogic {
     return { ...base, template: s.template, version: s.version, nextVersion: maxV + 1, dirty: s.dirty, cantSave: !s.dirty || hasEmpty,
       versionsText: 'Архив: ' + s.versions.filter((v) => !v.isActive && v.versionNumber !== s.version.versionNumber).map((v) => 'v' + v.versionNumber).join(', '),
       statusCount: d.statuses.length + ' ' + CRM.plural(d.statuses.length, 'статус', 'статуса', 'статусов') + ' · ' + d.transitions.length + ' ' + CRM.plural(d.transitions.length, 'переход', 'перехода', 'переходов'),
-      phaseOpts: CRM.PHASES.map((p) => ({ value: p.key, label: p.label })), rowCols: m ? '28px 1fr' : '40px minmax(0,1.2fr) 190px 110px minmax(0,1.6fr) 44px', rows,
+      // Мобильная раскладка — строго одна колонка: у строки статуса 6 grid-детей
+      // (номер/название/стадия CLM/срок/переходы/удаление), а не 2 — с 2 явными
+      // колонками auto-placement раскидывал их по кругу, и поля вроде селектора
+      // стадии CLM оказывались сжаты в 28px-колонку номера (невидимый текст).
+      phaseOpts: CRM.PHASES.map((p) => ({ value: p.key, label: p.label })), rowCols: m ? '1fr' : '40px minmax(0,1.2fr) 190px 110px minmax(0,1.6fr) 44px', rows,
       addStatus: () => this.edit((dd) => { dd.statuses.push({ id: 'new-st-' + Date.now(), name: '', minDays: 7, phase: 'RENEWAL', order: dd.statuses.length + 1, workflowTemplateVersionId: s.version.id }); }),
       discard: () => this.setState({ draft: this.toDraft(s.version), dirty: false, saveError: null }),
       askSave: () => this.setState({ confirm: true }), confirm: s.confirm, cancel: () => this.setState({ confirm: false }), save: () => this.save(), saving: s.saving, saveLabel: s.saving ? 'Сохраняем…' : 'Создать версию ' + (maxV + 1),

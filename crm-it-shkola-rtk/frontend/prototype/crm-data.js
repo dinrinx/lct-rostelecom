@@ -258,7 +258,17 @@
   }
 
   // --- транспорт -----------------------------------------------------------------
-  const cfg = { base: 'http://localhost:3000', role: 'kam', mode: 'auto' };
+  // Локально фронтенд и backend на разных портах (python serve.py:8123 и
+  // Nest:3000) — оставляем как раньше. На боевом домене nginx разруливает
+  // фронт и /admin|/auth|/... по одному origin (см. infra/nginx/conf.d),
+  // поэтому base — пустая строка, и call() ниже бьёт в тот же origin.
+  const isLocalHost = ['localhost', '127.0.0.1'].includes(location.hostname);
+  const cfg = { base: isLocalHost ? 'http://localhost:3000' : '', role: 'kam', mode: 'auto' };
+  // Ссылки на скачивание (files/reports) backend отдаёт относительными путями
+  // (/files/{id}/content и т.п.) — presigned-адреса на внутренний Docker-хост
+  // хранилища браузеру недоступны. absUrl достраивает их до cfg.base, чтобы
+  // компоненты (CrmInteraction/CrmReports) просто открывали d.url как раньше.
+  const absUrl = (u) => (u && u.startsWith('/') ? cfg.base + u : u);
   const stats = { total: 0, errors: 0, ms: 0, api: 0, fixtures: 0, last: null };
   const listeners = new Set();
   let lastSource = null;
@@ -307,8 +317,26 @@
     }
   }
 
+  // Реальные ссылки на скачивание (files/*/content, reports export-status/*/download)
+  // защищены тем же DevRoleGuard, что и остальной API — заголовок X-Dev-Role
+  // нужен на каждый запрос. Обычная навигация (window.open/<a href>) заголовков
+  // не передаёт, поэтому качаем через fetch (как и все остальные вызовы) и
+  // отдаём результат браузеру как blob — a.click() на object URL сохраняет
+  // файл под нужным именем, как обычная ссылка.
+  async function saveAs(url, fileName) {
+    if (!url || url === '#') return;
+    const res = await fetch(url, { headers: { 'X-Dev-Role': cfg.role } });
+    if (!res.ok) throw new ApiError('HTTP_' + res.status, 'Не удалось скачать файл', null, res.status);
+    const blob = await res.blob();
+    const objUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = objUrl; a.download = fileName || 'file'; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(objUrl), 10000);
+  }
+
   const api = {
     me: () => call('GET', '/auth/me', { fallback: () => USERS.find((u) => u.role === ROLES[cfg.role].dto) }),
+    saveAs,
     interactions: (q) => call('GET', '/reports/interactions', { query: q, fallback: () => fxInteractions(cfg.role, q) }).then((rows) => (rows || []).map(withLabels)),
     licenseRadar: () => call('GET', '/dashboard/license-radar', { fallback: () => fxLicenseRadar(cfg.role) }),
     slaRadar: () => call('GET', '/dashboard/sla-radar', { fallback: () => fxSlaRadar(cfg.role) }).then((r) => ({ ...r, items: (r.items || []).map(withLabels) })),
@@ -332,10 +360,14 @@
       return { id: iid, universityId: x.universityId, itProductId: x.itProductId, workflowTemplateVersionId: VERSION_ID, currentStatusId: st.id, responsibleUserId: x.responsibleUserId, createdAt: x.createdAt, updatedAt: at };
     } }),
     uploadFile: (file, iid) => { const fd = new FormData(); fd.append('file', file); fd.append('interactionInstanceId', iid); return call('POST', '/files/upload', { form: fd, fallback: () => { const f = { id: 'local-f-' + Date.now(), fileName: file.name, mimeType: file.type || 'application/octet-stream', size: file.size, storageKey: 'attachments/' + file.name, uploadedById: userIdForRole(), interactionInstanceId: iid, licenseId: null, createdAt: new Date().toISOString() }; FILES.push(f); return f; } }); },
-    downloadUrl: (fid) => call('GET', '/files/' + fid, { fallback: () => ({ fileId: fid, url: '#', expiresAt: ahead(0.01) }) }),
+    downloadUrl: (fid) => call('GET', '/files/' + fid, { fallback: () => ({ fileId: fid, url: '#', expiresAt: ahead(0.01) }) }).then((d) => ({ ...d, url: absUrl(d.url) })),
     charts: (q) => call('GET', '/reports/charts', { query: q, fallback: () => fxCharts(cfg.role, q) }),
-    exportReport: (q, format) => call('GET', '/reports/interactions/export', { query: { ...q, format }, fallback: () => ({ format, fileName: 'reestr-vzaimodeystviy-' + new Date().toISOString().slice(0, 10) + '.' + format, url: '#', generatedAt: new Date().toISOString(), rowCount: fxInteractions(cfg.role, q).length }) }),
-    createJob: (type) => call('POST', '/reports/jobs', { body: { type }, fallback: () => ({ id: 'job-' + Date.now(), type, status: 'QUEUED', requestedById: userIdForRole(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), resultUrl: null }) }),
+    exportReport: (q, format) => call('GET', '/reports/interactions/export', { query: { ...q, format }, fallback: () => ({ format, fileName: 'reestr-vzaimodeystviy-' + new Date().toISOString().slice(0, 10) + '.' + format, url: '#', generatedAt: new Date().toISOString(), rowCount: fxInteractions(cfg.role, q).length }) }).then((d) => ({ ...d, url: absUrl(d.url) })),
+    // params — те же поля, что у CreateReportJobDto (format, from/to и фильтры реестра);
+    // асинхронный путь (POST /reports/jobs → GET /reports/export-status/{id}), а не
+    // блокирующий exportReport — см. CrmReports.dc.html.
+    createJob: (type, params) => call('POST', '/reports/jobs', { body: { type, ...params }, fallback: () => ({ id: 'job-' + Date.now(), type, status: 'QUEUED', requestedById: userIdForRole(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), resultUrl: null }) }),
+    exportStatus: (jobId) => call('GET', '/reports/export-status/' + jobId, { fallback: () => ({ id: jobId, type: 'INTERACTIONS_EXPORT', status: 'SUCCESS', requestedById: userIdForRole(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), resultUrl: '#', fileName: 'otchet.xlsx', rowCount: 0 }) }).then((d) => ({ ...d, resultUrl: absUrl(d.resultUrl) })),
     universities: () => call('GET', '/catalogs/universities', { query: PAGE_ALL, fallback: () => UNIVERSITIES.filter(uniScope(cfg.role)) }),
     directions: () => call('GET', '/catalogs/it-directions', { query: PAGE_ALL, fallback: DIRECTIONS }),
     products: () => call('GET', '/catalogs/it-products', { query: PAGE_ALL, fallback: PRODUCTS }),

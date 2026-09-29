@@ -16,7 +16,6 @@ import { HealthScoreService } from './health-score/health-score.service';
 import { renderInteractionsPdf } from './report-export';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const EXPORT_URL_EXPIRY_SECONDS = 600;
 const LICENSE_RADAR_HORIZON_DAYS = 60;
 
 export interface InteractionReportFilters {
@@ -184,10 +183,12 @@ export class ReportsService {
     };
   }
 
-  // Файл кладём в тот же бакет MinIO (префикс exports/) и отдаём presigned-ссылку —
-  // содержимое через backend не проксируется, как и у вложений. xlsx — ExcelJS
-  // (та же библиотека, что и в импорте каталогов); xls — HTML-таблица с
-  // MIME Excel (бинарный BIFF exceljs не пишет, Excel такой файл открывает
+  // Файл кладём в бакет MinIO/Garage (префикс exports/) и отдаём ссылку на
+  // сам backend (/reports/interactions/export/download), не presigned-ссылку
+  // на хранилище — та подписана на внутренний Docker-хост Garage и не
+  // открывается из браузера (см. MinioService.getObjectStream). xlsx —
+  // ExcelJS (та же библиотека, что и в импорте каталогов); xls — HTML-таблица
+  // с MIME Excel (бинарный BIFF exceljs не пишет, Excel такой файл открывает
   // штатно); pdf — простой табличный рендер через pdfkit с шрифтом DejaVu Sans
   // (встроенные PDF-шрифты кириллицу не поддерживают — текст превращался бы
   // в мусор при копировании, см. report-export.ts).
@@ -198,7 +199,7 @@ export class ReportsService {
   ): Promise<InteractionsReportExportDto> {
     const generatedAt = new Date();
     const file = await this.generateInteractionsFile(scope, filters, format);
-    const url = await this.presignExport(file.storageKey, file.fileName);
+    const url = `/reports/interactions/export/download?key=${encodeURIComponent(file.storageKey)}&name=${encodeURIComponent(file.fileName)}`;
     return { format, fileName: file.fileName, url, generatedAt: generatedAt.toISOString(), rowCount: file.rowCount };
   }
 
@@ -246,9 +247,12 @@ export class ReportsService {
     return { storageKey, fileName, mimeType: 'application/json', rowCount: result.items.length };
   }
 
-  async presignExport(storageKey: string, fileName: string): Promise<string> {
+  // storageKey ограничен префиксом exports/ на уровне вызывающего контроллера
+  // (reports.controller.ts) — этот метод сам по себе отдаёт любой объект
+  // бакета по ключу, доступ к нему не завязан на RBAC-scope запроса.
+  async streamExport(storageKey: string): Promise<{ stream: NodeJS.ReadableStream; size: number }> {
     try {
-      return await this.minio.presignedDownloadUrl(storageKey, EXPORT_URL_EXPIRY_SECONDS, fileName);
+      return await this.minio.getObjectStream(storageKey);
     } catch (error) {
       throw this.storageUnavailable(error);
     }

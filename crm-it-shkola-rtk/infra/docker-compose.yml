@@ -116,7 +116,7 @@ services:
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?задайте KEYCLOAK_ADMIN_PASSWORD в infra/.env}
       KC_HEALTH_ENABLED: "true"
     ports:
-      - "${KEYCLOAK_PUBLISH_ADDR:-0.0.0.0}:8080:8080"
+      - "${KEYCLOAK_PUBLISH_ADDR:-127.0.0.1}:8080:8080"
     volumes:
       - keycloak-data:/opt/keycloak/data
       - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
@@ -176,12 +176,46 @@ services:
       # миграции применяются, seed не трогаем (реальные пользовательские данные).
       SEED_ON_START: ${SEED_ON_START:-if-empty}
     ports:
-      - "${BACKEND_PORT:-3000}:3000"
+      # Теперь backend смотрит наружу только через nginx (сервис ниже) —
+      # порт 3000 остаётся на 127.0.0.1 для локальной отладки с самого сервера
+      # (curl localhost:3000/health и т.п.), в интернет не публикуется.
+      - "127.0.0.1:${BACKEND_PORT:-3000}:3000"
     # Healthcheck самого backend не переопределён здесь: используется тот,
     # что уже задан HEALTHCHECK-инструкцией в backend/Dockerfile (GET /health —
     # тот же эндпоинт, что проверяет Postgres/Redis/MinIO по одному лёгкому
     # пингу на каждый, см. src/health). `docker compose ps` сразу покажет
     # backend healthy/unhealthy.
+
+  # Единая точка входа: TLS-терминация + отдача статики фронтенда + прокси
+  # API-запросов на backend. См. infra/nginx/conf.d/default.conf и
+  # infra/init-letsencrypt.sh (первичный выпуск сертификата).
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ../frontend/prototype:/usr/share/nginx/html:ro
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+
+  # Продление Let's Encrypt: пробует renew каждые 12 часов, certbot сам
+  # ничего не обновляет, пока сертификату не осталось <30 дней — команда
+  # безопасна для частых перезапусков. Первичный выпуск — через
+  # infra/init-letsencrypt.sh (этот сервис для него тоже используется,
+  # разовыми `docker compose run`).
+  certbot:
+    image: certbot/certbot
+    restart: unless-stopped
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: >
+      /bin/sh -c "trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot; sleep 12h & wait $${!}; done"
 
 volumes:
   postgres-data:

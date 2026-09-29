@@ -64,10 +64,36 @@ docker-compose, выставлять их на весь интернет нез�
 умолчанию смотрят только `backend` (порт из `BACKEND_PORT`) и `keycloak`
 (нужен, только если включён `AUTH_MODE=keycloak`).
 
-TLS/HTTPS и обратный прокси (nginx/Caddy/Traefik) этот compose-файл не
-настраивает — для реального продакшена перед `backend`/`keycloak` нужен
-реверс-прокси с TLS-терминацией; для демо-стенда на защите обычно достаточно
-голого HTTP на порту сервера.
+## HTTPS (nginx + Let's Encrypt)
+
+Домен: `itschool-rtk-supremum.ru` (DNS A-запись уже указывает на IP сервера).
+`nginx` в этом compose — единая точка входа: `:443` отдаёт статику фронтенда
+(`frontend/prototype`) и проксирует `/admin`, `/auth`, `/health`,
+`/integrations`, `/workflow`, `/catalogs`, `/dashboard`, `/files`, `/reports`,
+`/api/*` на `backend:3000` (см. `infra/nginx/conf.d/default.conf`).
+`backend`/`keycloak` теперь публикуются только на `127.0.0.1` хоста — снаружи
+доступны исключительно через nginx.
+
+Первый запуск на сервере:
+
+```bash
+cd infra
+cp .env.example .env
+# заполните пароли (см. таблицу выше) и LETSENCRYPT_EMAIL
+docker compose up -d postgres redis storage storage-init keycloak backend
+docker compose ps                       # дождитесь healthy
+./init-letsencrypt.sh                   # разово: выпускает сертификат и поднимает nginx
+```
+
+Дальше сертификат продлевает сам сервис `certbot` (проверяет раз в 12 часов,
+реально обновляет — когда до истечения < 30 дней). После продления nginx
+нужно перечитать конфиг: `docker compose exec nginx nginx -s reload`
+(это можно повесить на cron, но для двухнедельного окна ревью вручную раз в
+неделю достаточно).
+
+Если нужно быстро проверить голым HTTP без домена/сертификата (например,
+локально) — `docker compose up -d` без `nginx`/`certbot` и ходить напрямую на
+`http://<адрес>:3000` работает по-прежнему, как раньше.
 
 ## Полезные команды
 

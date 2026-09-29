@@ -1,5 +1,6 @@
-import { BadRequestException, Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query, Req, UseInterceptors } from '@nestjs/common';
-import { ApiBody, ApiHeader, ApiOkResponse, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { BadRequestException, Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query, Req, Res, UseInterceptors } from '@nestjs/common';
+import { ApiBody, ApiHeader, ApiOkResponse, ApiOperation, ApiParam, ApiProduces, ApiQuery, ApiTags } from '@nestjs/swagger';
+import type { Response } from 'express';
 import { ExportFormat, InteractionReportFilters, ReportsService } from './reports.service';
 import { CreateReportJobDto, ReportJobDto, ReportTypeDto } from './dto/report-job.dto';
 import { ReportQueueService } from './report-queue.service';
@@ -64,6 +65,39 @@ export class ReportsController {
     return this.reportsService.exportInteractions(request.catalogScope!, parseFilters(query), format);
   }
 
+  // Ссылка из InteractionsReportExportDto.url ведёт сюда — content стримится
+  // с backend, не отдаётся presigned-ссылкой на Garage напрямую (её внутренний
+  // Docker-хост недостижим из браузера). key ограничен префиксом exports/,
+  // чтобы эндпоинт нельзя было превратить в чтение произвольного объекта бакета.
+  @Get('interactions/export/download')
+  @ApiOperation({ summary: 'Скачать файл, полученный из GET /reports/interactions/export' })
+  @ApiQuery({ name: 'key', required: true })
+  @ApiQuery({ name: 'name', required: true })
+  @ApiProduces('application/octet-stream')
+  async downloadExportFile(
+    @Query('key') key: string,
+    @Query('name') name: string,
+    @Res() res: Response,
+  ): Promise<void> {
+    if (!key || !key.startsWith('exports/') || !name) {
+      throw new BadRequestException({ code: 'VALIDATION_ERROR', message: 'Некорректные параметры key/name' });
+    }
+    const { stream, size } = await this.reportsService.streamExport(key);
+    const ext = (name.split('.').pop() || '').toLowerCase();
+    const mimeType =
+      ext === 'xlsx'
+        ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        : ext === 'pdf'
+          ? 'application/pdf'
+          : ext === 'json'
+            ? 'application/json'
+            : 'application/vnd.ms-excel';
+    res.setHeader('Content-Type', mimeType);
+    res.setHeader('Content-Length', String(size));
+    res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(name)}`);
+    stream.pipe(res);
+  }
+
   // Кэшируется только charts: реестр и экспорт зависят от произвольных фильтров и порождают файлы.
   @Get('charts')
   @Cacheable('reports', CHARTS_TTL_MS)
@@ -115,6 +149,25 @@ export class ReportsController {
   @ApiOkResponse({ type: ReportJobDto })
   getExportStatus(@Req() request: RequestWithCatalogScope, @Param('jobId') jobId: string): Promise<ReportJobDto> {
     return this.reportQueue.getStatus(jobId, request.catalogScope!);
+  }
+
+  // resultUrl из ReportJobDto (при status=SUCCESS) ведёт сюда — те же правила
+  // доступа, что у статуса (автор задания или Администратор), контент стримится
+  // с backend напрямую.
+  @Get('export-status/:jobId/download')
+  @ApiOperation({ summary: 'Скачать готовый файл задания (после status=SUCCESS)' })
+  @ApiParam({ name: 'jobId', example: '42' })
+  @ApiProduces('application/octet-stream')
+  async downloadJobResult(
+    @Req() request: RequestWithCatalogScope,
+    @Param('jobId') jobId: string,
+    @Res() res: Response,
+  ): Promise<void> {
+    const { stream, size, fileName, mimeType } = await this.reportQueue.streamResult(jobId, request.catalogScope!);
+    res.setHeader('Content-Type', mimeType);
+    res.setHeader('Content-Length', String(size));
+    res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(fileName)}`);
+    stream.pipe(res);
   }
 }
 

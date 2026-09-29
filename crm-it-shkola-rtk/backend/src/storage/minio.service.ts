@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Client } from 'minio';
+import type { Readable } from 'stream';
 
 // S3-совместимое хранилище вложений (MinIO). Бакет — единый на всё приложение,
 // имя берётся из .env (MINIO_BUCKET), а не хардкодится, чтобы стенды не путали
@@ -70,5 +71,16 @@ export class MinioService implements OnModuleInit {
       ? { 'response-content-disposition': `attachment; filename*=UTF-8''${encodeURIComponent(downloadFileName)}` }
       : undefined;
     return this.client.presignedGetObject(this.bucket, storageKey, expirySeconds, responseHeaders);
+  }
+
+  // Presigned-ссылки (метод выше) подписаны на внутренний адрес Garage
+  // (MINIO_ENDPOINT=storage — имя контейнера в docker-сети) и поэтому не
+  // открываются из настоящего браузера ни локально, ни тем более с боевого
+  // домена. Контроллеры вместо presign читают объект этим методом и стримят
+  // байты сами — см. FilesController/ReportsController (*/content, */download).
+  async getObjectStream(storageKey: string): Promise<{ stream: Readable; size: number }> {
+    const stat = await this.client.statObject(this.bucket, storageKey);
+    const stream = await this.client.getObject(this.bucket, storageKey);
+    return { stream, size: stat.size };
   }
 }
