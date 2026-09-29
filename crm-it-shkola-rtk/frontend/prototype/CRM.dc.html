@@ -405,11 +405,14 @@ class Component extends DCLogic {
     const nav = items.map(withGo).map((n) => ({ ...n, icon: ICON[n.key].replace('.svg', n.active ? '--accent.svg' : '--soft.svg'), h: n.active ? '44px' : '48px', bg: n.active ? 'rgb(255,166,136)' : 'transparent', hoverBg: n.active ? 'rgb(255,166,136)' : 'rgb(244,244,245)', fg: n.active ? 'rgb(178,56,14)' : 'rgb(15,26,40)', iconColor: n.active ? 'rgb(254,79,19)' : 'rgb(76,81,94)', weight: n.active ? 700 : 400, lh: n.active ? '20px' : '24px' }));
     const primary = ['dashboard', 'registry'];
     const moreActive = !primary.includes(s.screen);
-    const mobileNav = [
+    // У КАМа всего 3 пункта меню (dashboard/registry/reports) — они целиком помещаются
+    // в нижнюю панель без "Ещё". "Ещё" нужен только когда пунктов реально больше, чем
+    // влезает в панель (сейчас — у Руководителя, 5 пунктов).
+    const mobileNav = (nav.length <= 3 ? nav : [
       ...nav.filter((n) => primary.includes(n.key)),
       { key: 'more', label: 'Ещё', go: () => this.setState({ more: true }), active: moreActive },
-    ].map((n) => ({ ...n, fg: n.active ? 'var(--color-fg-default)' : 'var(--color-fg-muted)', bar: n.active ? 'var(--color-accent)' : 'transparent', weight: n.active ? 500 : 400 }));
-    const moreNav = nav.filter((n) => !primary.includes(n.key));
+    ]).map((n) => ({ ...n, fg: n.active ? 'var(--color-fg-default)' : 'var(--color-fg-muted)', bar: n.active ? 'var(--color-accent)' : 'transparent', weight: n.active ? 500 : 400 }));
+    const moreNav = nav.length <= 3 ? [] : nav.filter((n) => !primary.includes(n.key));
     const title = TITLES[s.screen] || '';
     const sub = SUBTITLES[s.screen];
     const subtitle = typeof sub === 'string' ? sub : sub ? sub[s.role] || sub.kam : '';

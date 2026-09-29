@@ -75,7 +75,7 @@
           </div>
           <div style="display:flex;flex-direction:column">
             <sc-for list="{{ licRows }}" as="l" hint-placeholder-count="3">
-              <button onClick="{{ l.go }}" style="display:flex;align-items:center;gap:12px;padding:12px 0;border:1px solid rgb(229,230,232);background:transparent;text-align:left;cursor:pointer;font-family:inherit" style-hover="background:rgb(249,249,250)">
+              <button onClick="{{ l.go }}" style="display:flex;align-items:center;gap:12px;padding:12px 8px;border:1px solid rgb(229,230,232);background:transparent;text-align:left;cursor:pointer;font-family:inherit" style-hover="background:rgb(249,249,250)">
                 <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
                   <span style="font-weight:700;font-size:14px;line-height:20px;color:rgb(15,26,40)">{{ l.universityName }}</span>
                   <span style="font-weight:300;font-size:12px;line-height:16px;color:rgb(76,81,94)">{{ l.itProductName }}</span>
@@ -99,7 +99,7 @@
           </div>
           <div style="display:flex;flex-direction:column">
             <sc-for list="{{ slaRows }}" as="r" hint-placeholder-count="3">
-              <button onClick="{{ r.open }}" style="display:flex;align-items:center;gap:12px;padding:12px 0;border:1px solid rgb(229,230,232);background:transparent;text-align:left;cursor:pointer;font-family:inherit" style-hover="background:rgb(249,249,250)">
+              <button onClick="{{ r.open }}" style="display:flex;align-items:center;gap:12px;padding:12px 8px;border:1px solid rgb(229,230,232);background:transparent;text-align:left;cursor:pointer;font-family:inherit" style-hover="background:rgb(249,249,250)">
                 <span style="width:8px;height:8px;border-radius:50%;background:rgb(255,39,39);flex-shrink:0"></span>
                 <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
                   <span style="font-weight:700;font-size:14px;line-height:20px;color:rgb(15,26,40)">{{ r.universityName }}</span>
@@ -127,7 +127,7 @@
       </div>
       <div style="display:flex;flex-direction:column">
         <sc-for list="{{ health }}" as="h" hint-placeholder-count="5">
-          <button onClick="{{ h.go }}" style="display:flex;align-items:center;gap:12px;padding:12px 0;border:none;border-top:1px solid rgb(229,230,232);background:transparent;text-align:left;cursor:pointer;font-family:inherit" style-hover="background:rgb(249,249,250)">
+          <button onClick="{{ h.go }}" style="display:flex;align-items:center;gap:12px;padding:12px 8px;border:none;border-top:1px solid rgb(229,230,232);background:transparent;text-align:left;cursor:pointer;font-family:inherit" style-hover="background:rgb(249,249,250)">
             <span style="width:8px;height:8px;border-radius:50%;background:{{ h.color }};flex-shrink:0"></span>
             <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
               <span style="font-weight:700;font-size:14px;line-height:20px;color:rgb(15,26,40)">{{ h.vuzName }}</span>
@@ -173,7 +173,7 @@
       </sc-for>
     </div></sc-if>
 
-    <button onClick="{{ openHelp }}" style="display:flex;align-items:center;gap:12px;padding:16px 20px;border:none;border-radius:12px;background:rgb(194,153,255);text-align:left;cursor:pointer;font-family:inherit">
+    <button onClick="{{ openHelp }}" style="display:flex;align-items:center;gap:12px;padding:16px 20px;border:none;border-radius:12px;background:rgb(246,241,255);text-align:left;cursor:pointer;font-family:inherit">
       <img src="assets/icons/help--brandStrong.svg" alt="" style="display:block;width:20px;height:20px;padding:1.667px;box-sizing:border-box;flex-shrink:0">
       <span style="flex:1;min-width:0;display:flex;flex-direction:{{ helpDir }};gap:{{ helpGap }}">
         <span style="font-weight:700;font-size:14px;line-height:20px;color:rgb(83,0,179);white-space:nowrap">Как читать радар?</span>
@@ -217,9 +217,9 @@ class Component extends DCLogic {
     if (!CRM || s.status !== 'ready') return { ...base, windows: [], licRows: [], slaRows: [], phases: [], health: [] };
     // Окна вложенные (макет 02): «до 7» — просроченные и ≤ 7 дней, «до 30» включает «до 7», «до 60» — все.
     const WIN = [
-      { key: 'W7', label: 'До 7 дней', in: ['OVERDUE', 'DUE_IN_7_DAYS'], bg: 'rgb(255,148,147)', fg: 'rgb(179,26,27)', ring: 'rgb(255,39,39)', check: 'assets/icons/check16--errorStrong.svg' },
-      { key: 'W30', label: 'До 30 дней', in: ['OVERDUE', 'DUE_IN_7_DAYS', 'DUE_IN_30_DAYS'], bg: 'rgb(255,208,138)', fg: 'rgb(179,111,7)', ring: 'rgb(255,159,10)', check: 'assets/icons/check16--warningStrong.svg' },
-      { key: 'W60', label: 'До 60 дней', in: ['OVERDUE', 'DUE_IN_7_DAYS', 'DUE_IN_30_DAYS', 'DUE_IN_60_DAYS'], bg: 'rgb(194,153,255)', fg: 'rgb(83,0,179)', ring: 'rgb(119,0,255)', check: 'assets/icons/check16--brandStrong.svg' },
+      { key: 'W7', label: 'До 7 дней', in: ['OVERDUE', 'DUE_IN_7_DAYS'], bg: 'rgb(255,240,241)', fg: 'rgb(179,26,27)', ring: 'rgb(255,39,39)', check: 'assets/icons/check16--errorStrong.svg' },
+      { key: 'W30', label: 'До 30 дней', in: ['OVERDUE', 'DUE_IN_7_DAYS', 'DUE_IN_30_DAYS'], bg: 'rgb(255,245,223)', fg: 'rgb(179,111,7)', ring: 'rgb(255,159,10)', check: 'assets/icons/check16--warningStrong.svg' },
+      { key: 'W60', label: 'До 60 дней', in: ['OVERDUE', 'DUE_IN_7_DAYS', 'DUE_IN_30_DAYS', 'DUE_IN_60_DAYS'], bg: 'rgb(246,241,255)', fg: 'rgb(83,0,179)', ring: 'rgb(119,0,255)', check: 'assets/icons/check16--brandStrong.svg' },
     ];
     const win = WIN.find((w) => w.key === s.win) || WIN[0];
     const windows = WIN.map((w) => { const sel = w.key === win.key; return { ...w, count: s.lic.filter((i) => w.in.includes(i.bucket)).length, selected: sel, ring: sel ? 'inset 0 0 0 1.5px ' + w.ring : 'none', select: () => this.setState({ win: w.key }) }; });

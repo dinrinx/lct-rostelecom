@@ -118,7 +118,7 @@ export const ERROR_CODES: ErrorCodeDoc[] = [
   // --- Файлы ------------------------------------------------------------
   { code: 'FILE_NOT_FOUND', httpStatus: 404, category: 'Файлы', meaning: 'Файл с таким id не существует' },
   { code: 'FILE_ACTOR_UNKNOWN', httpStatus: 400, category: 'Файлы', meaning: 'Не удалось определить пользователя, загружающего файл (нет currentUserId)' },
-  { code: 'STORAGE_UNAVAILABLE', httpStatus: 503, category: 'Файлы', meaning: 'Хранилище файлов (MinIO/S3-совместимое) недоступно' },
+  { code: 'STORAGE_UNAVAILABLE', httpStatus: 503, category: 'Файлы', meaning: 'Хранилище файлов (S3-совместимое, Garage) недоступно' },
 
   // --- Отчёты и очередь ---------------------------------------------------
   { code: 'REPORT_TYPE_INVALID', httpStatus: 400, category: 'Отчёты', meaning: 'POST /reports/jobs: type не из LICENSE_RADAR|SLA_RADAR|INTERACTIONS_EXPORT' },

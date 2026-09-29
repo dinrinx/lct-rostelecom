@@ -132,7 +132,7 @@ button{font-family:var(--font-sans)}
           <div style="display:flex;align-items:center;gap:12px"><img src="assets/auth/logo-mark.svg" alt="" style="width:32px;height:32px;display:block"><div style="display:flex;flex-direction:column;gap:2px"><span style="font-weight:700;font-size:18px;line-height:20px;color:rgb(15,26,40)">ИТ Школа</span><span style="font-size:10px;line-height:12px;letter-spacing:.06em;text-transform:uppercase;color:rgb(76,81,94)">Ростелеком</span></div></div>
         </div>
         <nav style="display:flex;flex-direction:{{ navDir }};gap:4px;overflow-x:auto">
-          <sc-if value="{{ isDesktop }}"><div style="padding:0 12px 8px"><span style="display:inline-flex;align-items:center;height:24px;padding:0 8px;border-radius:4px;background:rgb(194,153,255);font-size:12px;line-height:16px;letter-spacing:.04em;text-transform:uppercase;color:rgb(83,0,179)">Админ-панель</span></div></sc-if>
+          <sc-if value="{{ isDesktop }}"><div style="padding:0 12px 8px"><span style="display:inline-flex;align-items:center;height:24px;padding:0 8px;border-radius:4px;background:rgb(246,241,255);font-size:12px;line-height:16px;letter-spacing:.04em;text-transform:uppercase;color:rgb(83,0,179)">Админ-панель</span></div></sc-if>
           <sc-for list="{{ nav }}" as="n" hint-placeholder-count="5">
             <button onClick="{{ n.go }}" style="flex-shrink:0;display:flex;align-items:center;gap:12px;height:{{ n.h }};padding:12px;box-sizing:border-box;border:none;border-radius:8px;background:{{ n.bg }};text-align:left;cursor:pointer;font-family:inherit;white-space:nowrap" style-hover="background:{{ n.hoverBg }}">
               <span style="display:block;width:20px;height:20px;flex-shrink:0;background:url({{ n.icon }}) center/20px 20px no-repeat"></span>
@@ -174,7 +174,7 @@ button{font-family:var(--font-sans)}
 
         <sc-if value="{{ isUsers }}" hint-placeholder-val="{{ true }}">
           <div data-screen-label="08 Пользователи и роли" style="display:flex;flex-direction:column;gap:24px">
-            <div style="display:flex;align-items:flex-start;gap:12px;padding:16px 20px;border-radius:12px;background:rgb(194,153,255)">
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:16px 20px;border-radius:12px;background:rgb(246,241,255)">
               <img src="assets/icons/help--brandStrong.svg" alt="" style="width:20px;height:20px;padding:1.667px;box-sizing:border-box;flex-shrink:0">
               <span style="display:flex;flex-direction:column;gap:2px"><span style="font-weight:700;font-size:14px;line-height:20px;color:rgb(83,0,179)">Роли синхронизируются с Keycloak</span><span style="font-weight:300;font-size:12px;line-height:16px;color:rgb(83,0,179)">Смена роли выполняется в Keycloak. Здесь можно проверить роль и деактивировать доступ.</span></span>
             </div>
@@ -227,7 +227,7 @@ button{font-family:var(--font-sans)}
 
         <sc-if value="{{ isVisibility }}" hint-placeholder-val="{{ false }}">
           <div data-screen-label="11 Видимость данных" style="display:flex;flex-direction:column;gap:16px">
-            <div style="padding:16px 20px;border-radius:12px;background:rgb(194,153,255);font-weight:300;font-size:14px;line-height:20px;color:rgb(83,0,179);text-wrap:pretty">Правила видимости заданы на бэкенде (RBAC на уровне запросов). Экран показывает, что видит каждая роль. Настройка правил появится в следующей версии.</div>
+            <div style="padding:16px 20px;border-radius:12px;background:rgb(246,241,255);font-weight:300;font-size:14px;line-height:20px;color:rgb(83,0,179);text-wrap:pretty">Правила видимости заданы на бэкенде (RBAC на уровне запросов). Экран показывает, что видит каждая роль. Настройка правил появится в следующей версии.</div>
             <div style="overflow-x:auto;border-radius:16px;background:#fff;box-shadow:inset 0 0 0 1px rgb(229,230,232)">
               <table style="width:100%;min-width:680px;border-collapse:collapse;font-size:14px;line-height:20px">
                 <thead><tr style="background:rgb(244,244,245);color:rgb(76,81,94);text-align:left;font-size:12px;line-height:16px"><th style="padding:14px 16px;font-weight:400">Данные</th><th style="padding:12px;font-weight:400">КАМ</th><th style="padding:12px;font-weight:400">Руководитель</th><th style="padding:12px 20px;font-weight:400">Администратор</th></tr></thead>

@@ -240,7 +240,7 @@ class Component extends DCLogic {
         phaseColor: CRM.PHASE[r.currentPhase].color, phaseBg: CRM.PHASE[r.currentPhase].bg,
         daysLabel: days(r.daysInCurrentStatus), overLabel: '+' + days(Math.max(over, 0)), inTime: !r.isOverdue && !!sla, slaText: 'В срок',
         slaShort: r.isOverdue ? '+' + days(Math.max(over, 0)) : sla ? 'в срок' : '—', slaColor: r.isOverdue ? 'rgb(179,26,27)' : 'rgb(76,81,94)',
-        bg: r.isOverdue ? 'rgb(255,148,147)' : '#fff', cardBg: r.isOverdue ? 'rgb(255,240,241)' : '#fff', hover: r.isOverdue ? 'rgb(255,166,160)' : 'rgb(249,249,250)',
+        bg: r.isOverdue ? 'rgb(255,240,241)' : '#fff', cardBg: r.isOverdue ? 'rgb(255,240,241)' : '#fff', hover: r.isOverdue ? 'rgb(255,225,227)' : 'rgb(249,249,250)',
         open: () => this.props.onOpen && this.props.onOpen(r.interactionInstanceId) };
     });
     const ready = s.status === 'ready';
