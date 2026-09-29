@@ -82,7 +82,11 @@ class Component extends DCLogic {
   fileRef = React.createRef();
   state = { version: null, drag: null, over: null, moves: {}, modal: null };
   componentDidMount() { this.loadVersion(); }
-  componentDidUpdate(pp) { if (pp.rows !== this.props.rows && Object.keys(this.state.moves).length) { const moves = { ...this.state.moves }; (this.props.rows || []).forEach((r) => { if (moves[r.interactionInstanceId] && moves[r.interactionInstanceId].to === r.currentStatusId) delete moves[r.interactionInstanceId]; }); this.setState({ moves }); } }
+  // rows — новый массив на каждый рендер родителя (см. CrmCritical.dc.html) —
+  // сравниваем по составу, не по ссылке, чтобы не пересчитывать moves впустую
+  // на каждый чужой АПИ-вызов.
+  rowsKey(rows) { return (rows || []).map((r) => r.interactionInstanceId + ':' + r.currentStatusId).join(','); }
+  componentDidUpdate(pp) { if (this.rowsKey(pp.rows) !== this.rowsKey(this.props.rows) && Object.keys(this.state.moves).length) { const moves = { ...this.state.moves }; (this.props.rows || []).forEach((r) => { if (moves[r.interactionInstanceId] && moves[r.interactionInstanceId].to === r.currentStatusId) delete moves[r.interactionInstanceId]; }); this.setState({ moves }); } }
   async loadVersion() { const CRM = await waitCRM(); try { const version = await CRM.api.templateVersion(CRM.activeVersionId()); this.setState({ version }); } catch (e) { this.props.onToast && this.props.onToast({ kind: 'error', title: 'Шаблон workflow не загрузился', code: e.code }); } }
   statusOf(row) { const m = this.state.moves[row.interactionInstanceId]; return m ? m.to : row.currentStatusId; }
   allowed(fromId, toId) { return !!this.state.version && this.state.version.transitions.some((t) => t.fromStatusId === fromId && t.toStatusId === toId); }

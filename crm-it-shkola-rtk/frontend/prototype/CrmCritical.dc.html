@@ -99,7 +99,14 @@ const DAY = 864e5;
 class Component extends DCLogic {
   state = { version: null, licenses: [], hist: {} };
   componentDidMount() { waitCRM().then(async (CRM) => { try { const [version, licenses] = await Promise.all([CRM.api.templateVersion(CRM.activeVersionId()), CRM.api.licenses()]); this.setState({ version, licenses }); } catch (e) {} this.loadHist(); }); }
-  componentDidUpdate(pp) { if (pp.rows !== this.props.rows) this.loadHist(); }
+  // rows — новый массив на каждый рендер родителя (CrmRegistry.renderVals()
+  // делает [...s.rows].sort() безусловно), а не только когда данные реально
+  // изменились — сравнение по ссылке (pp.rows !== this.props.rows) было
+  // всегда true и на каждый АПИ-вызов где угодно в приложении запускало
+  // loadHist(), который сам делает АПИ-вызовы → бесконечный цикл запросов.
+  // Сравниваем по составу (id взаимодействий), а не по ссылке.
+  rowsKey(rows) { return (rows || []).slice(0, 4).map((r) => r.interactionInstanceId).join(','); }
+  componentDidUpdate(pp) { if (this.rowsKey(pp.rows) !== this.rowsKey(this.props.rows)) this.loadHist(); }
   async loadHist() {
     const rows = (this.props.rows || []).slice(0, 4);
     const out = {};
