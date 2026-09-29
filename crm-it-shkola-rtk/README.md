@@ -60,18 +60,4 @@ curl http://localhost:3000/health
 
 Ответ `{ "status": "ok", "db": "ok", "redis": "ok", "uptime": ... }` подтверждает, что бэкенд видит Postgres и Redis из `docker compose up`.
 
-## Изменения контракта (27.09)
-
-- `WorkflowStatus`: новые поля `slaDays`, `minDays`, `isOptional`, `dependsOnStatusIds` (миграция
-  `workflow_status_sla_critical_path`). На вход шаблона — те же поля, зависимости через `dependsOnOrders`.
-- `PUT /workflow/templates/:id`: `migrateInstances` + `statuses[].sourceStatusId` — перенос процессов на новую
-  версию (по умолчанию, как и раньше, процессы остаются на своей версии). Менять шаблон может только Администратор.
-- `GET /workflow/templates` — всем ролям; в ответе добавлен `versions[]` (список версий с `instanceCount`).
-- `GET /workflow/template-versions/:id` — реальные данные из БД (была фикстура).
-- `GET /workflow/instances/:id/history` — добавлены `toStatusName`, `toStatusPhase`, `fromStatusName`.
-- `GET /reports/interactions`, `/reports/charts`, `/reports/interactions/export`, `/dashboard/license-radar`,
-  `/dashboard/sla-radar` — реальные расчёты по БД с видимостью по роли (были фикстуры). Экспорт: `xlsx`, `xls`;
-  `pdf` пока отвечает `422 REPORT_FORMAT_NOT_SUPPORTED`.
-- `GET /auth/me`, `GET/PUT /admin/users` — реальные данные (были фикстуры); новый `GET /auth/users` —
-  справочник сотрудников для всех ролей (только чтение).
 - `GET /health` — добавлено поле `keycloak`.
